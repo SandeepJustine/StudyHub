@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: studyhub-db
+    environment:
+      POSTGRES_USER: studyhub
+      POSTGRES_PASSWORD: studyhub
+      POSTGRES_DB: studyhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: studyhub-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  app:
+    build: .
+    container_name: studyhub-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://studyhub:studyhub@postgres:5432/studyhub
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:

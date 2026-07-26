@@ -1,0 +1,35 @@
+{
+  "common": {
+    "appName": "StudyHub Malawi",
+    "tagline": "Learn. Practice. Succeed.",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "noResults": "No results found"
+  },
+  "auth": {
+    "login": "Log In",
+    "register": "Sign Up",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "logout": "Log Out"
+  },
+  "subscription": {
+    "basic": "Student Basic",
+    "premium": "Student Premium",
+    "annual": "Annual Student",
+    "upgrade": "Upgrade Plan",
+    "currentPlan": "Current Plan"
+  },
+  "notifications": {
+    "paymentConfirmed": "Payment Confirmed",
+    "examResult": "Exam Result Available",
+    "classReminder": "Class Reminder",
+    "subscriptionExpiring": "Subscription Expiring Soon"
+  }
+}

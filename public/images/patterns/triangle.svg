@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="35" viewBox="0 0 40 35">
+  <defs>
+    <pattern id="triangle" x="0" y="0" width="40" height="35" patternUnits="userSpaceOnUse">
+      <path d="M20 0L40 35H0Z" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+      <path d="M20 35L40 0H0Z" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.05"/>
+    </pattern>
+  </defs>
+  <rect width="40" height="35" fill="url(#triangle)"/>
+</svg>

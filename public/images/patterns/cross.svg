@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <defs>
+    <pattern id="cross" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M10 0V20M0 10H20" stroke="currentColor" stroke-width="0.5" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="20" height="20" fill="url(#cross)"/>
+</svg>

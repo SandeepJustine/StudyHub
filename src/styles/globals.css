@@ -1,0 +1,296 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand Colors */
+  --color-navy: #0D1B3D;
+  --color-navy-light: #1A2D5A;
+  --color-navy-dark: #0A152E;
+  
+  --color-red: #E63946;
+  --color-red-light: #FF4D5A;
+  --color-red-dark: #CC2936;
+  
+  --color-green: #16A34A;
+  --color-green-light: #22C55E;
+  --color-green-dark: #15803D;
+  
+  --color-grey-light: #F2F4F7;
+  --color-grey-medium: #9CA3AF;
+  --color-grey-dark: #333333;
+  
+  /* Typography */
+  --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Spacing */
+  --logo-clear-space: 48px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(13, 27, 61, 0.05);
+  --shadow-md: 0 4px 6px rgba(13, 27, 61, 0.1);
+  --shadow-lg: 0 10px 15px rgba(13, 27, 61, 0.15);
+  --shadow-xl: 0 20px 25px rgba(13, 27, 61, 0.2);
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-grey-light text-grey-dark;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-bold text-navy;
+  }
+
+  h1 { @apply text-3xl md:text-4xl; }
+  h2 { @apply text-2xl md:text-3xl; }
+  h3 { @apply text-xl md:text-2xl; }
+  h4 { @apply text-lg md:text-xl; }
+
+  a {
+    @apply text-red hover:text-red-700 transition-colors duration-200;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-navy;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-grey-light;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-grey-medium rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-grey-dark;
+  }
+}
+
+@layer components {
+  /* Button variants using brand colors */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 
+           focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-red text-white hover:bg-red-700 focus:ring-red px-6 py-3;
+  }
+
+  .btn-secondary {
+    @apply bg-green text-white hover:bg-green-700 focus:ring-green px-6 py-3;
+  }
+
+  .btn-outline {
+    @apply border-2 border-navy text-navy hover:bg-navy hover:text-white focus:ring-navy px-6 py-3;
+  }
+
+  .btn-ghost {
+    @apply text-grey-dark hover:bg-grey-light focus:ring-grey-dark px-4 py-2;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200;
+  }
+
+  .card-hover {
+    @apply hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 border-2 border-grey-light rounded-lg 
+           focus:border-navy focus:ring-2 focus:ring-navy/20 
+           placeholder:text-grey-medium transition-colors duration-200;
+  }
+
+  .input-error {
+    @apply border-red focus:border-red focus:ring-red/20;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .badge-info {
+    @apply bg-navy/10 text-navy;
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    @apply animate-pulse bg-grey-light rounded;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply w-full bg-grey-light rounded-full h-2 overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-300;
+  }
+
+  .progress-bar-fill-green {
+    @apply bg-green;
+  }
+
+  .progress-bar-fill-red {
+    @apply bg-red;
+  }
+
+  .progress-bar-fill-navy {
+    @apply bg-navy;
+  }
+}
+
+@layer utilities {
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-in-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-in-out;
+  }
+
+  .animate-scale {
+    animation: scale 0.2s ease-in-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scale {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Print styles for certificates */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    @apply bg-white;
+  }
+
+  .certificate-print {
+    @apply p-0 m-0;
+  }
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .show-mobile-only {
+    display: none !important;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+/* Slider zoom effect */
+@keyframes slowZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+.animate-slow-zoom {
+  animation: slowZoom 6s ease-in-out forwards;
+}
+
+/* Duration extension for slider */
+.duration-10000 {
+  transition-duration: 10000ms;
+}

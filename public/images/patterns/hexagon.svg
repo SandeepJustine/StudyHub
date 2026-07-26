@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="52" viewBox="0 0 60 52">
+  <defs>
+    <pattern id="hexagon" x="0" y="0" width="60" height="52" patternUnits="userSpaceOnUse">
+      <path d="M15 0L30 8.66L45 0L60 8.66L60 26L45 34.64L30 26L15 34.64L0 26L0 8.66Z" fill="none" stroke="currentColor" stroke-width="1" opacity="0.1"/>
+      <path d="M15 26L30 34.66L45 26L60 34.66L60 52L45 60.64L30 52L15 60.64L0 52L0 34.66Z" fill="none" stroke="currentColor" stroke-width="1" opacity="0.1"/>
+    </pattern>
+  </defs>
+  <rect width="60" height="52" fill="url(#hexagon)"/>
+</svg>

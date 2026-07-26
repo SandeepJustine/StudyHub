@@ -1,0 +1,35 @@
+{
+  "common": {
+    "appName": "StudyHub Malawi",
+    "tagline": "Phunzirani. Yeserani. Pambanani.",
+    "loading": "Tikupanga...",
+    "error": "Vuto lachitika",
+    "save": "Sungani",
+    "cancel": "Lekani",
+    "delete": "Chotsani",
+    "edit": "Sinthani",
+    "view": "Onani",
+    "search": "Fufuzani",
+    "noResults": "Palibe zopezeka"
+  },
+  "auth": {
+    "login": "Lowani",
+    "register": "Lembetsani",
+    "forgotPassword": "Mwaiwala Chinsinsi?",
+    "resetPassword": "Sinthani Chinsinsi",
+    "logout": "Tulukani"
+  },
+  "subscription": {
+    "basic": "Wophunzira Wamba",
+    "premium": "Wophunzira Wapamwamba",
+    "annual": "Wophunzira Pachaka",
+    "upgrade": "Sinthani Dongosolo",
+    "currentPlan": "Dongosolo Lapano"
+  },
+  "notifications": {
+    "paymentConfirmed": "Malipiro Atsimikizidwa",
+    "examResult": "Zotsatira za Mayeso Alipo",
+    "classReminder": "Chikumbutso cha Maphunziro",
+    "subscriptionExpiring": "Dongosolo Latha Posachedwa"
+  }
+}

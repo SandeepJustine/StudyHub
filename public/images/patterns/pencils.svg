@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <defs>
+    <pattern id="pencils" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+      <!-- Pencil 1 -->
+      <g transform="translate(10, 10) rotate(-15)" opacity="0.12">
+        <rect x="0" y="2" width="24" height="4" rx="1" fill="currentColor"/>
+        <polygon points="24,0 30,4 24,8" fill="currentColor"/>
+        <rect x="0" y="0" width="4" height="8" rx="0.5" fill="#E63946" opacity="0.5"/>
+        <rect x="4" y="1" width="14" height="2" fill="white" opacity="0.3"/>
+      </g>
+      <!-- Pencil 2 -->
+      <g transform="translate(50, 50) rotate(25)" opacity="0.10">
+        <rect x="0" y="2" width="20" height="3.5" rx="1" fill="currentColor"/>
+        <polygon points="20,0 25,3.75 20,7.5" fill="currentColor"/>
+        <rect x="0" y="0" width="3.5" height="7.5" rx="0.5" fill="#E63946" opacity="0.5"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="80" height="80" fill="url(#pencils)"/>
+</svg>

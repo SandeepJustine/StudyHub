@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="600" viewBox="0 0 1920 600">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D1B3D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A2D5A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="600" fill="url(#bg)"/>
+  <rect width="1920" height="600" fill="url(#dots)"/>
+  <!-- Abstract document shapes -->
+  <rect x="700" y="100" width="500" height="400" rx="10" fill="white" opacity="0.03"/>
+  <line x1="750" y1="160" x2="1150" y2="160" stroke="white" stroke-width="3" opacity="0.1"/>
+  <line x1="750" y1="200" x2="1100" y2="200" stroke="white" stroke-width="3" opacity="0.1"/>
+  <line x1="750" y1="240" x2="1050" y2="240" stroke="white" stroke-width="3" opacity="0.1"/>
+  <line x1="750" y1="280" x2="1120" y2="280" stroke="white" stroke-width="3" opacity="0.1"/>
+  <line x1="750" y1="320" x2="1000" y2="320" stroke="white" stroke-width="3" opacity="0.1"/>
+  <line x1="750" y1="360" x2="1080" y2="360" stroke="white" stroke-width="3" opacity="0.1"/>
+</svg>

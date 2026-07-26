@@ -1,0 +1,629 @@
+.next/dev/types/validator.ts(522,31): error TS2344: Type 'typeof import("D:/StudyHub/studyhub/src/app/api/admin/payouts/[payoutId]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/payouts/[payoutId]">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { payoutId: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ success: boolean; data: { payout: { instructor: { user: { id: string; email: string; phone: string | null; fullName: string; avatar: string | null; }; courses: { ...; }[]; _count: { ...; }; } &...' is not assignable to type '(request: NextRequest, context: { params: Promise<{ payoutId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ payoutId: string; }>; }' is not assignable to type '{ params: { payoutId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'payoutId' is missing in type 'Promise<{ payoutId: string; }>' but required in type '{ payoutId: string; }'.
+.next/dev/types/validator.ts(558,31): error TS2344: Type 'typeof import("D:/StudyHub/studyhub/src/app/api/admin/users/[userId]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/users/[userId]">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { userId: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ success: boolean; data: { student: ({ institution: { id: string; name: string; slug: string; } | null; enrollments: ({ ...; } & { ...; })[]; examAttempts: { ...; }[]; } & { ...; }) | null; ... 25...' is not assignable to type '(request: NextRequest, context: { params: Promise<{ userId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ userId: string; }>; }' is not assignable to type '{ params: { userId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'userId' is missing in type 'Promise<{ userId: string; }>' but required in type '{ userId: string; }'.
+.next/dev/types/validator.ts(621,31): error TS2344: Type 'typeof import("D:/StudyHub/studyhub/src/app/api/courses/[courseId]/enroll/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/courses/[courseId]/enroll">'.
+  Types of property 'POST' are incompatible.
+    Type '(req: Request, { params }: { params: { courseId: string; }; }) => Promise<NextResponse<{ success: boolean; data: { id: string; progress: number; totalModules: number; completedModules: number; startedAt: Date; ... 5 more ...; courseId: string; }; }> | NextResponse<...>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ courseId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ courseId: string; }>; }' is not assignable to type '{ params: { courseId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'courseId' is missing in type 'Promise<{ courseId: string; }>' but required in type '{ courseId: string; }'.
+.next/dev/types/validator.ts(630,31): error TS2344: Type 'typeof import("D:/StudyHub/studyhub/src/app/api/courses/[courseId]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/courses/[courseId]">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { courseId: string; }; }) => Promise<NextResponse<{ success: boolean; data: { instructor: { user: { id: string; email: string; phone: string | null; passwordHash: string; ... 15 more ...; unsubscribedAt: Date | null; }; } & { ...; }; _count: { ...; }; modules: ({ ...; } & { ...; ...' is not assignable to type '(request: NextRequest, context: { params: Promise<{ courseId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ courseId: string; }>; }' is not assignable to type '{ params: { courseId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'courseId' is missing in type 'Promise<{ courseId: string; }>' but required in type '{ courseId: string; }'.
+.next/dev/types/validator.ts(657,31): error TS2344: Type 'typeof import("D:/StudyHub/studyhub/src/app/api/exams/[attemptId]/submit/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/exams/[attemptId]/submit">'.
+  Types of property 'POST' are incompatible.
+    Type '(req: Request, { params }: { params: { attemptId: string; }; }) => Promise<NextResponse<{ success: boolean; data: { attempt: { id: string; startedAt: Date; completedAt: Date | null; studentId: string; quizId: string; score: number; passed: boolean; answers: JsonValue; }; result: { ...; }; certificate: { ...; } | nul...' is not assignable to type '(request: NextRequest, context: { params: Promise<{ attemptId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ attemptId: string; }>; }' is not assignable to type '{ params: { attemptId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'attemptId' is missing in type 'Promise<{ attemptId: string; }>' but required in type '{ attemptId: string; }'.
+.next/dev/types/validator.ts(720,31): error TS2344: Type 'typeof import("D:/StudyHub/studyhub/src/app/api/payments/[transactionId]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/payments/[transactionId]">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { transactionId: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ success: boolean; data: { id: string; createdAt: Date; ... 11 more ...; subscriptionId: string | null; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ transactionId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ transactionId: string; }>; }' is not assignable to type '{ params: { transactionId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'transactionId' is missing in type 'Promise<{ transactionId: string; }>' but required in type '{ transactionId: string; }'.
+prisma/seed.ts(89,11): error TS2353: Object literal may only specify known properties, and 'isVerified' does not exist in type '(Without<InstructorCreateWithoutUserInput, InstructorUncheckedCreateWithoutUserInput> & InstructorUncheckedCreateWithoutUserInput) | (Without<...> & InstructorCreateWithoutUserInput)'.
+prisma/seed.ts(111,11): error TS2353: Object literal may only specify known properties, and 'companySize' does not exist in type '(Without<CorporateClientCreateWithoutUserInput, CorporateClientUncheckedCreateWithoutUserInput> & CorporateClientUncheckedCreateWithoutUserInput) | (Without<...> & CorporateClientCreateWithoutUserInput)'.
+prisma/seed.ts(133,11): error TS2353: Object literal may only specify known properties, and 'occupation' does not exist in type '(Without<ParentCreateWithoutUserInput, ParentUncheckedCreateWithoutUserInput> & ParentUncheckedCreateWithoutUserInput) | (Without<...> & ParentCreateWithoutUserInput)'.
+prisma/seed.ts(153,7): error TS2353: Object literal may only specify known properties, and 'address' does not exist in type '(Without<InstitutionCreateInput, InstitutionUncheckedCreateInput> & InstitutionUncheckedCreateInput) | (Without<...> & InstitutionCreateInput)'.
+prisma/seed.ts(192,7): error TS2353: Object literal may only specify known properties, and 'paymentMethod' does not exist in type 'Without<SubscriptionCreateInput, SubscriptionUncheckedCreateInput> & SubscriptionUncheckedCreateInput'.
+prisma/seed.ts(208,7): error TS2353: Object literal may only specify known properties, and 'paymentMethod' does not exist in type 'Without<SubscriptionCreateInput, SubscriptionUncheckedCreateInput> & SubscriptionUncheckedCreateInput'.
+prisma/seed.ts(223,7): error TS2353: Object literal may only specify known properties, and 'paymentMethod' does not exist in type 'Without<SubscriptionCreateInput, SubscriptionUncheckedCreateInput> & SubscriptionUncheckedCreateInput'.
+prisma/seed.ts(308,7): error TS2353: Object literal may only specify known properties, and 'description' does not exist in type 'Without<TransactionCreateInput, TransactionUncheckedCreateInput> & TransactionUncheckedCreateInput'.
+prisma/seed.ts(321,7): error TS2353: Object literal may only specify known properties, and 'description' does not exist in type 'Without<TransactionCreateInput, TransactionUncheckedCreateInput> & TransactionUncheckedCreateInput'.
+prisma/seed.ts(343,7): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<PromoCodeCreateInput, PromoCodeUncheckedCreateInput> & PromoCodeUncheckedCreateInput) | (Without<...> & PromoCodeCreateInput)'.
+prisma/seed.ts(361,7): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<PromoCodeCreateInput, PromoCodeUncheckedCreateInput> & PromoCodeUncheckedCreateInput) | (Without<...> & PromoCodeCreateInput)'.
+prisma/seed.ts(429,16): error TS2339: Property 'session' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+prisma/seed.ts(430,16): error TS2339: Property 'account' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+prisma/seed.ts(431,16): error TS2339: Property 'verificationToken' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/(admin)/admin/courses/page.tsx(7,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableBody'.
+src/app/(admin)/admin/courses/page.tsx(8,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableCell'.
+src/app/(admin)/admin/courses/page.tsx(9,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableHead'.
+src/app/(admin)/admin/courses/page.tsx(10,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableHeader'.
+src/app/(admin)/admin/courses/page.tsx(11,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableRow'.
+src/app/(admin)/admin/courses/page.tsx(44,23): error TS2322: Type '"default"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/courses/page.tsx(46,23): error TS2322: Type '"outline"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/courses/page.tsx(48,23): error TS2322: Type '"destructive"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/courses/page.tsx(50,23): error TS2322: Type '"outline"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/courses/page.tsx(107,38): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; }'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & { children: ReactNode; }'.
+src/app/(admin)/admin/courses/page.tsx(113,38): error TS2322: Type '{ children: Element[]; align: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+  Property 'align' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+src/app/(admin)/admin/courses/page.tsx(149,12): error TS2739: Type '{ children: Element[]; }' is missing the following properties from type 'TableProps<{ id: string; }>': data, columns
+src/app/(admin)/admin/courses/page.tsx(177,46): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; }'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & { children: ReactNode; }'.
+src/app/(admin)/admin/courses/page.tsx(178,51): error TS2322: Type '"icon"' is not assignable to type '"sm" | "md" | "lg" | "xs" | "xl" | null | undefined'.
+src/app/(admin)/admin/courses/page.tsx(182,46): error TS2322: Type '{ children: (false | Element)[]; align: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+  Property 'align' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+src/app/(admin)/admin/courses/page.tsx(183,45): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+src/app/(admin)/admin/courses/page.tsx(189,45): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+src/app/(admin)/admin/payouts/page.tsx(10,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableBody'.
+src/app/(admin)/admin/payouts/page.tsx(11,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableCell'.
+src/app/(admin)/admin/payouts/page.tsx(12,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableHead'.
+src/app/(admin)/admin/payouts/page.tsx(13,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableHeader'.
+src/app/(admin)/admin/payouts/page.tsx(14,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableRow'.
+src/app/(admin)/admin/payouts/page.tsx(53,23): error TS2322: Type '"default"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/payouts/page.tsx(55,23): error TS2322: Type '"outline"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/payouts/page.tsx(57,23): error TS2322: Type '"destructive"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/payouts/page.tsx(59,23): error TS2322: Type '"outline"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.
+src/app/(admin)/admin/payouts/page.tsx(95,14): error TS2739: Type '{ children: Element[]; }' is missing the following properties from type 'TableProps<{ id: string; }>': data, columns
+src/app/(admin)/admin/payouts/page.tsx(122,48): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; }'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & { children: ReactNode; }'.
+src/app/(admin)/admin/payouts/page.tsx(123,53): error TS2322: Type '"icon"' is not assignable to type '"sm" | "md" | "lg" | "xs" | "xl" | null | undefined'.
+src/app/(admin)/admin/payouts/page.tsx(127,48): error TS2322: Type '{ children: Element[]; align: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+  Property 'align' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+src/app/(instructor)/instructor/courses/new/page.tsx(317,43): error TS2304: Cannot find name 'formatCurrency'.
+src/app/(school-admin)/schooladmin/branding/page.tsx(88,59): error TS2322: Type '{ children: string; variant: "outline"; size: "sm"; as: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+  Property 'as' does not exist on type 'IntrinsicAttributes & ButtonProps & RefAttributes<HTMLButtonElement>'.
+src/app/(student)/courses/page.tsx(131,12): error TS2304: Cannot find name 'BookOpen'.
+src/app/(student)/dashboard/page.tsx(25,34): error TS2339: Property 'studentId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/(student)/dashboard/page.tsx(33,5): error TS2352: Conversion of type 'Promise<{ enrollments: { id: string; progress: number; totalModules: number; completedModules: number; startedAt: Date; lastAccessedAt: Date | null; completedAt: Date | null; certificateId: string | null; enrolledAt: Date; studentId: string; courseId: string; }[]; pagination: { ...; }; }>' to type 'Promise<PaginatedStudentEnrollments>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ enrollments: { id: string; progress: number; totalModules: number; completedModules: number; startedAt: Date; lastAccessedAt: Date | null; completedAt: Date | null; certificateId: string | null; enrolledAt: Date; studentId: string; courseId: string; }[]; pagination: { ...; }; }' is missing the following properties from type 'PaginatedResponse<StudentEnrollment>': data, total, page, limit, and 2 more.
+src/app/(student)/dashboard/page.tsx(34,5): error TS2352: Conversion of type 'Promise<{ attempts: ({ quiz: { title: string; module: { course: { title: string; subject: string; }; }; }; certificate: { id: string; type: CertificateType; verificationId: string; } | null; } & { ...; })[]; pagination: { ...; }; }>' to type 'Promise<PaginatedStudentExamHistory>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ attempts: ({ quiz: { title: string; module: { course: { title: string; subject: string; }; }; }; certificate: { id: string; type: CertificateType; verificationId: string; } | null; } & { ...; })[]; pagination: { ...; }; }' is missing the following properties from type 'PaginatedResponse<StudentExamHistoryEntry>': data, total, page, limit, and 2 more.
+src/app/(student)/dashboard/page.tsx(37,41): error TS2339: Property 'enrollments' does not exist on type 'PaginatedStudentEnrollments'.
+src/app/(student)/dashboard/page.tsx(37,60): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/(student)/dashboard/page.tsx(38,44): error TS2339: Property 'enrollments' does not exist on type 'PaginatedStudentEnrollments'.
+src/app/(student)/dashboard/page.tsx(38,63): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/(student)/dashboard/page.tsx(90,47): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/app/(student)/dashboard/page.tsx(90,52): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/(student)/dashboard/page.tsx(121,37): error TS7006: Parameter 'enrollment' implicitly has an 'any' type.
+src/app/(student)/dashboard/page.tsx(172,26): error TS2339: Property 'attempts' does not exist on type 'PaginatedStudentExamHistory'.
+src/app/(student)/dashboard/page.tsx(172,52): error TS7006: Parameter 'attempt' implicitly has an 'any' type.
+src/app/(student)/lab/[subject].tsx(56,47): error TS2739: Type 'Experiment' is missing the following properties from type 'PhysicsExperiment': topic, requiredMeasurements
+src/app/(student)/lab/[subject].tsx(57,47): error TS2739: Type 'Experiment' is missing the following properties from type 'BiologyExperiment': topic, stainingRequired
+src/app/(student)/lab/page.tsx(56,47): error TS2739: Type 'Experiment' is missing the following properties from type 'PhysicsExperiment': topic, requiredMeasurements
+src/app/(student)/lab/page.tsx(57,47): error TS2739: Type 'Experiment' is missing the following properties from type 'BiologyExperiment': topic, stainingRequired
+src/app/api/admin/payouts/[payoutId]/route.ts(86,9): error TS2353: Object literal may only specify known properties, and 'course' does not exist in type 'TransactionInclude<DefaultArgs>'.
+src/app/api/admin/payouts/[payoutId]/route.ts(96,78): error TS2339: Property 'instructorPayout' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/app/api/admin/payouts/[payoutId]/route.ts(192,24): error TS2339: Property 'metadata' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/app/api/admin/payouts/[payoutId]/route.ts(218,11): error TS2353: Object literal may only specify known properties, and 'pendingEarnings' does not exist in type '(Without<InstructorUpdateInput, InstructorUncheckedUpdateInput> & InstructorUncheckedUpdateInput) | (Without<...> & InstructorUpdateInput)'.
+src/app/api/admin/payouts/[payoutId]/route.ts(224,13): error TS2304: Cannot find name 'notificationService'.
+src/app/api/admin/payouts/instructors/route.ts(83,22): error TS2353: Object literal may only specify known properties, and 'processedAt' does not exist in type 'PayoutOrderByWithRelationInput | PayoutOrderByWithRelationInput[]'.
+src/app/api/admin/payouts/instructors/route.ts(84,35): error TS2353: Object literal may only specify known properties, and 'processedAt' does not exist in type 'PayoutSelect<DefaultArgs>'.
+src/app/api/admin/payouts/instructors/route.ts(96,39): error TS2339: Property 'pendingEarnings' does not exist on type '{ user: { id: string; email: string; phone: string | null; fullName: string; avatar: string | null; }; _count: { courses: number; payouts: number; }; } & { id: string; bio: string | null; expertise: string[]; ... 5 more ...; userId: string; }'.
+src/app/api/admin/payouts/instructors/route.ts(103,30): error TS2339: Property 'processedAt' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/app/api/admin/payouts/instructors/route.ts(114,9): error TS2353: Object literal may only specify known properties, and 'pendingEarnings' does not exist in type 'InstructorSumAggregateInputType'.
+src/app/api/admin/payouts/instructors/route.ts(124,24): error TS18048: 'totals._sum' is possibly 'undefined'.
+src/app/api/admin/payouts/instructors/route.ts(125,23): error TS18048: 'totals._sum' is possibly 'undefined'.
+src/app/api/admin/payouts/instructors/route.ts(125,35): error TS2339: Property 'pendingEarnings' does not exist on type '{ revenueShare?: number | null | undefined; totalEarnings?: number | null | undefined; coursesCount?: number | null | undefined; studentsCount?: number | null | undefined; rating?: number | ... 1 more ... | undefined; }'.
+src/app/api/admin/users/[userId]/route.ts(94,27): error TS2339: Property 'passwordResetToken' does not exist on type '{ student: ({ institution: { id: string; name: string; slug: string; } | null; enrollments: ({ course: { id: string; title: string; subject: string; }; } & { id: string; progress: number; totalModules: number; ... 7 more ...; courseId: string; })[]; examAttempts: { ...; }[]; } & { ...; }) | null; ... 6 more ...; aud...'.
+src/app/api/admin/users/[userId]/route.ts(94,47): error TS2339: Property 'emailVerificationToken' does not exist on type '{ student: ({ institution: { id: string; name: string; slug: string; } | null; enrollments: ({ course: { id: string; title: string; subject: string; }; } & { id: string; progress: number; totalModules: number; ... 7 more ...; courseId: string; })[]; examAttempts: { ...; }[]; } & { ...; }) | null; ... 6 more ...; aud...'.
+src/app/api/admin/users/route.ts(182,46): error TS2339: Property 'student' does not exist on type '{ id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }'.
+src/app/api/admin/users/route.ts(186,56): error TS2339: Property 'instructor' does not exist on type '{ id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }'.
+src/app/api/certificates/route.ts(57,11): error TS2353: Object literal may only specify known properties, and 'enrollment' does not exist in type 'CertificateInclude<DefaultArgs>'.
+src/app/api/certificates/route.ts(187,14): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<CertificateType, number>'.
+src/app/api/courses/[courseId]/enroll/route.ts(19,36): error TS2339: Property 'studentId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/courses/modules/content/route.ts(48,71): error TS2339: Property 'instructorId' does not exist on type 'Session'.
+src/app/api/courses/modules/content/route.ts(51,9): error TS2322: Type 'import("D:/StudyHub/studyhub/src/lib/courses/content-types").ContentType' is not assignable to type 'import("D:/StudyHub/studyhub/src/types/course").ContentType'.
+  Type '"TEXT"' is not assignable to type 'ContentType'.
+src/app/api/courses/modules/content/route.ts(58,69): error TS2339: Property 'instructorId' does not exist on type 'Session'.
+src/app/api/courses/modules/content/route.ts(61,7): error TS2322: Type 'import("D:/StudyHub/studyhub/src/lib/courses/content-types").ContentType' is not assignable to type 'import("D:/StudyHub/studyhub/src/types/course").ContentType'.
+  Type '"TEXT"' is not assignable to type 'ContentType'.
+src/app/api/exams/[attemptId]/submit/route.ts(17,36): error TS2339: Property 'studentId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/institutions/branding/route.ts(18,20): error TS2339: Property 'institutionId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/institutions/route.ts(41,20): error TS2339: Property 'institutionId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/institutions/students/route.ts(25,20): error TS2339: Property 'institutionId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/institutions/students/route.ts(54,20): error TS2339: Property 'institutionId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/instructor/earnings/route.ts(34,20): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'PayoutOrderByWithRelationInput | PayoutOrderByWithRelationInput[]'.
+src/app/api/instructor/earnings/route.ts(57,11): error TS2353: Object literal may only specify known properties, and 'course' does not exist in type 'TransactionInclude<DefaultArgs>'.
+src/app/api/instructor/earnings/route.ts(74,15): error TS2353: Object literal may only specify known properties, and 'instructorPayout' does not exist in type 'TransactionSumAggregateInputType'.
+src/app/api/instructor/earnings/route.ts(82,39): error TS2339: Property 'pendingEarnings' does not exist on type '{ id: string; bio: string | null; expertise: string[]; revenueShare: number; totalEarnings: number; coursesCount: number; studentsCount: number; rating: number; userId: string; }'.
+src/app/api/instructor/earnings/route.ts(92,28): error TS2339: Property 'paymentMethod' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/app/api/instructor/earnings/route.ts(94,26): error TS2339: Property 'processedAt' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/app/api/instructor/earnings/route.ts(95,24): error TS2339: Property 'createdAt' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/app/api/instructor/earnings/route.ts(100,26): error TS2339: Property 'course' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/app/api/instructor/earnings/route.ts(102,27): error TS2339: Property 'instructorPayout' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/app/api/instructor/earnings/route.ts(154,29): error TS2339: Property 'pendingEarnings' does not exist on type '{ id: string; bio: string | null; expertise: string[]; revenueShare: number; totalEarnings: number; coursesCount: number; studentsCount: number; rating: number; userId: string; }'.
+src/app/api/instructor/earnings/route.ts(157,69): error TS2339: Property 'pendingEarnings' does not exist on type '{ id: string; bio: string | null; expertise: string[]; revenueShare: number; totalEarnings: number; coursesCount: number; studentsCount: number; rating: number; userId: string; }'.
+src/app/api/instructor/earnings/route.ts(158,40): error TS2339: Property 'pendingEarnings' does not exist on type '{ id: string; bio: string | null; expertise: string[]; revenueShare: number; totalEarnings: number; coursesCount: number; studentsCount: number; rating: number; userId: string; }'.
+src/app/api/instructor/earnings/route.ts(180,9): error TS2353: Object literal may only specify known properties, and 'paymentMethod' does not exist in type 'Without<PayoutCreateInput, PayoutUncheckedCreateInput> & PayoutUncheckedCreateInput'.
+src/app/api/lab/experiments.ts(5,24): error TS2307: Cannot find module '../../../lib/prisma' or its corresponding type declarations.
+src/app/api/payments/[transactionId]/route.ts(34,9): error TS2353: Object literal may only specify known properties, and 'course' does not exist in type 'TransactionInclude<DefaultArgs>'.
+src/app/api/payments/[transactionId]/route.ts(165,21): error TS2339: Property 'refundedAmount' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/app/api/payments/[transactionId]/route.ts(182,69): error TS2339: Property 'refundedAmount' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/app/api/payments/route.ts(53,11): error TS2353: Object literal may only specify known properties, and 'description' does not exist in type 'TransactionSelect<DefaultArgs>'.
+src/app/api/payments/route.ts(175,29): error TS2339: Property 'phone' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/app/api/webhooks/email/route.ts(11,17): error TS2304: Cannot find name 'prisma'.
+src/app/api/webhooks/email/route.ts(18,17): error TS2304: Cannot find name 'prisma'.
+src/app/api/webhooks/email/route.ts(28,17): error TS2304: Cannot find name 'prisma'.
+src/app/api/webhooks/email/route.ts(38,17): error TS2304: Cannot find name 'prisma'.
+src/app/api/webhooks/email/route.ts(46,17): error TS2304: Cannot find name 'prisma'.
+src/app/api/webhooks/email/route.ts(53,17): error TS2304: Cannot find name 'prisma'.
+src/app/api/webhooks/email/route.ts(64,39): error TS18046: 'error' is of type 'unknown'.
+src/app/api/webhooks/sms/route.ts(202,9): error TS2322: Type '"SYSTEM_ALERT"' is not assignable to type 'NotificationType'.
+src/components/features/community/index.ts(1,27): error TS2307: Cannot find module './forum-list' or its corresponding type declarations.
+src/components/features/community/index.ts(2,10): error TS2305: Module '"./forum-thread"' has no exported member 'ForumThread'.
+src/components/features/community/index.ts(3,27): error TS2307: Cannot find module './forum-post' or its corresponding type declarations.
+src/components/features/community/index.ts(4,35): error TS2307: Cannot find module './notification-panel' or its corresponding type declarations.
+src/components/features/course/index.ts(2,28): error TS2307: Cannot find module './course-list' or its corresponding type declarations.
+src/components/features/course/index.ts(3,31): error TS2307: Cannot find module './course-details' or its corresponding type declarations.
+src/components/features/course/index.ts(4,34): error TS2307: Cannot find module './course-enrollment' or its corresponding type declarations.
+src/components/features/exam/index.ts(1,26): error TS2307: Cannot find module './exam-card' or its corresponding type declarations.
+src/components/features/exam/index.ts(2,26): error TS2307: Cannot find module './exam-list' or its corresponding type declarations.
+src/components/features/exam/index.ts(3,28): error TS2307: Cannot find module './exam-taking' or its corresponding type declarations.
+src/components/features/exam/index.ts(4,29): error TS2307: Cannot find module './exam-results' or its corresponding type declarations.
+src/components/features/index.ts(7,15): error TS2307: Cannot find module './user' or its corresponding type declarations.
+src/components/features/index.ts(8,15): error TS2307: Cannot find module './post' or its corresponding type declarations.
+src/components/features/index.ts(9,15): error TS2307: Cannot find module './comment' or its corresponding type declarations.
+src/components/features/index.ts(10,15): error TS2307: Cannot find module './message' or its corresponding type declarations.
+src/components/features/index.ts(11,15): error TS2306: File 'D:/StudyHub/studyhub/src/components/features/notification/index.ts' is not a module.
+src/components/features/index.ts(12,15): error TS2307: Cannot find module './friend' or its corresponding type declarations.
+src/components/features/index.ts(14,15): error TS2306: File 'D:/StudyHub/studyhub/src/components/features/certificate/index.ts' is not a module.
+src/components/features/index.ts(15,15): error TS2306: File 'D:/StudyHub/studyhub/src/components/features/analytics/index.ts' is not a module.
+src/components/features/institution/index.ts(1,33): error TS2307: Cannot find module './institution-card' or its corresponding type declarations.
+src/components/features/institution/index.ts(2,33): error TS2307: Cannot find module './institution-list' or its corresponding type declarations.
+src/components/features/institution/index.ts(3,38): error TS2307: Cannot find module './institution-dashboard' or its corresponding type declarations.
+src/components/features/institution/index.ts(4,37): error TS2307: Cannot find module './institution-settings' or its corresponding type declarations.
+src/components/features/payment/index.ts(1,29): error TS2307: Cannot find module './payment-form' or its corresponding type declarations.
+src/components/features/payment/index.ts(2,39): error TS2307: Cannot find module './payment-method-selector' or its corresponding type declarations.
+src/components/features/payment/index.ts(3,36): error TS2307: Cannot find module './transaction-history' or its corresponding type declarations.
+src/components/features/payment/index.ts(4,31): error TS2307: Cannot find module './invoice-viewer' or its corresponding type declarations.
+src/components/features/subscription/index.ts(2,34): error TS2307: Cannot find module './subscription-plan' or its corresponding type declarations.
+src/components/features/subscription/index.ts(3,34): error TS2307: Cannot find module './subscription-form' or its corresponding type declarations.
+src/components/forms/auth/index.ts(2,10): error TS2305: Module '"./register-form"' has no exported member 'RegisterForm'.
+src/components/forms/auth/index.ts(3,36): error TS2307: Cannot find module './forgot-password-form' or its corresponding type declarations.
+src/components/forms/auth/index.ts(4,35): error TS2307: Cannot find module './reset-password-form' or its corresponding type declarations.
+src/components/lab/BiologyLab.tsx(5,31): error TS2307: Cannot find module '../../services/lab/BiologyEngine' or its corresponding type declarations.
+src/components/lab/PhysicsLab.tsx(405,7): error TS2322: Type 'ConnectDragSource' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+  Type 'ConnectDragSource' is not assignable to type '(instance: HTMLDivElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'ReactElement<any, string | JSXElementConstructor<any>> | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/components/lab/VirtualLab.tsx(297,7): error TS2322: Type 'ConnectDragSource' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+  Type 'ConnectDragSource' is not assignable to type '(instance: HTMLDivElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'ReactElement<any, string | JSXElementConstructor<any>> | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/components/lab/VirtualLab.tsx(329,7): error TS2322: Type 'ConnectDragSource' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+  Type 'ConnectDragSource' is not assignable to type '(instance: HTMLDivElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'ReactElement<any, string | JSXElementConstructor<any>> | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/components/layouts/auth/index.ts(1,28): error TS2306: File 'D:/StudyHub/studyhub/src/components/layouts/auth/auth-layout.tsx' is not a module.
+src/components/layouts/auth/index.ts(2,28): error TS2307: Cannot find module './auth-header' or its corresponding type declarations.
+src/components/layouts/auth/index.ts(3,28): error TS2307: Cannot find module './auth-footer' or its corresponding type declarations.
+src/components/layouts/dashboard/header.tsx(100,34): error TS2304: Cannot find name 'signOut'.
+src/components/layouts/dashboard/index.ts(1,33): error TS2307: Cannot find module './dashboard-layout' or its corresponding type declarations.
+src/components/layouts/dashboard/index.ts(2,33): error TS2307: Cannot find module './dashboard-header' or its corresponding type declarations.
+src/components/layouts/dashboard/index.ts(3,34): error TS2307: Cannot find module './dashboard-sidebar' or its corresponding type declarations.
+src/components/layouts/dashboard/index.ts(4,33): error TS2307: Cannot find module './dashboard-footer' or its corresponding type declarations.
+src/components/layouts/dashboard/student-header.tsx(30,31): error TS2322: Type '"icon"' is not assignable to type '"sm" | "md" | "lg" | "xs" | "xl" | null | undefined'.
+src/components/layouts/dashboard/student-header.tsx(35,30): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; }'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & { children: ReactNode; }'.
+src/components/layouts/dashboard/student-header.tsx(36,37): error TS2322: Type '"icon"' is not assignable to type '"sm" | "md" | "lg" | "xs" | "xl" | null | undefined'.
+src/components/layouts/dashboard/student-header.tsx(43,30): error TS2322: Type '{ children: Element[]; align: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+  Property 'align' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+src/components/layouts/dashboard/student-header.tsx(44,29): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+src/components/layouts/dashboard/student-header.tsx(45,29): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & AnchorHTMLAttributes<HTMLAnchorElement> & RefAttributes<HTMLAnchorElement>'.
+src/components/layouts/public/index.ts(1,30): error TS2306: File 'D:/StudyHub/studyhub/src/components/layouts/public/public-layout.tsx' is not a module.
+src/components/layouts/public/index.ts(2,30): error TS2307: Cannot find module './public-header' or its corresponding type declarations.
+src/components/layouts/public/index.ts(3,30): error TS2307: Cannot find module './public-footer' or its corresponding type declarations.
+src/lib/ai/ai-tutor.ts(93,33): error TS2339: Property 'description' does not exist on type '{ module: { course: { id: string; createdAt: Date; updatedAt: Date; grade: string | null; examBoard: string | null; studentsCount: number; rating: number; status: ContentStatus; ... 11 more ...; instructorId: string; }; } & { ...; }; } & { ...; }'.
+src/lib/ai/index.ts(1,30): error TS2307: Cannot find module './quiz-generator' or its corresponding type declarations.
+src/lib/ai/index.ts(2,37): error TS2307: Cannot find module './explanation-generator' or its corresponding type declarations.
+src/lib/ai/index.ts(3,35): error TS2307: Cannot find module './study-plan-generator' or its corresponding type declarations.
+src/lib/ai/index.ts(4,44): error TS2307: Cannot find module './assignment-feedback' or its corresponding type declarations.
+src/lib/analytics/admin-analytics.ts(45,29): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(46,33): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(63,39): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(84,32): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(96,33): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(117,35): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/lib/analytics/admin-analytics.ts(117,40): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/lib/analytics/admin-analytics.ts(126,31): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(135,34): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(143,32): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(166,42): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(173,38): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(189,36): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(193,36): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(202,27): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(208,38): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/lib/analytics/admin-analytics.ts(209,39): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/lib/analytics/admin-analytics.ts(215,12): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(219,12): error TS2304: Cannot find name 'prisma'.
+src/lib/analytics/admin-analytics.ts(223,27): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(229,25): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(244,28): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/analytics/admin-analytics.ts(255,26): error TS2552: Cannot find name 'prisma'. Did you mean 'Prism'?
+src/lib/auth/auth-options.ts(151,22): error TS2339: Property 'phone' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-options.ts(152,22): error TS2339: Property 'locale' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-options.ts(153,22): error TS2339: Property 'institutionId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-options.ts(154,22): error TS2339: Property 'studentId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-options.ts(155,22): error TS2339: Property 'instructorId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-options.ts(156,22): error TS2339: Property 'emailVerified' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-options.ts(157,22): error TS2339: Property 'avatar' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth-service.ts(77,9): error TS2353: Object literal may only specify known properties, and 'emailVerificationToken' does not exist in type '(Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)'.
+src/lib/auth/auth-service.ts(201,16): error TS2353: Object literal may only specify known properties, and 'emailVerificationToken' does not exist in type 'UserWhereInput'.
+src/lib/auth/auth-service.ts(212,9): error TS2353: Object literal may only specify known properties, and 'emailVerificationToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+src/lib/auth/auth-service.ts(236,9): error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+src/lib/auth/auth-service.ts(260,9): error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type 'UserWhereInput'.
+src/lib/auth/auth-service.ts(286,9): error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+src/lib/auth/auth.ts(5,24): error TS2307: Cannot find module '@/lib/prisma' or its corresponding type declarations.
+src/lib/auth/auth.ts(58,36): error TS2339: Property 'institutionId' does not exist on type 'User | AdapterUser'.
+  Property 'institutionId' does not exist on type 'User'.
+src/lib/auth/auth.ts(59,29): error TS2339: Property 'locale' does not exist on type 'User | AdapterUser'.
+  Property 'locale' does not exist on type 'User'.
+src/lib/auth/auth.ts(65,7): error TS2322: Type 'unknown' is not assignable to type 'string'.
+src/lib/auth/auth.ts(66,20): error TS2339: Property 'institutionId' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/auth/auth.ts(67,20): error TS2339: Property 'locale' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/lib/billing/subscription-service.ts(79,19): error TS2304: Cannot find name 'PaymentError'.
+src/lib/billing/subscription-service.ts(100,9): error TS2353: Object literal may only specify known properties, and 'discountAmount' does not exist in type 'Without<SubscriptionCreateInput, SubscriptionUncheckedCreateInput> & SubscriptionUncheckedCreateInput'.
+src/lib/billing/subscription-service.ts(170,29): error TS2339: Property 'paymentMethod' does not exist on type '{ user: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/billing/subscription-service.ts(188,9): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type '(Without<SubscriptionUpdateInput, SubscriptionUncheckedUpdateInput> & SubscriptionUncheckedUpdateInput) | (Without<...> & SubscriptionUpdateInput)'.
+src/lib/billing/subscription-service.ts(189,27): error TS2339: Property 'metadata' does not exist on type '{ user: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/billing/subscription-service.ts(217,9): error TS2353: Object literal may only specify known properties, and 'cancelledAt' does not exist in type '(Without<SubscriptionUpdateInput, SubscriptionUncheckedUpdateInput> & SubscriptionUncheckedUpdateInput) | (Without<...> & SubscriptionUpdateInput)'.
+src/lib/billing/subscription-service.ts(219,28): error TS2339: Property 'metadata' does not exist on type '{ user: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/billing/subscription-service.ts(263,30): error TS2339: Property 'paymentMethod' does not exist on type '{ user: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/billing/subscription-service.ts(288,39): error TS2339: Property 'paymentMethod' does not exist on type '{ user: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; updatedAt: Date; ... 9 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/billing/subscription-service.ts(382,34): error TS2339: Property 'isActive' does not exist on type '{ id: string; createdAt: Date; code: string; discount: number; type: string; maxUses: number | null; usedCount: number; validFrom: Date; validUntil: Date; applicableTiers: SubscriptionTier[]; }'.
+src/lib/certificates/certificate-service.ts(27,7): error TS2322: Type '{ verificationId: string; issuedAt: Date; metadata: { issuer: string; price: number; generatedAt: string; }; studentId: string; enrollmentId?: string; examAttemptId?: string; type: CertificateType; title: string; description?: string; }' is not assignable to type '(Without<CertificateCreateInput, CertificateUncheckedCreateInput> & CertificateUncheckedCreateInput) | (Without<...> & CertificateCreateInput)'.
+  Type '{ verificationId: string; issuedAt: Date; metadata: { issuer: string; price: number; generatedAt: string; }; studentId: string; enrollmentId?: string; examAttemptId?: string; type: CertificateType; title: string; description?: string; }' is not assignable to type 'Without<CertificateCreateInput, CertificateUncheckedCreateInput> & CertificateUncheckedCreateInput'.
+    Type '{ verificationId: string; issuedAt: Date; metadata: { issuer: string; price: number; generatedAt: string; }; studentId: string; enrollmentId?: string; examAttemptId?: string; type: CertificateType; title: string; description?: string; }' is not assignable to type 'CertificateUncheckedCreateInput'.
+      Types of property 'examAttemptId' are incompatible.
+        Type 'string | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+src/lib/certificates/certificate-service.ts(64,9): error TS2353: Object literal may only specify known properties, and 'enrollment' does not exist in type 'CertificateInclude<DefaultArgs>'.
+src/lib/certificates/certificate-service.ts(111,28): error TS2339: Property 'title' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'.
+src/lib/certificates/certificate-service.ts(112,34): error TS2339: Property 'description' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'.
+src/lib/certificates/certificate-service.ts(115,34): error TS2551: Property 'student' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'. Did you mean 'studentId'?
+src/lib/certificates/certificate-service.ts(116,34): error TS2339: Property 'enrollment' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'.
+src/lib/certificates/certificate-service.ts(117,33): error TS2551: Property 'examAttempt' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'. Did you mean 'examAttemptId'?
+src/lib/certificates/certificate-service.ts(118,37): error TS2339: Property 'enrollment' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'.
+src/lib/certificates/certificate-service.ts(132,9): error TS2353: Object literal may only specify known properties, and 'enrollment' does not exist in type 'CertificateInclude<DefaultArgs>'.
+src/lib/certificates/verification-service.ts(16,9): error TS2353: Object literal may only specify known properties, and 'title' does not exist in type 'CertificateSelect<DefaultArgs>'.
+src/lib/community/forum-service.ts(34,9): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'Without<ForumThreadCreateInput, ForumThreadUncheckedCreateInput> & ForumThreadUncheckedCreateInput'.
+src/lib/community/forum-service.ts(107,13): error TS2353: Object literal may only specify known properties, and '_count' does not exist in type 'ForumPostInclude<DefaultArgs>'.
+src/lib/community/forum-service.ts(119,15): error TS2353: Object literal may only specify known properties, and 'viewsCount' does not exist in type '(Without<ForumThreadUpdateInput, ForumThreadUncheckedUpdateInput> & ForumThreadUncheckedUpdateInput) | (Without<...> & ForumThreadUpdateInput)'.
+src/lib/community/forum-service.ts(147,9): error TS2353: Object literal may only specify known properties, and 'parentId' does not exist in type 'Without<ForumPostCreateInput, ForumPostUncheckedCreateInput> & ForumPostUncheckedCreateInput'.
+src/lib/community/forum-service.ts(159,15): error TS2353: Object literal may only specify known properties, and 'postsCount' does not exist in type '(Without<ForumThreadUpdateInput, ForumThreadUncheckedUpdateInput> & ForumThreadUncheckedUpdateInput) | (Without<...> & ForumThreadUpdateInput)'.
+src/lib/community/index.ts(2,37): error TS2307: Cannot find module './notification-service' or its corresponding type declarations.
+src/lib/community/index.ts(3,35): error TS2307: Cannot find module './moderation-service' or its corresponding type declarations.
+src/lib/content/content-management-service.ts(28,13): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type '(Without<ContentItemCreateInput, ContentItemUncheckedCreateInput> & ContentItemUncheckedCreateInput) | (Without<...> & ContentItemCreateInput)'.
+src/lib/content/content-management-service.ts(58,9): error TS2353: Object literal may only specify known properties, and 'reviewedBy' does not exist in type '(Without<ContentItemUpdateInput, ContentItemUncheckedUpdateInput> & ContentItemUncheckedUpdateInput) | (Without<...> & ContentItemUpdateInput)'.
+src/lib/content/content-management-service.ts(89,9): error TS2353: Object literal may only specify known properties, and 'originalId' does not exist in type '(Without<ContentItemCreateInput, ContentItemUncheckedCreateInput> & ContentItemUncheckedCreateInput) | (Without<...> & ContentItemCreateInput)'.
+src/lib/content/content-management-service.ts(160,13): error TS2353: Object literal may only specify known properties, and 'originalId' does not exist in type 'ContentItemWhereInput'.
+src/lib/corporate/index.ts(1,34): error TS2307: Cannot find module './corporate-service' or its corresponding type declarations.
+src/lib/corporate/index.ts(2,40): error TS2307: Cannot find module './training-package-builder' or its corresponding type declarations.
+src/lib/corporate/recruitment-service.ts(68,15): error TS2353: Object literal may only specify known properties, and 'logo' does not exist in type 'CorporateClientSelect<DefaultArgs>'.
+src/lib/corporate/recruitment-service.ts(98,9): error TS2353: Object literal may only specify known properties, and 'postingId_studentId' does not exist in type 'JobApplicationWhereUniqueInput'.
+src/lib/corporate/recruitment-service.ts(127,15): error TS2561: Object literal may only specify known properties, but 'applicationsCount' does not exist in type '(Without<RecruitmentPostingUpdateInput, RecruitmentPostingUncheckedUpdateInput> & RecruitmentPostingUncheckedUpdateInput) | (Without<...> & RecruitmentPostingUpdateInput)'. Did you mean to write 'applications'?
+src/lib/corporate/recruitment-service.ts(156,9): error TS2353: Object literal may only specify known properties, and 'notes' does not exist in type '(Without<JobApplicationUpdateInput, JobApplicationUncheckedUpdateInput> & JobApplicationUncheckedUpdateInput) | (Without<...> & JobApplicationUpdateInput)'.
+src/lib/corporate/training-service.ts(49,9): error TS2353: Object literal may only specify known properties, and 'title' does not exist in type 'Without<CorporateContractCreateInput, CorporateContractUncheckedCreateInput> & CorporateContractUncheckedCreateInput'.
+src/lib/corporate/training-service.ts(79,9): error TS2353: Object literal may only specify known properties, and 'signedAt' does not exist in type '(Without<CorporateContractUpdateInput, CorporateContractUncheckedUpdateInput> & CorporateContractUncheckedUpdateInput) | (Without<...> & CorporateContractUpdateInput)'.
+src/lib/courses/content-renderer.tsx(8,42): error TS2307: Cannot find module '@/components/features/content/video-player' or its corresponding type declarations.
+src/lib/courses/content-renderer.tsx(12,42): error TS2307: Cannot find module '@/components/features/content/audio-player' or its corresponding type declarations.
+src/lib/courses/content-renderer.tsx(16,40): error TS2307: Cannot find module '@/components/features/content/pdf-viewer' or its corresponding type declarations.
+src/lib/courses/content-renderer.tsx(20,43): error TS2307: Cannot find module '@/components/features/content/slides-viewer' or its corresponding type declarations.
+src/lib/courses/content-renderer.tsx(24,42): error TS2307: Cannot find module '@/components/features/content/embed-viewer' or its corresponding type declarations.
+src/lib/courses/content-renderer.tsx(39,11): error TS2322: Type '{ url: string | undefined; provider: VideoProvider; embedCode: string | undefined; thumbnail: string | undefined; duration: number | undefined; captions: { language: string; url: string; }[] | undefined; onComplete: (() => void) | undefined; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'url' does not exist on type 'IntrinsicAttributes'.
+src/lib/courses/content-renderer.tsx(52,11): error TS2322: Type '{ url: string | undefined; provider: AudioProvider; embedCode: string | undefined; transcript: string | undefined; downloadUrl: string | undefined; onComplete: (() => void) | undefined; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'url' does not exist on type 'IntrinsicAttributes'.
+src/lib/courses/content-renderer.tsx(80,11): error TS2322: Type '{ url: string; downloadUrl: string | undefined; embedUrl: string | undefined; pageCount: number | undefined; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'url' does not exist on type 'IntrinsicAttributes'.
+src/lib/courses/content-renderer.tsx(90,11): error TS2322: Type '{ provider: EmbedProvider | undefined; url: string | undefined; embedCode: string | undefined; downloadUrl: string | undefined; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'provider' does not exist on type 'IntrinsicAttributes'.
+src/lib/courses/content-renderer.tsx(125,11): error TS2322: Type '{ embedCode: string; provider: EmbedProvider; isResponsive: boolean; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'embedCode' does not exist on type 'IntrinsicAttributes'.
+src/lib/courses/content-renderer.tsx(210,18): error TS2322: Type '{ url: any; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'url' does not exist on type 'IntrinsicAttributes'.
+src/lib/courses/course-service.ts(61,9): error TS2322: Type '{ create: { title: string; description: string | undefined; contentType: ContentType; contentUrl: string | undefined; duration: number | undefined; isPreview: boolean; isRequired: true; order: number; }[]; }' is not assignable to type 'CourseModuleUncheckedCreateNestedManyWithoutCourseInput | CourseModuleCreateNestedManyWithoutCourseInput | undefined'.
+  Types of property 'create' are incompatible.
+    Type '{ title: string; description: string | undefined; contentType: ContentType; contentUrl: string | undefined; duration: number | undefined; isPreview: boolean; isRequired: true; order: number; }[]' is not assignable to type '(Without<CourseModuleCreateWithoutCourseInput, CourseModuleUncheckedCreateWithoutCourseInput> & CourseModuleUncheckedCreateWithoutCourseInput) | (Without<...> & CourseModuleCreateWithoutCourseInput) | CourseModuleCreateWithoutCourseInput[] | CourseModuleUncheckedCreateWithoutCourseInput[] | undefined'.
+      Type '{ title: string; description: string | undefined; contentType: ContentType; contentUrl: string | undefined; duration: number | undefined; isPreview: boolean; isRequired: true; order: number; }[]' is not assignable to type 'CourseModuleCreateWithoutCourseInput[]'.
+        Type '{ title: string; description: string | undefined; contentType: ContentType; contentUrl: string | undefined; duration: number | undefined; isPreview: boolean; isRequired: true; order: number; }' is not assignable to type 'CourseModuleCreateWithoutCourseInput'.
+          Types of property 'contentType' are incompatible.
+            Type 'ContentType' is not assignable to type 'ContentType | undefined'.
+              Type '"NOTES"' is not assignable to type 'ContentType | undefined'.
+src/lib/courses/course-service.ts(169,9): error TS2322: Type 'ContentType' is not assignable to type 'ContentType | undefined'.
+  Type '"NOTES"' is not assignable to type 'ContentType | undefined'.
+src/lib/courses/enrollment-service.ts(44,11): error TS2353: Object literal may only specify known properties, and 'certificate' does not exist in type 'EnrollmentInclude<DefaultArgs>'.
+src/lib/courses/enrollment-service.ts(84,9): error TS2353: Object literal may only specify known properties, and 'certificate' does not exist in type 'EnrollmentInclude<DefaultArgs>'.
+src/lib/courses/enrollment-service.ts(100,7): error TS2322: Type '"status"[]' is not assignable to type 'EnrollmentScalarFieldEnum | EnrollmentScalarFieldEnum[]'.
+  Type '"status"[]' is not assignable to type 'EnrollmentScalarFieldEnum[]'.
+    Type '"status"' is not assignable to type 'EnrollmentScalarFieldEnum'.
+src/lib/courses/enrollment-service.ts(220,11): error TS2322: Type '{ examBoard: { in: (string | null)[]; }; }' is not assignable to type 'CourseWhereInput'.
+  Types of property 'examBoard' are incompatible.
+    Type '{ in: (string | null)[]; }' is not assignable to type 'string | StringNullableFilter<"Course"> | null | undefined'.
+      Types of property 'in' are incompatible.
+        Type '(string | null)[]' is not assignable to type 'string[] | FieldRef<"Course", "String[]"> | null | undefined'.
+          Type '(string | null)[]' is not assignable to type 'string[]'.
+            Type 'string | null' is not assignable to type 'string'.
+              Type 'null' is not assignable to type 'string'.
+src/lib/courses/index.ts(2,31): error TS2307: Cannot find module './course-builder' or its corresponding type declarations.
+src/lib/courses/multimedia-service.ts(79,57): error TS2304: Cannot find name 'VideoContent'.
+src/lib/courses/multimedia-service.ts(131,57): error TS2304: Cannot find name 'AudioContent'.
+src/lib/courses/multimedia-service.ts(180,56): error TS2304: Cannot find name 'TextContent'.
+src/lib/courses/multimedia-service.ts(225,55): error TS2304: Cannot find name 'PDFContent'.
+src/lib/courses/multimedia-service.ts(266,58): error TS2304: Cannot find name 'SlidesContent'.
+src/lib/courses/multimedia-service.ts(312,56): error TS2304: Cannot find name 'LinkContent'.
+src/lib/courses/multimedia-service.ts(338,57): error TS2304: Cannot find name 'EmbedContent'.
+src/lib/courses/multimedia-service.ts(371,56): error TS2304: Cannot find name 'QuizContent'.
+src/lib/courses/multimedia-service.ts(410,62): error TS2304: Cannot find name 'AssignmentContent'.
+src/lib/courses/multimedia-service.ts(431,61): error TS2304: Cannot find name 'PastPaperContent'.
+src/lib/email/email-cost-optimizer.ts(40,7): error TS2304: Cannot find name 'prisma'.
+src/lib/email/email-cost-optimizer.ts(47,7): error TS2304: Cannot find name 'prisma'.
+src/lib/email/email-service.ts(5,3): error TS2305: Module '"@/emails"' has no exported member 'PaymentConfirmationEmail'.
+src/lib/email/email-service.ts(6,3): error TS2305: Module '"@/emails"' has no exported member 'WelcomeEmail'.
+src/lib/email/email-service.ts(7,3): error TS2305: Module '"@/emails"' has no exported member 'OTPVerificationEmail'.
+src/lib/email/email-service.ts(8,3): error TS2305: Module '"@/emails"' has no exported member 'ExamResultEmail'.
+src/lib/email/email-service.ts(9,3): error TS2305: Module '"@/emails"' has no exported member 'RenewalReminderEmail'.
+src/lib/email/email-service.ts(10,3): error TS2305: Module '"@/emails"' has no exported member 'PasswordResetEmail'.
+src/lib/email/email-service.ts(11,3): error TS2305: Module '"@/emails"' has no exported member 'AccountVerificationEmail'.
+src/lib/email/email-service.ts(12,3): error TS2305: Module '"@/emails"' has no exported member 'GenericNotificationEmail'.
+src/lib/email/email-service.ts(77,9): error TS2349: This expression is not callable.
+  Not all constituents of type 'ComponentType<any>' are callable.
+    Type 'ComponentClass<any, any>' has no call signatures.
+src/lib/events/event-service.ts(52,9): error TS2353: Object literal may only specify known properties, and 'eventId_userId' does not exist in type 'EventRegistrationWhereUniqueInput'.
+src/lib/events/event-service.ts(85,9): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'Without<EventRegistrationCreateInput, EventRegistrationUncheckedCreateInput> & EventRegistrationUncheckedCreateInput'.
+src/lib/events/event-service.ts(138,9): error TS2561: Object literal may only specify known properties, but 'attendedAt' does not exist in type '(Without<EventRegistrationUpdateInput, EventRegistrationUncheckedUpdateInput> & EventRegistrationUncheckedUpdateInput) | (Without<...> & EventRegistrationUpdateInput)'. Did you mean to write 'attended'?
+src/lib/exams/exam-engine.ts(78,9): error TS2353: Object literal may only specify known properties, and 'attemptNumber' does not exist in type 'Without<ExamAttemptCreateInput, ExamAttemptUncheckedCreateInput> & ExamAttemptUncheckedCreateInput'.
+src/lib/exams/exam-engine.ts(130,9): error TS2353: Object literal may only specify known properties, and 'timeSpent' does not exist in type '(Without<ExamAttemptUpdateInput, ExamAttemptUncheckedUpdateInput> & ExamAttemptUncheckedUpdateInput) | (Without<...> & ExamAttemptUpdateInput)'.
+src/lib/exams/exam-engine.ts(289,9): error TS2322: Type 'true | 60' is not assignable to type 'boolean | BoolFieldUpdateOperationsInput | undefined'.
+  Type '60' is not assignable to type 'boolean | BoolFieldUpdateOperationsInput | undefined'.
+src/lib/exams/exam-engine.ts(304,28): error TS2339: Property 'certificateId' does not exist on type '{ id: string; startedAt: Date; completedAt: Date | null; studentId: string; quizId: string; score: number; passed: boolean; answers: JsonValue; }'.
+src/lib/exams/exam-engine.ts(325,9): error TS2353: Object literal may only specify known properties, and 'title' does not exist in type 'Without<CertificateCreateInput, CertificateUncheckedCreateInput> & CertificateUncheckedCreateInput'.
+src/lib/exams/exam-engine.ts(339,15): error TS2561: Object literal may only specify known properties, but 'certificateId' does not exist in type '(Without<ExamAttemptUpdateInput, ExamAttemptUncheckedUpdateInput> & ExamAttemptUncheckedUpdateInput) | (Without<...> & ExamAttemptUpdateInput)'. Did you mean to write 'certificate'?
+src/lib/exams/exam-engine.ts(412,13): error TS2353: Object literal may only specify known properties, and 'timeSpent' does not exist in type 'ExamAttemptSelect<DefaultArgs>'.
+src/lib/exams/exam-engine.ts(420,27): error TS2339: Property 'examAttempts' does not exist on type '{ id: string; title: string; description: string | null; moduleId: string; timeLimit: number | null; passingScore: number; maxAttempts: number; shuffleQuestions: boolean; questionsCount: number; totalPoints: number; }'.
+src/lib/exams/exam-engine.ts(422,26): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/lib/exams/exam-engine.ts(422,31): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/lib/exams/exam-engine.ts(425,26): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/lib/exams/exam-engine.ts(428,26): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/lib/exams/exam-engine.ts(428,31): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/lib/exams/exam-engine.ts(432,27): error TS2339: Property '_count' does not exist on type '{ id: string; title: string; description: string | null; moduleId: string; timeLimit: number | null; passingScore: number; maxAttempts: number; shuffleQuestions: boolean; questionsCount: number; totalPoints: number; }'.
+src/lib/exams/index.ts(1,29): error TS2307: Cannot find module './exam-service' or its corresponding type declarations.
+src/lib/exams/index.ts(3,38): error TS2307: Cannot find module './certificate-generator' or its corresponding type declarations.
+src/lib/exams/index.ts(4,37): error TS2307: Cannot find module './certificate-verifier' or its corresponding type declarations.
+src/lib/growth/promotions-service.ts(31,9): error TS2353: Object literal may only specify known properties, and 'createdBy' does not exist in type '(Without<PromoCodeCreateInput, PromoCodeUncheckedCreateInput> & PromoCodeUncheckedCreateInput) | (Without<...> & PromoCodeCreateInput)'.
+src/lib/growth/promotions-service.ts(49,20): error TS2339: Property 'isActive' does not exist on type '{ id: string; createdAt: Date; code: string; discount: number; type: string; maxUses: number | null; usedCount: number; validFrom: Date; validUntil: Date; applicableTiers: SubscriptionTier[]; }'.
+src/lib/growth/promotions-service.ts(62,19): error TS2339: Property 'minAmount' does not exist on type '{ id: string; createdAt: Date; code: string; discount: number; type: string; maxUses: number | null; usedCount: number; validFrom: Date; validUntil: Date; applicableTiers: SubscriptionTier[]; }'.
+src/lib/growth/promotions-service.ts(62,51): error TS2339: Property 'minAmount' does not exist on type '{ id: string; createdAt: Date; code: string; discount: number; type: string; maxUses: number | null; usedCount: number; validFrom: Date; validUntil: Date; applicableTiers: SubscriptionTier[]; }'.
+src/lib/growth/promotions-service.ts(64,50): error TS2339: Property 'minAmount' does not exist on type '{ id: string; createdAt: Date; code: string; discount: number; type: string; maxUses: number | null; usedCount: number; validFrom: Date; validUntil: Date; applicableTiers: SubscriptionTier[]; }'.
+src/lib/growth/promotions-service.ts(70,45): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SubscriptionTier'.
+src/lib/growth/promotions-service.ts(108,9): error TS2353: Object literal may only specify known properties, and 'refereeEmail' does not exist in type 'Without<ReferralCreateInput, ReferralUncheckedCreateInput> & ReferralUncheckedCreateInput'.
+src/lib/growth/promotions-service.ts(137,9): error TS2353: Object literal may only specify known properties, and 'convertedAt' does not exist in type '(Without<ReferralUpdateInput, ReferralUncheckedUpdateInput> & ReferralUncheckedUpdateInput) | (Without<...> & ReferralUpdateInput)'.
+src/lib/growth/promotions-service.ts(162,9): error TS2353: Object literal may only specify known properties, and 'createdBy' does not exist in type '(Without<PromoCodeCreateInput, PromoCodeUncheckedCreateInput> & PromoCodeUncheckedCreateInput) | (Without<...> & PromoCodeCreateInput)'.
+src/lib/growth/promotions-service.ts(192,42): error TS2339: Property 'isActive' does not exist on type '{ id: string; createdAt: Date; code: string; discount: number; type: string; maxUses: number | null; usedCount: number; validFrom: Date; validUntil: Date; applicableTiers: SubscriptionTier[]; }'.
+src/lib/institution/institution-service.ts(134,35): error TS2304: Cannot find name 'bcrypt'.
+src/lib/institution/portal-service.ts(4,31): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(45,33): error TS2304: Cannot find name 'SubscriptionTier'.
+src/lib/institution/portal-service.ts(65,12): error TS7053: Element implicitly has an 'any' type because expression of type 'SubscriptionTier' can't be used to index type '{ INSTITUTION_BRONZE: string[]; INSTITUTION_SILVER: string[]; INSTITUTION_GOLD: string[]; }'.
+src/lib/institution/portal-service.ts(73,31): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(95,26): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(100,24): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(105,35): error TS2304: Cannot find name 'bcrypt'.
+src/lib/institution/portal-service.ts(111,31): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(121,17): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(132,65): error TS18046: 'error' is of type 'unknown'.
+src/lib/institution/portal-service.ts(147,31): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(158,11): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(169,28): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(182,25): error TS7006: Parameter 'student' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(185,50): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(185,55): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(188,52): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(189,57): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(198,27): error TS2304: Cannot find name 'prisma'.
+src/lib/institution/portal-service.ts(213,24): error TS7006: Parameter 'course' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(217,44): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(219,38): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/lib/institution/portal-service.ts(228,11): error TS2304: Cannot find name 'SubscriptionTier'.
+src/lib/marketplace/course-service.ts(13,14): error TS2304: Cannot find name 'Course'.
+src/lib/marketplace/course-service.ts(15,30): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(20,59): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/lib/marketplace/course-service.ts(24,26): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(48,76): error TS2304: Cannot find name 'PaymentMethod'.
+src/lib/marketplace/course-service.ts(49,26): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(57,28): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(64,27): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(69,31): error TS2304: Cannot find name 'paymentService'.
+src/lib/marketplace/course-service.ts(86,11): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(96,11): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(104,11): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(121,32): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(139,13): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(151,26): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(161,11): error TS2304: Cannot find name 'prisma'.
+src/lib/marketplace/course-service.ts(171,11): error TS2304: Cannot find name 'notificationService'.
+src/lib/marketplace/index.ts(3,40): error TS2307: Cannot find module './revenue-share-calculator' or its corresponding type declarations.
+src/lib/marketplace/marketplace-service.ts(102,17): error TS2339: Property 'stock' does not exist on type '{ seller: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; ... 10 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/marketplace/marketplace-service.ts(117,9): error TS2353: Object literal may only specify known properties, and 'stock' does not exist in type '(Without<MarketplaceListingUpdateInput, MarketplaceListingUncheckedUpdateInput> & MarketplaceListingUncheckedUpdateInput) | (Without<...> & MarketplaceListingUpdateInput)'.
+src/lib/marketplace/marketplace-service.ts(119,21): error TS2339: Property 'stock' does not exist on type '{ seller: { id: string; email: string; phone: string | null; passwordHash: string; fullName: string; role: UserRole; avatar: string | null; locale: string; createdAt: Date; ... 10 more ...; unsubscribedAt: Date | null; }; } & { ...; }'.
+src/lib/marketplace/sponsorship-service.ts(23,9): error TS2353: Object literal may only specify known properties, and 'placement' does not exist in type 'SponsorshipSlotWhereInput'.
+src/lib/notifications/notification-service.ts(101,9): error TS2353: Object literal may only specify known properties, and 'priority' does not exist in type 'Without<NotificationCreateInput, NotificationUncheckedCreateInput> & NotificationUncheckedCreateInput'.
+src/lib/notifications/notification-service.ts(299,26): error TS2353: Object literal may only specify known properties, and 'readAt' does not exist in type 'NotificationWhereInput'.
+src/lib/notifications/notification-service.ts(329,15): error TS2353: Object literal may only specify known properties, and 'readAt' does not exist in type '(Without<NotificationUpdateInput, NotificationUncheckedUpdateInput> & NotificationUncheckedUpdateInput) | (Without<...> & NotificationUpdateInput)'.
+src/lib/notifications/notification-service.ts(338,24): error TS2353: Object literal may only specify known properties, and 'readAt' does not exist in type 'NotificationWhereInput'.
+src/lib/notifications/notification-service.ts(339,15): error TS2353: Object literal may only specify known properties, and 'readAt' does not exist in type '(Without<NotificationUpdateManyMutationInput, NotificationUncheckedUpdateManyInput> & NotificationUncheckedUpdateManyInput) | (Without<...> & NotificationUpdateManyMutationInput)'.
+src/lib/notifications/notification-service.ts(378,13): error TS2352: Conversion of type 'string | number | boolean | JsonObject | JsonArray | null | undefined' to type 'NotificationPreferences' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'JsonValue[]' is missing the following properties from type 'NotificationPreferences': emailEnabled, smsEnabled, pushEnabled, types
+src/lib/notifications/notification-service.ts(447,9): error TS2353: Object literal may only specify known properties, and 'priority' does not exist in type 'Without<NotificationCreateInput, NotificationUncheckedCreateInput> & NotificationUncheckedCreateInput'.
+src/lib/notifications/notification-service.ts(540,49): error TS2345: Argument of type '{ userId: any; title: any; body: any; data: any; }' is not assignable to parameter of type 'RealtimePushPayload & { userId: string; }'.
+  Property 'timestamp' is missing in type '{ userId: any; title: any; body: any; data: any; }' but required in type 'RealtimePushPayload'.
+src/lib/notifications/push-service.ts(37,27): error TS2339: Property 'icon' does not exist on type 'RealtimePushPayload & { userId: string; }'.
+src/lib/notifications/push-service.ts(38,28): error TS2339: Property 'badge' does not exist on type 'RealtimePushPayload & { userId: string; }'.
+src/lib/notifications/push-service.ts(39,26): error TS2339: Property 'tag' does not exist on type 'RealtimePushPayload & { userId: string; }'.
+src/lib/notifications/push-service.ts(40,41): error TS2339: Property 'requireInteraction' does not exist on type 'RealtimePushPayload & { userId: string; }'.
+src/lib/notifications/push-service.ts(41,30): error TS2339: Property 'actions' does not exist on type 'RealtimePushPayload & { userId: string; }'.
+src/lib/notifications/push-service.ts(75,9): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+src/lib/notifications/push-service.ts(145,11): error TS18046: 'error' is of type 'unknown'.
+src/lib/parent/parent-service.ts(60,9): error TS2353: Object literal may only specify known properties, and 'relationship' does not exist in type 'Without<ParentLinkCreateInput, ParentLinkUncheckedCreateInput> & ParentLinkUncheckedCreateInput'.
+src/lib/parent/parent-service.ts(97,26): error TS2339: Property 'relationship' does not exist on type '{ student: { user: { email: string; fullName: string; }; institution: { name: string; slug: string; } | null; } & { id: string; grade: string | null; examBoard: string | null; subjects: string[]; institutionId: string | null; userId: string; }; } & { ...; }'.
+src/lib/parent/parent-service.ts(160,18): error TS2339: Property 'title' does not exist on type '{ id: string; metadata: JsonValue; studentId: string; type: CertificateType; verificationId: string; issuedAt: Date; expiresAt: Date | null; examAttemptId: string; }'.
+src/lib/payments/payment-service.ts(15,37): error TS2307: Cannot find module './adapters/bank-transfer.adapter' or its corresponding type declarations.
+src/lib/payments/payment-service.ts(78,9): error TS2353: Object literal may only specify known properties, and 'description' does not exist in type 'Without<TransactionCreateInput, TransactionUncheckedCreateInput> & TransactionUncheckedCreateInput'.
+src/lib/payments/payment-service.ts(105,13): error TS2353: Object literal may only specify known properties, and 'providerRef' does not exist in type '(Without<TransactionUpdateInput, TransactionUncheckedUpdateInput> & TransactionUncheckedUpdateInput) | (Without<...> & TransactionUpdateInput)'.
+src/lib/payments/payment-service.ts(133,20): error TS18046: 'error' is of type 'unknown'.
+src/lib/payments/payment-service.ts(139,9): error TS18046: 'error' is of type 'unknown'.
+src/lib/payments/payment-service.ts(161,40): error TS2339: Property 'providerRef' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/lib/payments/payment-service.ts(187,9): error TS2353: Object literal may only specify known properties, and 'providerRef' does not exist in type '(Without<TransactionUpdateInput, TransactionUncheckedUpdateInput> & TransactionUncheckedUpdateInput) | (Without<...> & TransactionUpdateInput)'.
+src/lib/payments/payment-service.ts(201,31): error TS2339: Property 'description' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/lib/payments/payment-service.ts(234,9): error TS2353: Object literal may only specify known properties, and 'instructorPayout' does not exist in type '(Without<TransactionUpdateInput, TransactionUncheckedUpdateInput> & TransactionUncheckedUpdateInput) | (Without<...> & TransactionUpdateInput)'.
+src/lib/payments/payment-service.ts(241,9): error TS2353: Object literal may only specify known properties, and 'pendingEarnings' does not exist in type '(Without<InstructorUpdateInput, InstructorUncheckedUpdateInput> & InstructorUncheckedUpdateInput) | (Without<...> & InstructorUpdateInput)'.
+src/lib/payments/payment-service.ts(274,61): error TS2339: Property 'providerRef' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/lib/payments/payment-service.ts(281,11): error TS2353: Object literal may only specify known properties, and 'refundedAmount' does not exist in type '(Without<TransactionUpdateInput, TransactionUncheckedUpdateInput> & TransactionUncheckedUpdateInput) | (Without<...> & TransactionUpdateInput)'.
+src/lib/payments/payout-service.ts(45,9): error TS2353: Object literal may only specify known properties, and 'course' does not exist in type 'TransactionInclude<DefaultArgs>'.
+src/lib/payments/payout-service.ts(68,31): error TS2551: Property 'instructor' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'. Did you mean 'instructorId'?
+src/lib/payments/payout-service.ts(69,32): error TS2551: Property 'instructor' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'. Did you mean 'instructorId'?
+src/lib/payments/payout-service.ts(70,29): error TS2551: Property 'instructor' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'. Did you mean 'instructorId'?
+src/lib/payments/payout-service.ts(81,59): error TS2339: Property 'instructorPayout' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/lib/payments/payout-service.ts(86,25): error TS2339: Property 'course' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/lib/payments/payout-service.ts(88,31): error TS2339: Property 'instructorPayout' does not exist on type '{ id: string; createdAt: Date; userId: string; status: TransactionStatus; amount: number; paymentMethod: PaymentMethod; metadata: JsonValue; ... 6 more ...; subscriptionId: string | null; }'.
+src/lib/payments/payout-service.ts(113,15): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type 'Without<PayoutCreateInput, PayoutUncheckedCreateInput> & PayoutUncheckedCreateInput'.
+src/lib/payments/payout-service.ts(126,15): error TS2353: Object literal may only specify known properties, and 'pendingEarnings' does not exist in type '(Without<InstructorUpdateInput, InstructorUncheckedUpdateInput> & InstructorUncheckedUpdateInput) | (Without<...> & InstructorUpdateInput)'.
+src/lib/payments/payout-service.ts(178,26): error TS2339: Property 'bankDetails' does not exist on type '{ user: { email: string; phone: string | null; fullName: string; }; } & { id: string; bio: string | null; expertise: string[]; revenueShare: number; totalEarnings: number; coursesCount: number; studentsCount: number; rating: number; userId: string; }'.
+src/lib/payments/payout-service.ts(190,9): error TS2353: Object literal may only specify known properties, and 'paymentMethod' does not exist in type '(Without<PayoutUpdateInput, PayoutUncheckedUpdateInput> & PayoutUncheckedUpdateInput) | (Without<...> & PayoutUpdateInput)'.
+src/lib/payments/payout-service.ts(193,22): error TS2339: Property 'metadata' does not exist on type '{ instructor: { user: { email: string; phone: string | null; fullName: string; }; } & { id: string; bio: string | null; expertise: string[]; revenueShare: number; totalEarnings: number; coursesCount: number; studentsCount: number; rating: number; userId: string; }; } & { ...; }'.
+src/lib/payments/payout-service.ts(255,9): error TS2353: Object literal may only specify known properties, and 'processedAt' does not exist in type '(Without<PayoutUpdateInput, PayoutUncheckedUpdateInput> & PayoutUncheckedUpdateInput) | (Without<...> & PayoutUpdateInput)'.
+src/lib/payments/payout-service.ts(257,22): error TS2339: Property 'metadata' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/lib/payments/payout-service.ts(269,9): error TS2353: Object literal may only specify known properties, and 'pendingEarnings' does not exist in type '(Without<InstructorUpdateInput, InstructorUncheckedUpdateInput> & InstructorUncheckedUpdateInput) | (Without<...> & InstructorUpdateInput)'.
+src/lib/payments/payout-service.ts(295,9): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type '(Without<PayoutUpdateInput, PayoutUncheckedUpdateInput> & PayoutUncheckedUpdateInput) | (Without<...> & PayoutUpdateInput)'.
+src/lib/payments/payout-service.ts(296,22): error TS2339: Property 'metadata' does not exist on type '{ id: string; status: string; amount: number; instructorId: string; reference: string | null; paidAt: Date | null; period: string; }'.
+src/lib/payments/payout-service.ts(308,11): error TS2353: Object literal may only specify known properties, and 'pendingEarnings' does not exist in type '(Without<InstructorUpdateInput, InstructorUncheckedUpdateInput> & InstructorUncheckedUpdateInput) | (Without<...> & InstructorUpdateInput)'.
+src/lib/payments/webhook-handler.ts(13,38): error TS2345: Argument of type 'string' is not assignable to parameter of type 'PaymentMethod'.
+src/lib/security/audit-logger.ts(24,9): error TS2353: Object literal may only specify known properties, and 'userAgent' does not exist in type 'Without<AuditLogCreateInput, AuditLogUncheckedCreateInput> & AuditLogUncheckedCreateInput'.
+src/lib/security/encryption-service.ts(25,24): error TS2339: Property 'getAuthTag' does not exist on type 'Cipher'.
+src/lib/security/encryption-service.ts(44,14): error TS2339: Property 'setAuthTag' does not exist on type 'Decipher'.
+src/lib/security/index.ts(1,29): error TS2307: Cannot find module './auth-service' or its corresponding type declarations.
+src/lib/security/index.ts(2,35): error TS2307: Cannot find module './permission-service' or its corresponding type declarations.
+src/lib/sms/index.ts(2,10): error TS2724: '"./sms-provider"' has no exported member named 'SMSProvider'. Did you mean 'SMS_PROVIDERS'?
+src/lib/sms/index.ts(3,29): error TS2307: Cannot find module './sms-template' or its corresponding type declarations.
+src/lib/support/support-service.ts(26,9): error TS2353: Object literal may only specify known properties, and 'attachments' does not exist in type 'Without<SupportTicketCreateInput, SupportTicketUncheckedCreateInput> & SupportTicketUncheckedCreateInput'.
+src/lib/support/support-service.ts(73,20): error TS2353: Object literal may only specify known properties, and 'updatedAt' does not exist in type 'SupportTicketOrderByWithRelationInput | SupportTicketOrderByWithRelationInput[]'.
+src/services/api-client.ts(18,24): error TS2339: Property 'accessToken' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/services/api-client.ts(19,7): error TS7053: Element implicitly has an 'any' type because expression of type '"Authorization"' can't be used to index type '{ [x: string]: string; } | { append(name: string, value: string): void; delete(name: string): void; get(name: string): string | null; getSetCookie(): string[]; has(name: string): boolean; ... 5 more ...; [Symbol.iterator](): HeadersIterator<...>; } | { ...; }'.
+  Property 'Authorization' does not exist on type '{ [x: string]: string; } | { append(name: string, value: string): void; delete(name: string): void; get(name: string): string | null; getSetCookie(): string[]; has(name: string): boolean; ... 5 more ...; [Symbol.iterator](): HeadersIterator<...>; } | { ...; }'.
+src/services/api-client.ts(19,57): error TS2339: Property 'accessToken' does not exist on type '{ id: string; role: UserRole; } & { name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; }'.
+src/services/auth-service.ts(4,24): error TS2307: Cannot find module '@/lib/prisma' or its corresponding type declarations.
+src/services/auth-service.ts(5,25): error TS2307: Cannot find module 'bcrypt' or its corresponding type declarations.
+src/services/auth-service.ts(118,11): error TS2304: Cannot find name 'EmailService'.
+src/services/auth-service.ts(138,34): error TS2304: Cannot find name 'hash'.
+src/services/email-service.ts(131,24): error TS2304: Cannot find name 'prisma'.
+src/services/email-service.ts(160,12): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ STUDENT: { icon: string; title: string; description: string; }[]; INSTRUCTOR: { icon: string; title: string; description: string; }[]; SCHOOL_ADMIN: { icon: string; title: string; description: string; }[]; }'.
+  No index signature with a parameter of type 'string' was found on type '{ STUDENT: { icon: string; title: string; description: string; }[]; INSTRUCTOR: { icon: string; title: string; description: string; }[]; SCHOOL_ADMIN: { icon: string; title: string; description: string; }[]; }'.
+src/services/exam-service.ts(1,24): error TS2307: Cannot find module '@/lib/prisma' or its corresponding type declarations.
+src/services/exam-service.ts(2,44): error TS2306: File 'D:/StudyHub/studyhub/src/types/exam.ts' is not a module.
+src/services/exam-service.ts(78,29): error TS7006: Parameter 'question' implicitly has an 'any' type.
+src/services/exam-service.ts(140,26): error TS7006: Parameter 'attempt' implicitly has an 'any' type.
+src/services/index.ts(6,10): error TS2614: Module '"./api-client"' has no exported member 'APIClient'. Did you mean to use 'import APIClient from "./api-client"' instead?
+src/services/lab/ChemistryEngine.ts(147,27): error TS2304: Cannot find name 'ObservationType'.
+src/services/lab/ChemistryEngine.ts(195,33): error TS2304: Cannot find name 'ObservationType'.
+src/services/notification-service.ts(5,3): error TS2305: Module '"@/emails"' has no exported member 'PaymentConfirmationEmail'.
+src/services/notification-service.ts(6,3): error TS2305: Module '"@/emails"' has no exported member 'SubscriptionReceiptEmail'.
+src/services/notification-service.ts(7,3): error TS2305: Module '"@/emails"' has no exported member 'OTPVerificationEmail'.
+src/services/notification-service.ts(8,3): error TS2305: Module '"@/emails"' has no exported member 'ExamResultEmail'.
+src/services/notification-service.ts(9,3): error TS2305: Module '"@/emails"' has no exported member 'CourseEnrollmentEmail'.
+src/services/notification-service.ts(10,3): error TS2305: Module '"@/emails"' has no exported member 'ClassReminderEmail'.
+src/services/notification-service.ts(11,3): error TS2305: Module '"@/emails"' has no exported member 'InstructorPayoutEmail'.
+src/services/notification-service.ts(12,3): error TS2305: Module '"@/emails"' has no exported member 'WelcomeEmail'.
+src/services/notification-service.ts(13,3): error TS2305: Module '"@/emails"' has no exported member 'RenewalReminderEmail'.
+src/services/notification-service.ts(14,3): error TS2305: Module '"@/emails"' has no exported member 'CertificateIssuedEmail'.
+src/services/notification-service.ts(42,38): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(60,28): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(87,15): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(99,13): error TS2353: Object literal may only specify known properties, and 'channel' does not exist in type 'Notification'.
+src/services/notification-service.ts(108,11): error TS2353: Object literal may only specify known properties, and 'channel' does not exist in type 'Notification'.
+src/services/notification-service.ts(168,25): error TS2339: Property 'retries' does not exist on type 'Notification'.
+src/services/notification-service.ts(170,60): error TS2339: Property 'channel' does not exist on type 'Notification'.
+src/services/notification-service.ts(171,30): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(172,39): error TS2339: Property 'userId' does not exist on type 'Notification'.
+src/services/notification-service.ts(176,30): error TS18048: 'provider' is possibly 'undefined'.
+src/services/notification-service.ts(177,34): error TS2339: Property 'userId' does not exist on type 'Notification'.
+src/services/notification-service.ts(181,35): error TS2339: Property 'message' does not exist on type 'Notification'.
+src/services/notification-service.ts(182,32): error TS2339: Property 'type' does not exist on type 'Notification'.
+src/services/notification-service.ts(183,36): error TS2339: Property 'metadata' does not exist on type 'Notification'.
+src/services/notification-service.ts(189,15): error TS2353: Object literal may only specify known properties, and 'retries' does not exist in type 'Notification'.
+src/services/notification-service.ts(189,38): error TS2339: Property 'retries' does not exist on type 'Notification'.
+src/services/notification-service.ts(191,35): error TS2339: Property 'notificationId' does not exist on type 'Notification'.
+src/services/notification-service.ts(192,19): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(193,41): error TS2339: Property 'notificationId' does not exist on type 'Notification'.
+src/services/notification-service.ts(196,34): error TS2339: Property 'channel' does not exist on type 'Notification'.
+src/services/notification-service.ts(197,34): error TS2339: Property 'channel' does not exist on type 'Notification'.
+src/services/notification-service.ts(204,13): error TS2353: Object literal may only specify known properties, and 'retries' does not exist in type 'Notification'.
+src/services/notification-service.ts(204,36): error TS2339: Property 'retries' does not exist on type 'Notification'.
+src/services/notification-service.ts(207,31): error TS2339: Property 'notificationId' does not exist on type 'Notification'.
+src/services/notification-service.ts(209,15): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(210,37): error TS2339: Property 'notificationId' does not exist on type 'Notification'.
+src/services/notification-service.ts(213,30): error TS2339: Property 'channel' does not exist on type 'Notification'.
+src/services/notification-service.ts(269,28): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(282,9): error TS2349: This expression is not callable.
+  Not all constituents of type 'ComponentType<any>' are callable.
+    Type 'ComponentClass<any, any>' has no call signatures.
+src/services/notification-service.ts(323,23): error TS2304: Cannot find name 'PasswordResetEmail'.
+src/services/notification-service.ts(324,29): error TS2304: Cannot find name 'AccountVerificationEmail'.
+src/services/notification-service.ts(325,24): error TS2304: Cannot find name 'JobApplicationEmail'.
+src/services/notification-service.ts(326,27): error TS2304: Cannot find name 'EventRegistrationEmail'.
+src/services/notification-service.ts(329,33): error TS2304: Cannot find name 'GenericNotificationEmail'.
+src/services/notification-service.ts(348,28): error TS2304: Cannot find name 'prisma'.
+src/services/notification-service.ts(361,36): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | Request | URL'.
+      Type 'undefined' is not assignable to type 'string | Request | URL'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'URL | RequestInfo'.
+      Type 'undefined' is not assignable to type 'URL | RequestInfo'.
+src/services/payment-service.ts(1,10): error TS2459: Module '"@/types/payment"' declares 'PaymentMethod' locally, but it is not exported.
+src/services/payment-service.ts(1,25): error TS2305: Module '"@/types/payment"' has no exported member 'PaymentStatus'.
+src/services/payment-service.ts(6,24): error TS2307: Cannot find module '@/lib/prisma' or its corresponding type declarations.
+src/services/payment-service.ts(56,33): error TS2339: Property 'status' does not exist on type 'PaymentResult'.
+src/services/payment-service.ts(59,42): error TS2339: Property 'metadata' does not exist on type 'PaymentResult'.
+src/services/payment-service.ts(67,31): error TS2339: Property 'status' does not exist on type 'PaymentResult'.
+src/services/payment-service.ts(70,40): error TS2339: Property 'metadata' does not exist on type 'PaymentResult'.
+src/utils/button.tsx(2,22): error TS2307: Cannot find module '@radix-ui/react-slot' or its corresponding type declarations.
+src/utils/header.tsx(30,30): error TS2322: Type '{ children: Element; asChild: true; }' is not assignable to type 'IntrinsicAttributes & { children: ReactNode; }'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & { children: ReactNode; }'.
+src/utils/header.tsx(31,37): error TS2322: Type '"icon"' is not assignable to type '"sm" | "md" | "lg" | "xs" | "xl" | null | undefined'.
+src/utils/header.tsx(35,30): error TS2322: Type '{ children: Element[]; align: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+  Property 'align' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement> & RefAttributes<HTMLDivElement>'.
+src/utils/helpers.ts(5,30): error TS2307: Cannot find module 'uuid' or its corresponding type declarations.
+src/utils/layout.tsx(2,10): error TS2305: Module '"../components/layouts/dashboard/header"' has no exported member 'AdminHeader'.
+src/utils/layout.tsx(3,10): error TS2305: Module '"../components/layouts/dashboard/sidebar"' has no exported member 'AdminSidebar'.
+src/utils/page.tsx(3,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableBody'.
+src/utils/page.tsx(4,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableCell'.
+src/utils/page.tsx(5,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableHead'.
+src/utils/page.tsx(6,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableHeader'.
+src/utils/page.tsx(7,3): error TS2305: Module '"@/components/ui/table"' has no exported member 'TableRow'.
+src/utils/page.tsx(26,10): error TS2739: Type '{ children: Element[]; }' is missing the following properties from type 'TableProps<{ id: string; }>': data, columns
+src/utils/page.tsx(39,35): error TS2322: Type '"default"' is not assignable to type '"info" | "error" | "success" | "neutral" | "warning" | undefined'.

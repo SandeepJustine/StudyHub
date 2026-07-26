@@ -1,0 +1,7 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="200" height="50" fill="#0D1B3D"/>
+<text x="10" y="35" font-family="Poppins" font-weight="700" font-size="24" fill="white">StudyHub</text>
+<text x="120" y="35" font-family="Poppins" font-weight="400" font-size="24" fill="#E63946">MW</text>
+<circle cx="100" cy="15" r="8" fill="#16A34A"/>
+<path d="M95 15L100 10L105 15L100 20L95 15Z" fill="white"/>
+</svg>
