@@ -130,7 +130,9 @@ model User {
 
   eventRegistrations EventRegistration[]
   forumThreads       ForumThread[]
-  forumPosts         ForumPost[]
+  forumPosts         ForumPost[]    @relation("PostAuthor")
+  createdForums      Forum[]
+  forumSubscriptions ForumSubscription[]
   marketplaceListings MarketplaceListing[]
   referralsMade      Referral[]   @relation("Referrer")
   referralsReceived  Referral[]   @relation("Referred")
@@ -731,8 +733,44 @@ model LiveClass {
 // Community
 // ---------------------------------------------------------------------------
 
+model Forum {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String?
+  subject       String?  // e.g. Mathematics, Physics, English
+  icon          String?
+  color         String?  // Hex color for UI
+  isPublic      Boolean  @default(true)
+  createdById   String?
+  createdBy     User?    @relation(fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  threads       ForumThread[]
+  subscriptions ForumSubscription[]
+
+  @@index([subject])
+  @@index([slug])
+}
+
+model ForumSubscription {
+  id            String   @id @default(cuid())
+  forumId       String
+  forum         Forum    @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          String   @default("member") // member, moderator, admin
+  createdAt     DateTime @default(now())
+
+  @@unique([forumId, userId])
+  @@index([userId])
+}
+
 model ForumThread {
   id            String   @id @default(cuid())
+  forumId       String?
+  forum         Forum?   @relation(fields: [forumId], references: [id])
   subject       String?
   courseId      String?
   course        Course?  @relation(fields: [courseId], references: [id])
@@ -740,6 +778,9 @@ model ForumThread {
   author        User     @relation(fields: [authorId], references: [id])
   title         String
   content       String
+  tags          String[] @default([])
+  viewsCount    Int      @default(0)
+  postsCount    Int      @default(0)
   isPinned      Boolean  @default(false)
   isLocked      Boolean  @default(false)
   isDeleted     Boolean  @default(false)
@@ -749,21 +790,32 @@ model ForumThread {
 }
 
 model ForumPost {
-  id            String   @id @default(cuid())
-  threadId      String
-  thread        ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  authorId      String
-  author        User     @relation(fields: [authorId], references: [id])
-  content       String
-  createdAt     DateTime @default(now())
-  isDeleted     Boolean  @default(false)
+  id        String   @id @default(cuid())
+  content   String
+  likes     Int      @default(0)
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关系
+  authorId  String
+  author    User         @relation("PostAuthor", fields: [authorId], references: [id])
+  threadId  String
+  thread    ForumThread  @relation(fields: [threadId], references: [id])
+  parentId  String?
+  parent    ForumPost?   @relation("PostReplies", fields: [parentId], references: [id])
+  replies   ForumPost[]  @relation("PostReplies")
+
+  @@index([threadId])
+  @@index([authorId])
 }
+
 
 // ---------------------------------------------------------------------------
 // Support
-// ---------------------------------------------------------------------------
 
 model SupportTicket {
+
   id            String   @id @default(cuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)

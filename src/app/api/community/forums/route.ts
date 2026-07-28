@@ -4,8 +4,8 @@ import { authOptions } from '@/lib/auth/auth-options';
 import { forumService } from '@/lib/community/forum-service';
 
 /**
- * GET /api/community
- * Get forum threads
+ * GET /api/community/forums
+ * Get all public forums
  */
 export async function GET(req: Request) {
   try {
@@ -15,34 +15,31 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const params = {
-      subject: searchParams.get('subject') || undefined,
-      courseId: searchParams.get('courseId') || undefined,
-      page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
-      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20,
-      sortBy: (searchParams.get('sortBy') || 'latest') as 'latest' | 'popular' | 'pinned',
-    };
+    const subject = searchParams.get('subject') || undefined;
 
-    const result = await forumService.getThreads(params);
+    let forums = await forumService.getForums(session.user.id);
+
+    if (subject) {
+      forums = forums.filter((f: any) => f.subject === subject);
+    }
 
     return NextResponse.json({
       success: true,
-      data: result.threads,
-      pagination: result.pagination,
+      data: forums,
     });
 
   } catch (error: any) {
-    console.error('Get threads error:', error);
+    console.error('Get forums error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch threads' },
+      { error: 'Failed to fetch forums' },
       { status: 500 }
     );
   }
 }
 
 /**
- * POST /api/community
- * Create a new thread
+ * POST /api/community/forums
+ * Create a new forum thread (any authenticated user)
  */
 export async function POST(req: Request) {
   try {
@@ -52,7 +49,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, content, subject, courseId, tags } = body;
+    const { title, content, subject, tags } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -61,12 +58,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create a thread (since we don't have a separate Forum model)
     const thread = await forumService.createThread(session.user.id, {
       title,
       content,
-      subject,
-      courseId,
-      tags,
+      subject: subject || 'General',
+      tags: tags || [],
     });
 
     return NextResponse.json({

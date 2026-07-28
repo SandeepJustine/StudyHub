@@ -34,15 +34,22 @@ export default async function StudentCertificatesPage() {
   }
 
   // Fetch certificates - use enrollmentId and examAttemptId instead of relations
+    // 修改证书获取逻辑
   const certificates = await prisma.certificate.findMany({
     where: { studentId: student.id },
     orderBy: { issuedAt: 'desc' },
   });
 
-  // Fetch related enrollment and exam data separately
-  const enrollmentIds = certificates.filter(c => c.enrollmentId).map(c => c.enrollmentId!);
-  const examAttemptIds = certificates.filter(c => c.examAttemptId).map(c => c.examAttemptId!);
+  // 从 metadata 中提取 enrollmentId
+  const enrollmentIds = certificates
+    .filter(c => c.metadata && (c.metadata as any).enrollmentId)
+    .map(c => (c.metadata as any).enrollmentId);
 
+  const examAttemptIds = certificates
+    .filter(c => c.examAttemptId)
+    .map(c => c.examAttemptId!);
+
+  // 获取相关数据
   const [enrollments, examAttempts] = await Promise.all([
     enrollmentIds.length > 0
       ? prisma.enrollment.findMany({
@@ -58,9 +65,19 @@ export default async function StudentCertificatesPage() {
       : [],
   ]);
 
-  // Create lookup maps
-  const enrollmentMap = new Map(enrollments.map(e => [e.id, e]));
-  const examMap = new Map(examAttempts.map(e => [e.id, e]));
+// 创建查找映射
+const enrollmentMap = new Map(enrollments.map(e => [e.id, e]));
+const examMap = new Map(examAttempts.map(e => [e.id, e]));
+
+// 在渲染证书时修改获取 enrollment 的方式
+{certificates.map((cert) => {
+  const enrollmentId = cert.metadata ? (cert.metadata as any).enrollmentId : null;
+  const enrollment = enrollmentId ? enrollmentMap.get(enrollmentId) : null;
+  const exam = cert.examAttemptId ? examMap.get(cert.examAttemptId) : null;
+  
+  // ... 其余渲染代码保持不变
+})}
+
 
   const digitalCerts = certificates.filter(c => c.type === 'DIGITAL');
   const printedCerts = certificates.filter(c => c.type === 'PRINTED');
@@ -89,7 +106,7 @@ export default async function StudentCertificatesPage() {
       {certificates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {certificates.map((cert) => {
-            const enrollment = cert.enrollmentId ? enrollmentMap.get(cert.enrollmentId) : null;
+            const enrollment = cert.id ? enrollmentMap.get(cert.id) : null;
             const exam = cert.examAttemptId ? examMap.get(cert.examAttemptId) : null;
 
             return (
@@ -112,8 +129,8 @@ export default async function StudentCertificatesPage() {
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-bold text-navy text-center mb-2">{cert.title}</h3>
-                  {cert.description && <p className="text-xs text-grey-dark text-center mb-3">{cert.description}</p>}
+                  <h3 className="text-lg font-bold text-navy text-center mb-2">{cert.type}</h3>
+                  {cert.metadata && <p className="text-xs text-grey-dark text-center mb-3">{cert.type}</p>}
 
                   <div className="bg-grey-light/50 rounded-lg p-3 mb-3 space-y-1 text-xs">
                     {enrollment && (
