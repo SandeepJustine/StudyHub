@@ -27,13 +27,13 @@ export function StudentHeader() {
           className="w-full rounded-lg bg-grey-light pl-8 md:w-[200px] lg:w-[336px]"
         />
       </div>
-      <Button variant="ghost" size="icon">
+      <Button variant="ghost" size="sm">
         <Bell className="h-5 w-5" />
         <span className="sr-only">Notifications</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
+          <Button variant="outline" size="sm" className="overflow-hidden rounded-full">
             <Avatar>
               <AvatarImage src={session?.user?.image ?? undefined} alt={session?.user?.name ?? 'User'} />
               <AvatarFallback>{session?.user?.name?.[0]?.toUpperCase() ?? 'U'}</AvatarFallback>

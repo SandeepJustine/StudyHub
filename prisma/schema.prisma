@@ -590,6 +590,7 @@ model Quiz {
   totalPoints     Int      @default(0)
   questions       Question[]
   examAttempts    ExamAttempt[]
+  timeSpent       Int      @default(0)
 }
 
 model Question {
@@ -741,6 +742,7 @@ model ForumThread {
   content       String
   isPinned      Boolean  @default(false)
   isLocked      Boolean  @default(false)
+  isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   posts         ForumPost[]

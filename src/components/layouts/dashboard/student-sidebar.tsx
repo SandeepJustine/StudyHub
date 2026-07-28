@@ -9,6 +9,7 @@ import {
   User,
   Settings,
   Users,
+  Microscope,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/utils/cn';
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/student/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/student/courses', icon: BookOpen, label: 'My Courses' },
   { href: '/student/exams', icon: ClipboardCheck, label: 'Exams' },
+  {href: '/student/lab', icon: Microscope, label: 'Virtual-Lab'}, // Add a new item for the lab
   { href: '/student/certificates', icon: Award, label: 'Certificates' },
   { href: '/student/community', icon: Users, label: 'Community' },
   { href: '/student/profile', icon: User, label: 'Profile' },

@@ -86,6 +86,27 @@ export interface ExperimentStep {
   volume?: number;
   observationFields: ObservationType[];
   hint?: string;
+  initialState?: {
+    equipment: {
+      [key: string]: {
+        contents?: {
+          chemicalId: string;
+          volume: number;
+        };
+        isHeating: boolean;
+      };
+    };
+    chemicals: {
+      [key: string]: {
+        concentration?: number;
+        state: ChemicalState;
+      };
+    };
+   components: {
+      [key: string]: PhysicsComponent;
+      
+   }
+  }
 }
 
 export interface StudentExperiment {

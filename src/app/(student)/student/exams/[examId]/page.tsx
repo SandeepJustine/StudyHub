@@ -1,10 +1,13 @@
-export default function Page() {
-  return (
-    <div className="min-h-screen bg-grey-light flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-navy mb-2">Coming Soon</h1>
-        <p className="text-grey-dark">This page is under development.</p>
-      </div>
-    </div>
-  );
-}
+import { getServerSession } from 'next-auth'; import { authOptions } from '@/lib/auth/auth-options'; import { redirect } from 'next/navigation'; import prisma from '@/lib/utils/prisma'; import { Card, CardContent } from '@/components/ui/card'; import { Badge } from '@/components/ui/badge'; import { Button } from '@/components/ui/button'; import { ArrowLeft, Clock, AlertTriangle, CheckCircle, Target } from 'lucide-react'; import Link from 'next/link';
+export default async function ExamDetailPage({ params }: { params: Promise<{ examId: string }> }) {
+  let session; try { session = await getServerSession(authOptions); } catch { redirect('/auth/login'); } if (!session?.user) redirect('/auth/login'); const { examId } = await params;
+  const student = await prisma.student.findFirst({ where: { userId: session.user.id }, select: { id: true } }); if (!student) return <div className="p-6"><p>Student not found.</p></div>;
+  const quiz = await prisma.quiz.findUnique({ where: { id: examId }, include: { module: { include: { course: { select: { title: true, subject: true } } } }, _count: { select: { questions: true } } } });
+  if (!quiz) return <div className="p-6 text-center"><AlertTriangle size={40} className="mx-auto text-yellow-500 mb-3" /><h2 className="text-lg font-bold text-navy">Exam Not Found</h2><Link href="/student/exams"><Button variant="primary" className="mt-3">Back</Button></Link></div>;
+  const attempts = await prisma.examAttempt.count({ where: { studentId: student.id, quizId: examId } }); const canAttempt = attempts < quiz.maxAttempts;
+  return (<div className="p-6 space-y-6 max-w-3xl mx-auto"><Link href="/student/exams" className="text-grey-medium hover:text-navy flex items-center gap-1 text-sm"><ArrowLeft size={16} />Back</Link>
+  <Card className="border-0 shadow-sm"><CardContent className="p-6"><div className="flex justify-between mb-4"><div><Badge variant="info" size="sm" className="mb-2">{quiz.module.course.subject}</Badge><h1 className="text-2xl font-bold text-navy">{quiz.title}</h1><p className="text-sm text-grey-dark">{quiz.module.course.title}</p></div><Badge variant={canAttempt?'success':'error'}>{canAttempt?'Available':'Max'}</Badge></div>
+  <div className="grid grid-cols-3 gap-4 mb-6"><div className="p-3 bg-blue-50 rounded-lg text-center"><Clock size={18} className="mx-auto text-blue-600 mb-1" /><p className="font-bold text-navy">{quiz.timeLimit||30}min</p></div><div className="p-3 bg-purple-50 rounded-lg text-center"><Target size={18} className="mx-auto text-purple-600 mb-1" /><p className="font-bold text-navy">{quiz._count.questions}Q</p></div><div className="p-3 bg-green-50 rounded-lg text-center"><CheckCircle size={18} className="mx-auto text-green mb-1" /><p className="font-bold text-navy">{quiz.passingScore}%</p></div></div>
+  <div className="p-4 bg-yellow-50 rounded-lg mb-4 text-sm">Attempts: {attempts}/{quiz.maxAttempts}</div>
+  {canAttempt?<Link href={`/student/exams/${examId}/take`}><Button variant="primary" size="lg" fullWidth>Start Exam</Button></Link>:<div className="p-4 bg-red-50 rounded-lg text-sm text-red-800">Max attempts reached.</div>}
+  </CardContent></Card></div>);}

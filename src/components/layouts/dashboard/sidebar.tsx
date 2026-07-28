@@ -114,7 +114,7 @@ export function Sidebar({ role, menuItems }: SidebarProps) {
         {/* Footer */}
         <div className="p-4 border-t border-navy-light space-y-2">
           <Link
-            href="/help"
+            href="/contact"
             className={cn(
               'flex items-center gap-3 px-3 py-2 text-grey-light hover:text-white rounded-lg transition-colors',
               isCollapsed && 'justify-center'

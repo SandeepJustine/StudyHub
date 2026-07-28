@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     const { quizId } = await req.json();
-    const studentId = session.user.role;
+    const studentId = session.user.studentId;
 
     if (!studentId) {
       return NextResponse.json({ error: 'Student profile not found' }, { status: 400 });

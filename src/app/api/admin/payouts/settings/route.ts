@@ -7,15 +7,18 @@ const auditLogger = new AuditLogger();
 
 // Default payout settings
 const DEFAULT_SETTINGS = {
-  minimumPayout: 10000, // MWK 10,000 minimum
+  minimumPayout: 10000,
   payoutSchedule: 'monthly',
   payoutDay: 15,
   autoApprove: false,
   paymentMethods: ['AIRTEL_MONEY', 'TNM_MPAMBA', 'BANK_TRANSFER'],
-  processingFee: 0, // No fee for now
-  holdPeriod: 7, // Days to hold before payout
-  maxBulkProcess: 50, // Max payouts to process at once
+  processingFee: 0,
+  holdPeriod: 7,
+  maxBulkProcess: 50,
 };
+
+// In-memory settings (in production, store in database)
+let currentSettings = { ...DEFAULT_SETTINGS };
 
 /**
  * GET /api/admin/payouts/settings
@@ -29,14 +32,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // In production, fetch from database
-    // For now, return default settings
     return NextResponse.json({
       success: true,
-      data: DEFAULT_SETTINGS,
+      data: currentSettings,
     });
 
   } catch (error) {
+    console.error('Payout settings error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch payout settings' },
       { status: 500 }
@@ -67,28 +69,30 @@ export async function PUT(req: Request) {
     }
 
     // Validate settings
-    if (settings.minimumPayout && settings.minimumPayout < 1000) {
+    if (settings.minimumPayout !== undefined && settings.minimumPayout < 1000) {
       return NextResponse.json(
         { error: 'Minimum payout must be at least MWK 1,000' },
         { status: 400 }
       );
     }
 
-    if (settings.payoutDay && (settings.payoutDay < 1 || settings.payoutDay > 28)) {
+    if (settings.payoutDay !== undefined && (settings.payoutDay < 1 || settings.payoutDay > 28)) {
       return NextResponse.json(
         { error: 'Payout day must be between 1 and 28' },
         { status: 400 }
       );
     }
 
-    // Merge with defaults
-    const updatedSettings = {
-      ...DEFAULT_SETTINGS,
-      ...settings,
-    };
+    if (settings.processingFee !== undefined && (settings.processingFee < 0 || settings.processingFee > 10)) {
+      return NextResponse.json(
+        { error: 'Processing fee must be between 0 and 10%' },
+        { status: 400 }
+      );
+    }
 
-    // In production, save to database
-    // For now, just log and return
+    // Merge with current settings
+    const previousSettings = { ...currentSettings };
+    currentSettings = { ...currentSettings, ...settings };
 
     // Log audit
     await auditLogger.logAction({
@@ -97,18 +101,19 @@ export async function PUT(req: Request) {
       entity: 'PAYOUT_SETTINGS',
       entityId: 'GLOBAL',
       changes: {
-        previous: DEFAULT_SETTINGS,
-        updated: updatedSettings,
+        previous: previousSettings,
+        updated: currentSettings,
       },
     });
 
     return NextResponse.json({
       success: true,
-      data: updatedSettings,
+      data: currentSettings,
       message: 'Payout settings updated successfully',
     });
 
   } catch (error) {
+    console.error('Update payout settings error:', error);
     return NextResponse.json(
       { error: 'Failed to update payout settings' },
       { status: 500 }

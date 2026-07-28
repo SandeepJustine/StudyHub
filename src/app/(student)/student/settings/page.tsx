@@ -1,10 +1,8 @@
-export default function Page() {
-  return (
-    <div className="min-h-screen bg-grey-light flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-navy mb-2">Coming Soon</h1>
-        <p className="text-grey-dark">This page is under development.</p>
-      </div>
-    </div>
-  );
-}
+import { getServerSession } from 'next-auth'; import { authOptions } from '@/lib/auth/auth-options'; import { redirect } from 'next/navigation'; import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'; import { Button } from '@/components/ui/button'; import { Input } from '@/components/ui/input'; import { User, Mail, Phone, Lock, Bell, Globe } from 'lucide-react';
+export default async function StudentSettingsPage() {
+  let session; try { session = await getServerSession(authOptions); } catch { redirect('/auth/login'); } if (!session?.user) redirect('/auth/login'); if (session.user.role !== 'STUDENT') redirect(`/${session.user.role.toLowerCase()}/dashboard`);
+  return (<div className="p-6 space-y-6 max-w-2xl"><div className="flex items-center gap-3"><div className="p-2.5 bg-navy/10 rounded-xl"><User size={22} className="text-navy" /></div><div><h1 className="text-2xl font-bold text-navy">Settings</h1><p className="text-sm text-grey-medium">Manage your account</p></div></div>
+  <Card className="border-0 shadow-sm"><CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader><CardContent className="space-y-3"><Input label="Full Name" value={session.user.name||''} leftIcon={<User size={16} />} disabled /><Input label="Email" value={session.user.email||''} leftIcon={<Mail size={16} />} disabled /><Input label="Phone" placeholder="+265 888 000 000" leftIcon={<Phone size={16} />} /><Button variant="primary" size="sm">Update</Button></CardContent></Card>
+  <Card className="border-0 shadow-sm"><CardHeader><CardTitle className="text-base">Password</CardTitle></CardHeader><CardContent className="space-y-3"><Input label="Current" type="password" leftIcon={<Lock size={16} />} /><Input label="New" type="password" leftIcon={<Lock size={16} />} /><Input label="Confirm" type="password" leftIcon={<Lock size={16} />} /><Button variant="primary" size="sm">Change</Button></CardContent></Card>
+  <Card className="border-0 shadow-sm"><CardHeader><CardTitle className="text-base">Notifications</CardTitle></CardHeader><CardContent className="space-y-3">{['Email','SMS','Push'].map((n)=>(<div key={n} className="flex items-center justify-between p-2 bg-grey-light/50 rounded-lg"><div className="flex items-center gap-2"><Bell size={14} className="text-navy" /><span className="text-sm">{n}</span></div><label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" defaultChecked className="sr-only peer" /><div className="w-9 h-5 bg-grey-light rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-green after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" /></label></div>))}<Button variant="primary" size="sm">Save</Button></CardContent></Card>
+  <Card className="border-0 shadow-sm"><CardHeader><CardTitle className="text-base">Language</CardTitle></CardHeader><CardContent className="space-y-3"><div className="flex items-center gap-2"><Globe size={14} className="text-navy" /><span className="text-sm">Default Language</span></div><select className="w-full px-3 py-2 border rounded-lg text-sm"><option value="en">English</option><option value="ny">Chichewa</option></select><Button variant="primary" size="sm">Save</Button></CardContent></Card></div>);}

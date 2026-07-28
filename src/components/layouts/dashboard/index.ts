@@ -1,4 +1,4 @@
 export { DashboardLayout } from './dashboard-layout';
-export { DashboardHeader } from './dashboard-header';
-export { DashboardSidebar } from './dashboard-sidebar';
+export { DashboardHeader } from './header';
+export { DashboardSidebar } from './sidebar';
 export { DashboardFooter } from './dashboard-footer';

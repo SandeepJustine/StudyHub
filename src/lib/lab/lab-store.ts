@@ -1,9 +1,11 @@
-// lib/lab-store.ts - Zustand store for lab state management
+'use client';
+
 import { create } from 'zustand';
 import { 
-  LabEquipmentItem, Chemical, Experiment, StudentExperiment,
-  StudentObservation, Badge 
-} from '../../types/lab';
+  LabEquipmentItem, 
+  Experiment, 
+  StudentExperiment,
+} from '@/types/lab';
 
 interface LabStore {
   // Lab State

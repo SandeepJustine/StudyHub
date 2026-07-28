@@ -1,72 +1,140 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown';
-import { 
-  Search, 
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
-  Check, 
-  X, 
-  Plus, 
+import { Modal } from '@/components/ui/modal';
+import { Toast } from '@/components/ui/toast';
+import {
+  Search,
+  MoreHorizontal,
+  Eye,
+  Check,
+  X,
+  Plus,
   RefreshCw,
-  Download,
-  Filter
+  Filter,
+  AlertCircle,
 } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 
 export default function AdminCoursesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('');
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [confirmAction, setConfirmAction] = useState<{ action: string; label: string }>({ action: '', label: '' });
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'APPROVED':
-        return <Badge variant="success">Approved</Badge>;
-      case 'PENDING':
-        return <Badge variant="neutral">Pending</Badge>;
-      case 'REJECTED':
-        return <Badge variant="error">Rejected</Badge>;
-      default:
-        return <Badge variant="neutral">{status}</Badge>;
+  useEffect(() => {
+    fetchCourses();
+  }, [searchQuery, statusFilter, pagination.page]);
+
+  const fetchCourses = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('query', searchQuery);
+      if (statusFilter) params.append('status', statusFilter);
+      params.append('page', pagination.page.toString());
+      params.append('limit', pagination.limit.toString());
+
+      const response = await fetch(`/api/admin/courses?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch courses');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCourses(data.data || []);
+        setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 });
+      }
+    } catch (err: any) {
+      console.error('Error fetching courses:', err);
+      setError(err.message);
+
+      // Mock data fallback
+      setCourses([
+        { id: '1', title: 'MSCE Mathematics', subject: 'Mathematics', examBoard: 'MSCE', price: 15000, status: 'APPROVED', studentsCount: 120, rating: 4.5, instructor: { user: { fullName: 'Mr. John Doe', email: 'john@email.com' } }, stats: { enrollments: 120, reviews: 25, modules: 12 }, createdAt: '2025-01-15', publishedAt: '2025-02-01' },
+        { id: '2', title: 'JCE English Literature', subject: 'English', examBoard: 'JCE', price: 12000, status: 'PENDING_REVIEW', studentsCount: 50, rating: 0, instructor: { user: { fullName: 'Ms. Jane Smith', email: 'jane@email.com' } }, stats: { enrollments: 0, reviews: 0, modules: 8 }, createdAt: '2025-03-10' },
+        { id: '3', title: 'ICAM Financial Accounting', subject: 'Accounting', examBoard: 'ICAM', price: 30000, status: 'APPROVED', studentsCount: 80, rating: 4.8, instructor: { user: { fullName: 'Dr. Alex Banda', email: 'alex@email.com' } }, stats: { enrollments: 80, reviews: 15, modules: 20 }, createdAt: '2025-02-20' },
+        { id: '4', title: 'TEVETA Electrical', subject: 'Technical', examBoard: 'TEVETA', price: 25000, status: 'REJECTED', studentsCount: 0, rating: 0, instructor: { user: { fullName: 'Eng. Mary Phiri', email: 'mary@email.com' } }, stats: { enrollments: 0, reviews: 0, modules: 10 }, createdAt: '2025-04-01' },
+      ]);
+      setPagination({ page: 1, limit: 10, total: 4, totalPages: 1 });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Define columns for the Table component
+  const handleCourseAction = async (action: string, courseId: string) => {
+    try {
+      const response = await fetch('/api/admin/courses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, action }),
+      });
+
+      if (!response.ok) throw new Error('Action failed');
+
+      setToast({ message: `Course ${action}ed successfully`, type: 'success' });
+      setShowConfirmModal(false);
+      setShowActionMenu(null);
+      fetchCourses();
+    } catch (err: any) {
+      setToast({ message: err.message || 'Action failed', type: 'error' });
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'APPROVED': return <Badge variant="success">Approved</Badge>;
+      case 'PENDING_REVIEW': return <Badge variant="warning">Pending</Badge>;
+      case 'REJECTED': return <Badge variant="error">Rejected</Badge>;
+      case 'DRAFT': return <Badge variant="neutral">Draft</Badge>;
+      case 'ARCHIVED': return <Badge variant="neutral">Archived</Badge>;
+      default: return <Badge>{status}</Badge>;
+    }
+  };
+
   const columns = [
     {
       key: 'title',
-      header: 'Title',
-      accessor: (course: any) => <span className="font-medium text-navy">{course.title}</span>,
+      header: 'Course',
+      accessor: (course: any) => (
+        <div>
+          <p className="font-medium text-navy">{course.title}</p>
+          <p className="text-xs text-grey-medium">{course.subject} • {course.examBoard}</p>
+        </div>
+      ),
     },
     {
       key: 'instructor',
       header: 'Instructor',
-      accessor: (course: any) => course.instructor, // Assuming instructor is a string or object with a name
-    },
-    {
-      key: 'category',
-      header: 'Category',
-      accessor: (course: any) => course.category, // Assuming category is a string
+      accessor: (course: any) => (
+        <div className="text-sm">
+          <p>{course.instructor?.user?.fullName || 'Unknown'}</p>
+          <p className="text-xs text-grey-medium">{course.instructor?.user?.email}</p>
+        </div>
+      ),
     },
     {
       key: 'price',
-      header: 'Price (MWK)',
-      accessor: (course: any) => course.price.toLocaleString(),
+      header: 'Price',
+      accessor: (course: any) => (
+        <span className="font-semibold text-navy">{formatCurrency(course.price)}</span>
+      ),
     },
     {
       key: 'status',
@@ -74,203 +142,224 @@ export default function AdminCoursesPage() {
       accessor: (course: any) => getStatusBadge(course.status),
     },
     {
-      key: 'enrollments',
-      header: 'Enrollments',
-      accessor: (course: any) => course.enrollments,
+      key: 'stats',
+      header: 'Stats',
+      accessor: (course: any) => (
+        <div className="text-sm">
+          <p>{course.studentsCount || course.stats?.enrollments || 0} students</p>
+          {course.rating > 0 && <p className="text-xs text-yellow-600">★ {course.rating.toFixed(1)}</p>}
+        </div>
+      ),
     },
     {
-      key: 'revenueShare',
-      header: 'Revenue Share',
-      accessor: (course: any) => `${course.revenueShare}%`,
-    },
-    {
-      key: 'createdAt',
-      header: 'Created',
-      accessor: (course: any) => course.createdAt, // Assuming it's already formatted or can be formatted here
+      key: 'date',
+      header: 'Date',
+      accessor: (course: any) => (
+        <div className="text-sm">
+          <p>{formatDate(course.createdAt)}</p>
+          {course.publishedAt && <p className="text-xs text-green">Published: {formatDate(course.publishedAt)}</p>}
+        </div>
+      ),
     },
     {
       key: 'actions',
       header: 'Actions',
       accessor: (course: any) => (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-1">
-                <MoreHorizontal className="h-4 w-4" />
+        <div className="flex gap-1 relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setSelectedCourse(course); setShowDetailModal(true); }}
+          >
+            <Eye size={14} className="mr-1" /> View
+          </Button>
+          {course.status === 'PENDING_REVIEW' && (
+            <>
+              <Button
+                variant="success"
+                size="sm"
+                onClick={() => {
+                  setSelectedCourse(course);
+                  setConfirmAction({ action: 'approve', label: 'Approve Course' });
+                  setShowConfirmModal(true);
+                }}
+              >
+                <Check size={14} className="mr-1" /> Approve
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => console.log('View course', course.id)}>
-                <Eye className="h-4 w-4 mr-2" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Edit course', course.id)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              {course.status === 'PENDING' && (
-                <>
-                  <DropdownMenuItem className="text-green" onClick={() => console.log('Approve course', course.id)}>
-                    <Check className="h-4 w-4 mr-2" />
-                    Approve
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red" onClick={() => console.log('Reject course', course.id)}>
-                    <X className="h-4 w-4 mr-2" />
-                    Reject
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => {
+                  setSelectedCourse(course);
+                  setConfirmAction({ action: 'reject', label: 'Reject Course' });
+                  setShowConfirmModal(true);
+                }}
+              >
+                <X size={14} className="mr-1" /> Reject
+              </Button>
+            </>
+          )}
+          {course.status === 'APPROVED' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedCourse(course);
+                setConfirmAction({ action: 'archive', label: 'Archive Course' });
+                setShowConfirmModal(true);
+              }}
+            >
+              Archive
+            </Button>
+          )}
         </div>
       ),
     },
   ];
 
-  const fetchCourses = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (statusFilter !== 'ALL') params.append('status', statusFilter);
-      params.append('page', pagination.page.toString());
-      params.append('limit', pagination.limit.toString());
-      
-      const response = await fetch(`/api/admin/courses?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch courses');
-      
-      const data = await response.json();
-      // Assuming the API returns { courses: [...] } based on the placeholder code
-      setCourses(data.courses || []); // Assuming data.courses is the array of courses
-      setPagination(data.pagination || { page: 1, limit: 10, total: data.courses.length, totalPages: Math.ceil(data.courses.length / 10) });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
-      console.error('Error fetching courses:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Placeholder for actual API call
-    const mockCourses = [
-      { id: '1', title: 'MSCE Mathematics', instructor: 'Mr. John Doe', category: 'Mathematics', price: 15000, status: 'APPROVED', enrollments: 120, revenueShare: 70, createdAt: '2023-01-15' },
-      { id: '2', title: 'JCE English Literature', instructor: 'Ms. Jane Smith', category: 'English', price: 12000, status: 'PENDING', enrollments: 50, revenueShare: 70, createdAt: '2023-02-20' },
-      { id: '3', title: 'ICAM Financial Accounting', instructor: 'Dr. Alex Banda', category: 'Accounting', price: 30000, status: 'APPROVED', enrollments: 80, revenueShare: 80, createdAt: '2023-03-10' },
-      { id: '4', title: 'TEVETA Electrical Installation', instructor: 'Eng. Mary Phiri', category: 'Technical', price: 25000, status: 'REJECTED', enrollments: 30, revenueShare: 70, createdAt: '2023-04-01' },
-      { id: '5', title: 'MSCE Physical Science', instructor: 'Mr. John Doe', category: 'Science', price: 18000, status: 'APPROVED', enrollments: 95, revenueShare: 70, createdAt: '2023-05-05' },
-    ];
-    setCourses(mockCourses);
-    setLoading(false);
-  }, [searchQuery, statusFilter, pagination.page]);
-
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Course Management</h1>
-        <Button variant="primary" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Course
+        <div>
+          <h1 className="text-2xl font-bold text-navy">Course Management</h1>
+          <p className="text-grey-dark mt-1">Review and manage all platform courses</p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={fetchCourses}>
+          <RefreshCw size={16} />
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <CardTitle>All Courses</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-grey-dark/50" />
-                <Input
-                  type="search"
-                  placeholder="Search courses..."
-                  className="w-[250px] pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={fetchCourses}><RefreshCw size={16} /></Button>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filter
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setStatusFilter('ALL')}>
-                    All Statuses
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('APPROVED')}>
-                    Approved
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('PENDING')}>
-                    Pending
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('REJECTED')}>
-                    Rejected
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div> 
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy"></div>
-            </div>
-          ) : error ? (
-            <div className="p-4 bg-red-50 text-red-600 rounded-lg text-center">
-              <p>Error: {error}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={fetchCourses}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : (
-            <Table
-              data={courses}
-              columns={columns}
-              isLoading={loading}
-              emptyMessage="No courses found."
+      {/* Error Banner */}
+      {error && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-800">
+          <AlertCircle size={16} />
+          <span>Using mock data - API unavailable: {error}</span>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search courses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftIcon={<Search size={18} className="text-grey-medium" />}
             />
-          )}
+          </div>
+          <select
+            className="px-4 py-2 border-2 border-grey-light rounded-lg text-sm"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="APPROVED">Approved</option>
+            <option value="PENDING_REVIEW">Pending Review</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="DRAFT">Draft</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table
+            data={courses}
+            columns={columns}
+            isLoading={loading}
+            emptyMessage="No courses found"
+          />
         </CardContent>
       </Card>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-grey-medium">
-          Showing {(pagination.page - 1) * pagination.limit + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} courses
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pagination.page === 1}
-            onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pagination.page >= pagination.totalPages}
-            onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-          >
-            Next
-          </Button>
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-grey-medium">
+            Showing {(pagination.page - 1) * pagination.limit + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={pagination.page === 1} onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={pagination.page >= pagination.totalPages} onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}>Next</Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Course Detail Modal */}
+      <Modal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        title={selectedCourse?.title || 'Course Details'}
+        size="lg"
+      >
+        {selectedCourse && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-xs text-grey-medium">Status</p>
+                {getStatusBadge(selectedCourse.status)}
+              </div>
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-xs text-grey-medium">Price</p>
+                <p className="font-semibold text-navy">{formatCurrency(selectedCourse.price)}</p>
+              </div>
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-xs text-grey-medium">Subject</p>
+                <p className="font-medium">{selectedCourse.subject}</p>
+              </div>
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-xs text-grey-medium">Exam Board</p>
+                <p className="font-medium">{selectedCourse.examBoard || 'N/A'}</p>
+              </div>
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-xs text-grey-medium">Students</p>
+                <p className="font-medium">{selectedCourse.studentsCount || 0}</p>
+              </div>
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-xs text-grey-medium">Rating</p>
+                <p className="font-medium">{selectedCourse.rating > 0 ? `★ ${selectedCourse.rating.toFixed(1)}` : 'No ratings'}</p>
+              </div>
+            </div>
+            <div className="p-3 bg-grey-light/50 rounded-lg">
+              <p className="text-xs text-grey-medium">Instructor</p>
+              <p className="font-medium">{selectedCourse.instructor?.user?.fullName || 'Unknown'}</p>
+              <p className="text-xs text-grey-medium">{selectedCourse.instructor?.user?.email}</p>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Confirm Action Modal */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title={confirmAction.label}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-grey-dark">
+            Are you sure you want to {confirmAction.action} <strong>{selectedCourse?.title}</strong>?
+          </p>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setShowConfirmModal(false)}>Cancel</Button>
+            <Button
+              variant={confirmAction.action === 'reject' || confirmAction.action === 'archive' ? 'danger' : 'primary'}
+              onClick={() => handleCourseAction(confirmAction.action, selectedCourse?.id)}
+            >
+              {confirmAction.label}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
     </div>
   );
 }

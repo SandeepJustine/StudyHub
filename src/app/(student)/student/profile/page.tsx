@@ -1,10 +1,6 @@
-export default function Page() {
-  return (
-    <div className="min-h-screen bg-grey-light flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-navy mb-2">Coming Soon</h1>
-        <p className="text-grey-dark">This page is under development.</p>
-      </div>
-    </div>
-  );
-}
+import { getServerSession } from 'next-auth'; import { authOptions } from '@/lib/auth/auth-options'; import { redirect } from 'next/navigation'; import prisma from '@/lib/utils/prisma'; import { Card, CardContent } from '@/components/ui/card'; import { Badge } from '@/components/ui/badge'; import { Button } from '@/components/ui/button'; import { User, Mail, Phone, BookOpen, Award, Edit } from 'lucide-react';
+export default async function StudentProfilePage() {
+  let session; try { session = await getServerSession(authOptions); } catch { redirect('/auth/login'); } if (!session?.user) redirect('/auth/login'); if (session.user.role !== 'STUDENT') redirect(`/${session.user.role.toLowerCase()}/dashboard`);
+  const student = await prisma.student.findFirst({ where: { userId: session.user.id }, include: { _count: { select: { enrollments: true, examAttempts: true, certificates: true } } } }); if (!student) return <div className="p-6"><p>Student not found.</p></div>;
+  return (<div className="p-6 space-y-6"><Card className="border-0 shadow-sm"><CardContent className="p-6"><div className="flex items-center gap-4"><div className="w-16 h-16 rounded-full bg-navy/10 flex items-center justify-center"><span className="text-2xl font-bold text-navy">{session.user.name?.charAt(0)?.toUpperCase()}</span></div><div className="flex-1"><h1 className="text-xl font-bold text-navy">{session.user.name}</h1><div className="flex items-center gap-4 mt-1 text-sm text-grey-medium"><span className="flex items-center gap-1"><Mail size={14} />{session.user.email}</span>{session.user.phone&&<span className="flex items-center gap-1"><Phone size={14} />{session.user.phone}</span>}</div><div className="flex gap-2 mt-2">{student.grade&&<Badge variant="neutral" size="sm">{student.grade}</Badge>}{student.examBoard&&<Badge variant="neutral" size="sm">{student.examBoard}</Badge>}</div></div><Button variant="outline" size="sm"><Edit size={14} className="mr-1" />Edit</Button></div></CardContent></Card>
+  <div className="grid grid-cols-3 gap-3">{[{ l:'Enrollments', v:student._count.enrollments, i:<BookOpen size={16} className="text-green" />, b:'bg-green-50' },{ l:'Exams', v:student._count.examAttempts, i:<Award size={16} className="text-blue-600" />, b:'bg-blue-50' },{ l:'Certificates', v:student._count.certificates, i:<Award size={16} className="text-yellow-600" />, b:'bg-yellow-50' }].map((s,i)=>(<Card key={i} className="border-0 shadow-sm"><CardContent className="p-3 text-center"><div className={`p-1.5 rounded-lg ${s.b} inline-block mb-1`}>{s.i}</div><p className="text-xl font-bold text-navy">{s.v}</p><p className="text-xs text-grey-medium">{s.l}</p></CardContent></Card>))}</div></div>);}

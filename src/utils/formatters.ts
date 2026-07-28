@@ -1,12 +1,16 @@
 /**
  * Formatting utilities for StudyHub Malawi
  */
+export function formatCurrency(amount: number | undefined | null, currency: string = 'MWK', locale: string = 'en'): string {
+  // Handle undefined or null amounts
+  if (amount === undefined || amount === null) {
+    amount = 0;
+  }
 
-export function formatCurrency(amount: number, currency: string = 'MWK', locale: string = 'en'): string {
   if (currency === 'MWK') {
     return `MWK ${amount.toLocaleString(locale === 'ny' ? 'en-MW' : 'en-US')}`;
   }
-  
+  // ... rest of function
   return new Intl.NumberFormat(locale === 'ny' ? 'en-MW' : 'en-US', {
     style: 'currency',
     currency,

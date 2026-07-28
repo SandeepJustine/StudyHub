@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { getSession } from 'next-auth/react';  // ← Import getSession
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,10 +36,27 @@ export default function LoginPage() {
           ? 'Invalid email or password' 
           : result.error
         );
-      } else {
-        router.push('/dashboard');
-        router.refresh();
+        setIsLoading(false);
+        return;
       }
+
+      // Get the session to know the user's role
+      const session = await getSession();
+      
+      // Redirect based on role
+      const roleRoutes: Record<string, string> = {
+        STUDENT: '/student/dashboard',
+        INSTRUCTOR: '/instructor/dashboard',
+        SCHOOL_ADMIN: '/school-admin/dashboard',
+        CORPORATE_CLIENT: '/corporate/dashboard',
+        PLATFORM_ADMIN: '/admin/dashboard',
+        PARENT: '/parents/dashboard',
+      };
+      
+      const dashboardPath = roleRoutes[session?.user?.role || ''] || '/';
+      router.push(dashboardPath);
+      router.refresh();
+      
     } catch (error) {
       setError('An unexpected error occurred. Please try again.');
     } finally {
@@ -48,17 +66,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-grey-light px-4 py-12 overflow-hidden">
-      {/* Background Pattern - Dots */}
-      {/* Background Pattern - Pencils 
-      <div 
-        className="absolute inset-0 opacity-[0.1]"
-        style={{ 
-          backgroundImage: 'url("/images/patterns/pencils.svg")',
-          backgroundRepeat: 'repeat',
-          backgroundSize: '80px 80px',
-        }}
-      />
-      */}
 
       {/* Background Pattern - Education Icons (larger, more subtle) */}
       <div 
