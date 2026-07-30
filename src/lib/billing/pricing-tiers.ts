@@ -193,17 +193,17 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     monthlyPrice: 0,
     annualPrice: null,
     features: [
-      'Create and sell courses',
-      'Basic analytics',
-      'Student management',
-      'Community access',
+      'course:create',        // Changed from 'Create and sell courses'
+      'analytics:basic',      // Changed from 'Basic analytics'
+      'student:manage',       // Changed from 'Student management'
+      'community:access',     // Changed from 'Community access'
     ],
     limits: {
       courses: 5,
       storage: 1000,
     },
-    revenueShare: 0.70, // 70% to instructor
-    platformFee: 0.30,   // 30% to platform
+    revenueShare: 0.70,
+    platformFee: 0.30,
   },
 
   INSTRUCTOR_PRO: {
@@ -211,20 +211,20 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     description: 'Maximize your teaching potential',
     monthlyPrice: 25000,
     annualPrice: null,
-    features: [
-      'Unlimited courses',
-      'Advanced analytics',
-      'Priority listing',
-      'Marketing tools',
-      'Custom coupons',
-      'Dedicated support',
+     features: [
+      'course:create:unlimited',  // Changed from 'Unlimited courses'
+      'analytics:advanced',       // Changed from 'Advanced analytics'
+      'listing:priority',         // Changed from 'Priority listing'
+      'marketing:tools',          // Changed from 'Marketing tools'
+      'coupons:custom',           // Changed from 'Custom coupons'
+      'support:dedicated',        // Changed from 'Dedicated support'
     ],
     limits: {
-      courses: -1,
+      courses: -1, // unlimited
       storage: 50000,
     },
-    revenueShare: 0.80, // 80% to instructor
-    platformFee: 0.20,   // 20% to platform
+    revenueShare: 0.80,
+    platformFee: 0.20,
   },
 };
 

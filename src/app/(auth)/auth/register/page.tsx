@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Mail, Lock, User, Phone, GraduationCap, AlertCircle } from 'lucide-react';
+import { getSession } from 'next-auth/react';
 
 const ROLES = [
   { value: 'STUDENT', label: 'Student', icon: <GraduationCap size={24} />, description: 'Learn and prepare for exams' },
@@ -68,14 +69,33 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Auto-login after registration
-      await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
+    // Auto-login after registration
+const signInResult = await signIn('credentials', {
+  email: formData.email,
+  password: formData.password,
+  redirect: false,
+});
 
-      router.push('/dashboard');
+if (signInResult?.error) {
+  // Auto-login failed, redirect to login page
+  router.push('/auth/login?registered=true');
+  } else {
+    // Get session to determine role
+    const session = await getSession();
+    
+    // Role-based dashboard routes
+    const roleRoutes: Record<string, string> = {
+      STUDENT: '/student/dashboard',
+      INSTRUCTOR: '/instructor/dashboard',
+      SCHOOL_ADMIN: '/school-admin/dashboard',
+      CORPORATE_CLIENT: '/corporate/dashboard',
+      PLATFORM_ADMIN: '/admin/dashboard',
+      PARENT: '/parents/dashboard',
+    };
+    
+    const dashboardPath = roleRoutes[session?.user?.role || ''] || '/';
+    window.location.href = dashboardPath;
+  }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -84,27 +104,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-grey-light p-4 overflow-hidden">
-      {/* Background Pattern - Education Icons (larger, more subtle) */}
-          <div 
-            className="absolute inset-0 opacity-[0.5]"
-            style={{ 
-              backgroundImage: 'url("/images/patterns/education-icons.svg")',
-              backgroundRepeat: 'repeat',
-              backgroundSize: '175px 175px',
-            }}
-          />
-
-          {/* Background Pattern - Campus (very subtle) */}
-        <div 
-          className="absolute inset-0 opacity-[1.5]"
-          style={{ 
-            backgroundImage: 'url("/images/patterns/campus.svg")',
-            backgroundRepeat: 'repeat',
-            backgroundSize: '100px 100px',
-          }}
-        />
-
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
+      
+      <div className="relative z-10 mb-8">
+        <Link href="/">
+          <Logo variant="full-color" size="lg" />
+        </Link>
+      </div>
           {/* Main Card */}
           <div className="relative z-10 w-full max-w-md">
             <Card padding="lg">

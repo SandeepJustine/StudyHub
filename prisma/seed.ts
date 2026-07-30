@@ -3,15 +3,62 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+async function cleanDatabase() {
+  // Delete in order to respect foreign key constraints
+  await prisma.activityLog.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.supportResponse.deleteMany();
+  await prisma.supportTicket.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.forumPost.deleteMany();
+  await prisma.forumThread.deleteMany();
+  await prisma.jobApplication.deleteMany();
+  await prisma.recruitmentPosting.deleteMany();
+  await prisma.corporateContract.deleteMany();
+  await prisma.eventRegistration.deleteMany();
+  await prisma.event.deleteMany();
+  await prisma.liveClass.deleteMany();
+  await prisma.assignmentSubmission.deleteMany();
+  await prisma.assignment.deleteMany();
+  await prisma.examAttempt.deleteMany();
+  await prisma.question.deleteMany();
+  await prisma.quiz.deleteMany();
+  await prisma.courseReview.deleteMany();
+  await prisma.enrollment.deleteMany();
+  await prisma.courseModule.deleteMany();
+  await prisma.course.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.transaction.deleteMany();
+  await prisma.payout.deleteMany();
+  await prisma.subscription.deleteMany();
+  await prisma.parentLink.deleteMany();
+  await prisma.parent.deleteMany();
+  await prisma.corporateClient.deleteMany();
+  await prisma.instructor.deleteMany();
+  await prisma.schoolAdmin.deleteMany();
+  await prisma.student.deleteMany();
+  await prisma.institutionBranding.deleteMany();
+  await prisma.institution.deleteMany();
+  await prisma.promoCode.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.verificationToken.deleteMany();
+  await prisma.user.deleteMany();
+  console.log('Database cleaned');
+}
+
 async function main() {
   console.log('🌱 Starting database seed...\n');
+
+  // Uncomment to wipe all data before reseeding:
+  // await cleanDatabase();
 
   const password = await bcrypt.hash('password123', 12);
 
   // ============================================
   // CREATE USERS
   // ============================================
-  
+
   console.log('Creating users...');
 
   const admin = await prisma.user.upsert({
@@ -263,59 +310,6 @@ async function main() {
   console.log('  Corporate:  corporate@studyhub.mw');
   console.log('  Parent:     parent@studyhub.mw');
   console.log('');
-}
-
-main()
-  .catch((e) => {
-    console.error('❌ Seed failed:', e.message);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-
-async function cleanDatabase() {
-  // Delete in order to respect foreign key constraints
-  await prisma.activityLog.deleteMany();
-  await prisma.auditLog.deleteMany();
-  await prisma.supportResponse.deleteMany();
-  await prisma.supportTicket.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.forumPost.deleteMany();
-  await prisma.forumThread.deleteMany();
-  await prisma.jobApplication.deleteMany();
-  await prisma.recruitmentPosting.deleteMany();
-  await prisma.corporateContract.deleteMany();
-  await prisma.eventRegistration.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.liveClass.deleteMany();
-  await prisma.assignmentSubmission.deleteMany();
-  await prisma.assignment.deleteMany();
-  await prisma.examAttempt.deleteMany();
-  await prisma.question.deleteMany();
-  await prisma.quiz.deleteMany();
-  await prisma.courseReview.deleteMany();
-  await prisma.enrollment.deleteMany();
-  await prisma.courseModule.deleteMany();
-  await prisma.course.deleteMany();
-  await prisma.invoice.deleteMany();
-  await prisma.transaction.deleteMany();
-  await prisma.payout.deleteMany();
-  await prisma.subscription.deleteMany();
-  await prisma.parentLink.deleteMany();
-  await prisma.parent.deleteMany();
-  await prisma.corporateClient.deleteMany();
-  await prisma.instructor.deleteMany();
-  await prisma.schoolAdmin.deleteMany();
-  await prisma.student.deleteMany();
-  await prisma.institutionBranding.deleteMany();
-  await prisma.institution.deleteMany();
-  await prisma.promoCode.deleteMany();
-  await prisma.session.deleteMany();
-  await prisma.account.deleteMany();
-  await prisma.verificationToken.deleteMany();
-  await prisma.user.deleteMany();
-  console.log('Database cleaned');
 }
 
 main()

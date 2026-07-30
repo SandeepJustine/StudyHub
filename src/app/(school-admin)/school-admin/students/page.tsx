@@ -1,45 +1,158 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table } from '@/components/ui/table';
 import { Modal } from '@/components/ui/modal';
+import { Toast } from '@/components/ui/toast';
+import { StudentForm } from '@/components/features/institution/student-form';
+import { StudentDetailModal } from '@/components/features/institution/student-detail-modal';
 import {
-  Search,
-  Filter,
-  Download,
-  UserPlus,
-  Upload,
-  Eye,
-  Edit,
-  Trash2,
+  Search, Filter, Download, UserPlus, Upload, Eye, Edit, Trash2,
 } from 'lucide-react';
 
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  grade?: string;
+  subjects: string[];
+  enrollmentCount: number;
+  averageProgress: number;
+  lastActive?: Date | null;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export default function SchoolAdminStudentsPage() {
-  const [showAddStudent, setShowAddStudent] = useState(false);
-  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1, limit: 20, total: 0, totalPages: 1,
+  });
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('');
+  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [viewingStudent, setViewingStudent] = useState<any>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const students = [
-    { id: '1', name: 'John Phiri', email: 'john@example.com', grade: 'Form 4', subjects: ['Math', 'Physics'], avgScore: 72, status: 'active' },
-    { id: '2', name: 'Mary Banda', email: 'mary@example.com', grade: 'Form 3', subjects: ['English', 'Biology'], avgScore: 85, status: 'active' },
-    { id: '3', name: 'Peter Kamanga', email: 'peter@example.com', grade: 'Form 4', subjects: ['Chemistry', 'Math'], avgScore: 45, status: 'at_risk' },
-    { id: '4', name: 'Grace Mwale', email: 'grace@example.com', grade: 'Form 2', subjects: ['Geography', 'History'], avgScore: 90, status: 'active' },
-  ];
+  const fetchStudents = useCallback(async (page = 1, query = searchQuery, grade = selectedGrade) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: '20',
+        ...(query && { query }),
+        ...(grade && { grade }),
+      });
+      const res = await fetch(`/api/institutions/students?${params}`);
+      const data = await res.json();
+      if (data.success) {
+        setStudents(data.data);
+        setPagination(data.pagination);
+      }
+    } catch (error) {
+      setToast({ message: 'Failed to load students', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, selectedGrade]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  const handleAddStudent = async (formData: any) => {
+    try {
+      const res = await fetch('/api/institutions/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ students: [formData] }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToast({ message: 'Student added successfully', type: 'success' });
+        setShowAddStudent(false);
+        fetchStudents();
+      } else {
+        setToast({ message: data.error || 'Failed to add student', type: 'error' });
+      }
+    } catch (error) {
+      setToast({ message: 'Failed to add student', type: 'error' });
+    }
+  };
+
+  const handleEditStudent = async (formData: any) => {
+    if (!editingStudent) return;
+    try {
+      const res = await fetch(`/api/institutions/students/${editingStudent.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToast({ message: 'Student updated successfully', type: 'success' });
+        setEditingStudent(null);
+        fetchStudents();
+      } else {
+        setToast({ message: data.error || 'Failed to update student', type: 'error' });
+      }
+    } catch (error) {
+      setToast({ message: 'Failed to update student', type: 'error' });
+    }
+  };
+
+  const handleDeleteStudent = async (student: Student) => {
+    if (!confirm(`Are you sure you want to delete ${student.name}?`)) return;
+    try {
+      const res = await fetch(`/api/institutions/students/${student.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToast({ message: 'Student deleted successfully', type: 'success' });
+        fetchStudents();
+      } else {
+        setToast({ message: data.error || 'Failed to delete student', type: 'error' });
+      }
+    } catch (error) {
+      setToast({ message: 'Failed to delete student', type: 'error' });
+    }
+  };
+
+  const handleViewStudent = async (student: Student) => {
+    try {
+      const res = await fetch(`/api/institutions/students/${student.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setViewingStudent(data.data);
+      }
+    } catch (error) {
+      setToast({ message: 'Failed to load student details', type: 'error' });
+    }
+  };
 
   const columns = [
     {
       key: 'name',
       header: 'Student Name',
-      accessor: (student: any) => (
+      accessor: (student: Student) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-navy/10 flex items-center justify-center">
             <span className="text-sm font-medium text-navy">
-              {student.name.split(' ').map((n: string) => n[0]).join('')}
+              {student.name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
           <div>
@@ -52,55 +165,65 @@ export default function SchoolAdminStudentsPage() {
     {
       key: 'grade',
       header: 'Grade',
-      accessor: (student: any) => (
-        <Badge variant="neutral">{student.grade}</Badge>
+      accessor: (student: Student) => (
+        <Badge variant="neutral">{student.grade || 'N/A'}</Badge>
       ),
     },
     {
       key: 'subjects',
       header: 'Subjects',
-      accessor: (student: any) => (
-        <div className="flex gap-1">
-          {student.subjects.map((s: string) => (
+      accessor: (student: Student) => (
+        <div className="flex gap-1 flex-wrap">
+          {student.subjects.slice(0, 3).map((s: string) => (
             <Badge key={s} size="sm" variant="info">{s}</Badge>
           ))}
+          {student.subjects.length > 3 && (
+            <Badge size="sm" variant="neutral">+{student.subjects.length - 3}</Badge>
+          )}
         </div>
       ),
     },
     {
       key: 'avgScore',
-      header: 'Avg Score',
-      accessor: (student: any) => (
+      header: 'Avg Progress',
+      accessor: (student: Student) => (
         <div className="flex items-center gap-2">
           <div className="w-16 bg-grey-light rounded-full h-2">
             <div
               className={`h-2 rounded-full ${
-                student.avgScore >= 70 ? 'bg-green' : student.avgScore >= 50 ? 'bg-yellow-500' : 'bg-red'
+                student.averageProgress >= 70 ? 'bg-green' :
+                student.averageProgress >= 50 ? 'bg-yellow-500' : 'bg-red'
               }`}
-              style={{ width: `${student.avgScore}%` }}
+              style={{ width: `${Math.min(student.averageProgress, 100)}%` }}
             />
           </div>
-          <span className="text-sm font-medium">{student.avgScore}%</span>
+          <span className="text-sm font-medium">{Math.round(student.averageProgress)}%</span>
         </div>
       ),
     },
     {
       key: 'status',
       header: 'Status',
-      accessor: (student: any) => (
-        <Badge variant={student.status === 'active' ? 'success' : 'error'}>
-          {student.status === 'active' ? 'Active' : 'At Risk'}
+      accessor: (student: Student) => (
+        <Badge variant={student.lastActive ? 'success' : 'warning'}>
+          {student.lastActive ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },
     {
       key: 'actions',
       header: 'Actions',
-      accessor: (student: any) => (
+      accessor: (student: Student) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm"><Eye size={14} /></Button>
-          <Button variant="ghost" size="sm"><Edit size={14} /></Button>
-          <Button variant="ghost" size="sm"><Trash2 size={14} className="text-red" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => handleViewStudent(student)}>
+            <Eye size={14} />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setEditingStudent(student)}>
+            <Edit size={14} />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(student)}>
+            <Trash2 size={14} className="text-red" />
+          </Button>
         </div>
       ),
     },
@@ -131,14 +254,14 @@ export default function SchoolAdminStudentsPage() {
             <Input
               placeholder="Search students..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setTimeout(() => fetchStudents(1, e.target.value, selectedGrade), 500); }}
               leftIcon={<Search size={18} className="text-grey-medium" />}
             />
           </div>
           <select
             className="px-4 py-2 border-2 border-grey-light rounded-lg text-sm"
             value={selectedGrade}
-            onChange={(e) => setSelectedGrade(e.target.value)}
+            onChange={(e) => { setSelectedGrade(e.target.value); fetchStudents(1, searchQuery, e.target.value); }}
           >
             <option value="">All Grades</option>
             <option value="Form 1">Form 1</option>
@@ -157,57 +280,65 @@ export default function SchoolAdminStudentsPage() {
           <Table
             data={students}
             columns={columns}
+            isLoading={loading}
+            emptyMessage="No students found"
           />
         </CardContent>
       </Card>
 
-      {/* Add Student Modal */}
-      <Modal
-        isOpen={showAddStudent}
-        onClose={() => setShowAddStudent(false)}
-        title="Add New Student"
-        size="md"
-      >
-        <div className="space-y-4">
-          <Input label="Full Name" placeholder="Enter student name" />
-          <Input label="Email" type="email" placeholder="student@example.com" />
-          <Input label="Phone" placeholder="+265 888 000 000" />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-grey-dark">Grade</label>
-              <select className="w-full px-4 py-3 border-2 border-grey-light rounded-lg">
-                <option>Select grade</option>
-                <option>Form 1</option>
-                <option>Form 2</option>
-                <option>Form 3</option>
-                <option>Form 4</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-grey-dark">Exam Board</label>
-              <select className="w-full px-4 py-3 border-2 border-grey-light rounded-lg">
-                <option>Select board</option>
-                <option>MSCE</option>
-                <option>JCE</option>
-              </select>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-grey-dark">Subjects</label>
-            <div className="grid grid-cols-2 gap-2">
-              {['Mathematics', 'English', 'Physics', 'Biology', 'Chemistry', 'Geography'].map(s => (
-                <label key={s} className="flex items-center gap-2">
-                  <input type="checkbox" className="rounded border-grey-light" />
-                  <span className="text-sm">{s}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowAddStudent(false)}>Cancel</Button>
-            <Button variant="primary">Add Student</Button>
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-grey-medium">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline" size="sm"
+              disabled={pagination.page === 1}
+              onClick={() => fetchStudents(pagination.page - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline" size="sm"
+              disabled={pagination.page === pagination.totalPages}
+              onClick={() => fetchStudents(pagination.page + 1)}
+            >
+              Next
+            </Button>
           </div>
         </div>
+      )}
+
+      {/* Add/Edit Student Modal */}
+      <Modal
+        isOpen={showAddStudent || !!editingStudent}
+        onClose={() => { setShowAddStudent(false); setEditingStudent(null); }}
+        title={editingStudent ? 'Edit Student' : 'Add New Student'}
+        size="lg"
+      >
+        <StudentForm
+          student={editingStudent}
+          onSubmit={editingStudent ? handleEditStudent : handleAddStudent}
+          onCancel={() => { setShowAddStudent(false); setEditingStudent(null); }}
+        />
+      </Modal>
+
+      {/* Student Detail Modal */}
+      <Modal
+        isOpen={!!viewingStudent}
+        onClose={() => setViewingStudent(null)}
+        title="Student Details"
+        size="xl"
+      >
+        {viewingStudent && (
+          <StudentDetailModal
+            student={viewingStudent}
+            onClose={() => setViewingStudent(null)}
+            onEdit={() => { setViewingStudent(null); setEditingStudent(viewingStudent); }}
+          />
+        )}
       </Modal>
 
       {/* Bulk Import Modal */}
@@ -224,7 +355,6 @@ export default function SchoolAdminStudentsPage() {
             <p className="text-sm text-grey-medium mb-4">or</p>
             <Button variant="outline">Browse Files</Button>
           </div>
-
           <div className="bg-grey-light/50 rounded-lg p-4">
             <h4 className="font-semibold text-navy mb-2">CSV Format Requirements</h4>
             <p className="text-sm text-grey-dark mb-2">Your CSV file should include these columns:</p>
@@ -232,7 +362,6 @@ export default function SchoolAdminStudentsPage() {
               email, fullName, grade, examBoard, subjects (comma-separated)
             </code>
           </div>
-
           <div className="flex gap-3 justify-between">
             <Button variant="outline">Download Template</Button>
             <div className="flex gap-3">
@@ -242,6 +371,15 @@ export default function SchoolAdminStudentsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

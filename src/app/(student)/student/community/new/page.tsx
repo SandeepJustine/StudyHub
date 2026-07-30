@@ -1,6 +1,5 @@
 'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,20 +10,12 @@ import { Toast } from '@/components/ui/toast';
 import { MessageSquare, Send, ArrowLeft, Loader2, Tag, X } from 'lucide-react';
 import Link from 'next/link';
 
-const FORUMS = [
-  { id: '1', name: 'MSCE Mathematics', subject: 'Mathematics' },
-  { id: '2', name: 'Physics Study Group', subject: 'Physics' },
-  { id: '3', name: 'English Literature', subject: 'English' },
-  { id: '4', name: 'Chemistry Lab', subject: 'Chemistry' },
-  { id: '5', name: 'Biology Corner', subject: 'Biology' },
-  { id: '6', name: 'ICAM Study Hub', subject: 'Accounting' },
-];
-
 export default function NewThreadPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [forums, setForums] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -34,9 +25,18 @@ export default function NewThreadPage() {
     tags: [] as string[],
   });
 
+  useEffect(() => {
+    fetch('/api/community/forums')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setForums(d.data || []);
+      })
+      .catch(() => {});
+  }, []);
+
   if (status === 'loading') {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[50vh]">
+      <div className="p-6 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-navy" />
       </div>
     );
@@ -48,17 +48,17 @@ export default function NewThreadPage() {
   }
 
   const addTag = (tag: string) => {
-    const trimmed = tag.trim();
-    if (trimmed && !formData.tags.includes(trimmed) && formData.tags.length < 5) {
-      setFormData({ ...formData, tags: [...formData.tags, trimmed], tagsInput: '' });
+    const t = tag.trim();
+    if (t && !formData.tags.includes(t) && formData.tags.length < 5) {
+      setFormData({ ...formData, tags: [...formData.tags, t], tagsInput: '' });
     }
   };
 
   const removeTag = (tag: string) => {
-    setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
+    setFormData({ ...formData, tags: formData.tags.filter((x) => x !== tag) });
   };
 
-  const handleTagsInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleTagsInput = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       addTag(formData.tagsInput);
@@ -68,18 +68,13 @@ export default function NewThreadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
-      setToast({ message: 'Title and content are required', type: 'error' });
+      setToast({ message: 'Title and content required', type: 'error' });
       return;
     }
-
     setIsSubmitting(true);
     try {
-      // Add any remaining tag text
-      if (formData.tagsInput.trim()) {
-        addTag(formData.tagsInput);
-      }
-
-      const response = await fetch('/api/community', {
+      if (formData.tagsInput.trim()) addTag(formData.tagsInput);
+      const res = await fetch('/api/community', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,13 +85,14 @@ export default function NewThreadPage() {
           tags: formData.tags,
         }),
       });
-
-      if (!response.ok) throw new Error('Failed to create thread');
-
-      setToast({ message: 'Discussion posted successfully!', type: 'success' });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed');
+      }
+      setToast({ message: 'Posted!', type: 'success' });
       setTimeout(() => router.push('/student/community'), 1000);
-    } catch (error) {
-      setToast({ message: 'Failed to post discussion', type: 'error' });
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed', type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +100,6 @@ export default function NewThreadPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/student/community" className="text-grey-medium hover:text-navy">
           <ArrowLeft size={18} />
@@ -115,16 +110,13 @@ export default function NewThreadPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-navy">New Discussion</h1>
-            <p className="text-sm text-grey-medium">Share your knowledge with the community</p>
+            <p className="text-sm text-grey-medium">Share your knowledge</p>
           </div>
         </div>
       </div>
-
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-4">
-            {/* Title */}
             <div>
               <label className="block text-sm font-medium text-grey-dark mb-1">Title *</label>
               <Input
@@ -136,38 +128,35 @@ export default function NewThreadPage() {
               />
               <p className="text-xs text-grey-medium mt-1">{formData.title.length}/200</p>
             </div>
-
-            {/* Forum Select */}
             <div>
               <label className="block text-sm font-medium text-grey-dark mb-1">Forum</label>
               <select
                 value={formData.forumId}
                 onChange={(e) => setFormData({ ...formData, forumId: e.target.value })}
-                className="w-full px-4 py-2.5 border-2 border-grey-light rounded-lg text-sm focus:border-navy focus:ring-2 focus:ring-navy/20"
+                className="w-full px-4 py-2.5 border-2 border-grey-light rounded-lg text-sm"
               >
                 <option value="">General Discussion</option>
-                {FORUMS.map((forum) => (
-                  <option key={forum.id} value={forum.id}>
-                    {forum.name} ({forum.subject})
+                {forums.map((f: any) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name} ({f.subject})
                   </option>
                 ))}
               </select>
             </div>
-
-            {/* Subject */}
             <div>
-              <label className="block text-sm font-medium text-grey-dark mb-1">Subject (optional)</label>
+              <label className="block text-sm font-medium text-grey-dark mb-1">
+                Subject (optional)
+              </label>
               <Input
-                placeholder="e.g., Mathematics, Physics"
+                placeholder="e.g., Mathematics"
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
               />
             </div>
-
-            {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-grey-dark mb-1">
-                <Tag size={14} className="inline mr-1" />Tags
+                <Tag size={14} className="inline mr-1" />
+                Tags
               </label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {formData.tags.map((tag) => (
@@ -180,7 +169,7 @@ export default function NewThreadPage() {
                 ))}
               </div>
               <Input
-                placeholder="Add tags (press Enter or comma)"
+                placeholder="Add tags (press Enter)"
                 value={formData.tagsInput}
                 onChange={(e) => setFormData({ ...formData, tagsInput: e.target.value })}
                 onKeyDown={handleTagsInput}
@@ -188,13 +177,11 @@ export default function NewThreadPage() {
               />
               <p className="text-xs text-grey-medium mt-1">{formData.tags.length}/5 tags</p>
             </div>
-
-            {/* Content */}
             <div>
               <label className="block text-sm font-medium text-grey-dark mb-1">Content *</label>
               <textarea
-                className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy focus:ring-2 focus:ring-navy/20 min-h-[200px] text-sm resize-y"
-                placeholder="Write your discussion here... Share your thoughts, questions, or tips!"
+                className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy min-h-[200px] text-sm resize-y"
+                placeholder="Write your discussion here..."
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 required
@@ -202,22 +189,27 @@ export default function NewThreadPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Actions */}
         <div className="flex items-center justify-between">
           <Link href="/student/community">
-            <Button variant="ghost" type="button">Cancel</Button>
+            <Button variant="ghost" type="button">
+              Cancel
+            </Button>
           </Link>
           <Button variant="primary" size="lg" type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
-              <><Loader2 size={16} className="animate-spin mr-1" /> Posting...</>
+              <>
+                <Loader2 size={16} className="animate-spin mr-1" />
+                Posting...
+              </>
             ) : (
-              <><Send size={16} className="mr-1" /> Post Discussion</>
+              <>
+                <Send size={16} className="mr-1" />
+                Post Discussion
+              </>
             )}
           </Button>
         </div>
       </form>
-
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );

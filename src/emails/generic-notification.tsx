@@ -1,49 +1,59 @@
 // src/emails/generic-notification.tsx
-import {
-  Body, Container, Head, Heading, Html, Preview, Section, Text, Link,
+import React from 'react';
+import { 
+  Body, 
+  Container, 
+  Head, 
+  Heading, 
+  Html, 
+  Preview, 
+  Section, 
+  Text, 
+  Tailwind,
 } from '@react-email/components';
 
 interface GenericNotificationEmailProps {
   userName?: string;
   title?: string;
   message?: string;
-  metadata?: Record<string, any>;
-  locale?: string;
+  appName?: string;
 }
 
-export const GenericNotificationEmail = ({
-  userName = 'Student',
-  title = 'StudyHub Notification',
-  message = 'You have a new notification from StudyHub Malawi.',
-  metadata,
-  locale = 'en',
-}: GenericNotificationEmailProps) => {
+export const GenericNotificationEmail: React.FC<GenericNotificationEmailProps> = ({
+  userName = 'User',
+  title = 'Notification',
+  message = 'You have a new notification.',
+  appName = 'StudyHub Malawi',
+}) => {
   return (
     <Html>
       <Head />
       <Preview>{title}</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={content}>
-            <Heading style={heading}>{title}</Heading>
-            <Text style={paragraph}>Hello {userName},</Text>
-            <Text style={paragraph}>{message}</Text>
-            {metadata?.actionUrl && (
-              <Section style={ctaContainer}>
-                <Link href={metadata.actionUrl} style={ctaButton}>{metadata.actionLabel || 'View Details'}</Link>
-              </Section>
-            )}
-          </Section>
-        </Container>
-      </Body>
+      <Tailwind>
+        <Body className="bg-gray-100 font-sans">
+          <Container className="mx-auto max-w-xl py-5 px-4">
+            <Section className="bg-white rounded-lg shadow-md p-8">
+              <Heading className="text-2xl font-bold text-gray-800 mb-4">
+                {title}
+              </Heading>
+              <Text className="text-gray-600 mb-6">
+                Hi {userName},
+              </Text>
+              <Text className="text-gray-600 mb-6">
+                {message}
+              </Text>
+              <Text className="text-gray-500 text-sm">
+                If you have any questions about this notification, please don't hesitate to contact our support team.
+              </Text>
+            </Section>
+            <Text className="text-center text-gray-500 text-sm mt-4">
+              © {new Date().getFullYear()} {appName}. All rights reserved.
+            </Text>
+          </Container>
+        </Body>
+      </Tailwind>
     </Html>
   );
 };
 
-const main = { backgroundColor: '#F2F4F7', fontFamily: "'Poppins', sans-serif" };
-const container = { margin: '0 auto', padding: '20px 0', maxWidth: '480px' };
-const content = { backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '8px' };
-const heading = { fontSize: '24px', fontWeight: 'bold', color: '#0D1B3D', textAlign: 'center' as const, marginBottom: '24px' };
-const paragraph = { fontSize: '16px', lineHeight: '24px', color: '#333333', marginBottom: '16px' };
-const ctaContainer = { textAlign: 'center' as const, marginBottom: '24px' };
-const ctaButton = { backgroundColor: '#E63946', color: '#FFFFFF', padding: '12px 32px', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-block' };
+export default GenericNotificationEmail;

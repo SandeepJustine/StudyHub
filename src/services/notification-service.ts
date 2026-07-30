@@ -1,6 +1,7 @@
 // src/lib/notifications/notification-service.ts
 import { createTransport, Transporter } from 'nodemailer';
 import { render } from '@react-email/render';
+import prisma from '@/lib/utils/prisma';
 import { 
   PaymentConfirmationEmail,
   SubscriptionReceiptEmail,

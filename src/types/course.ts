@@ -33,7 +33,17 @@ export interface CourseModule {
   quiz?: QuizData;
 }
 
-export type ContentType = 'VIDEO' | 'NOTES' | 'QUIZ' | 'PAST_PAPER' | 'ASSIGNMENT';
+export type ContentType = 
+  | 'VIDEO' 
+  | 'AUDIO' 
+  | 'TEXT' 
+  | 'PDF' 
+  | 'SLIDES' 
+  | 'LINK' 
+  | 'EMBED' 
+  | 'QUIZ' 
+  | 'ASSIGNMENT'
+  | 'PAST_PAPER';
 
 export interface QuizData {
   id: string;

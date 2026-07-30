@@ -4,36 +4,91 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Toast } from '@/components/ui/toast';
 import {
-  Users,
-  GraduationCap,
-  BookOpen,
-  TrendingUp,
-  AlertTriangle,
-  Search,
-  Download,
-  UserPlus,
+  Users, GraduationCap, BookOpen, TrendingUp,
+  AlertTriangle, Download, UserPlus,
 } from 'lucide-react';
-import { formatCurrency } from '@/utils/formatters';
+import { formatDate } from '@/utils/formatters';
+
+interface DashboardData {
+  institution: {
+    name: string;
+    tier: string;
+    studentCount: number;
+    maxStudents: number;
+    currentStudents: number;
+  };
+  stats: {
+    totalStudents: number;
+    totalTeachers: number;
+    activeStudents: number;
+    coursesAssigned: number;
+    averageProgress: number;
+    studentsAtRisk: number;
+  };
+  subscription: {
+    status: string;
+    tier: string;
+    endDate: string;
+    autoRenew: boolean;
+  } | null;
+  courses: Array<{ id: string; title: string; subject: string; studentsCount: number }>;
+}
 
 export default function SchoolAdminDashboardPage() {
-  const [stats, setStats] = useState({
-    totalStudents: 156,
-    activeStudents: 142,
-    totalTeachers: 12,
-    coursesAssigned: 24,
-    averageProgress: 67,
-    subscriptionTier: 'INSTITUTION_BRONZE',
-    subscriptionStatus: 'active',
-    renewalDate: '2026-08-15',
-    studentsAtRisk: 8,
-  });
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/institutions/analytics');
+        const result = await res.json();
+        if (result.success) {
+          setData(result.data);
+        } else {
+          setToast({ message: result.error || 'Failed to load dashboard', type: 'error' });
+        }
+      } catch (error) {
+        setToast({ message: 'Failed to load dashboard', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}><CardContent className="p-6"><div className="h-6 bg-grey-light rounded animate-pulse mb-2"></div><div className="h-4 bg-grey-light rounded animate-pulse w-2/3"></div></CardContent></Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-grey-medium">Failed to load dashboard data</p>
+      </div>
+    );
+  }
+
+  const stats = data.stats;
+  const tier = data.institution.tier.replace('INSTITUTION_', '');
+  const isBronze = data.institution.tier === 'INSTITUTION_BRONZE';
 
   return (
     <div className="space-y-6">
       {/* Subscription Alert */}
-      {stats.subscriptionTier === 'INSTITUTION_BRONZE' && (
+      {isBronze && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle size={20} className="text-yellow-600" />
@@ -132,80 +187,36 @@ export default function SchoolAdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { name: 'John Phiri', grade: 'Form 4', progress: 25, lastActive: '3 days ago', reason: 'Low engagement' },
-                { name: 'Mary Banda', grade: 'Form 3', progress: 30, lastActive: '1 week ago', reason: 'Incomplete assignments' },
-                { name: 'Peter Kamanga', grade: 'Form 4', progress: 20, lastActive: '5 days ago', reason: 'Failed mock exam' },
-              ].map((student, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+              <p className="text-sm text-grey-medium">
+                {stats.studentsAtRisk} student{stats.studentsAtRisk > 1 ? 's are' : ' is'} showing low progress.
+                Review their records and intervene.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Course Performance */}
+      {data.courses.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Course Enrollment Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.courses.slice(0, 5).map((course) => (
+                <div key={course.id} className="flex items-center justify-between p-3 bg-grey-light/30 rounded-lg">
                   <div>
-                    <h4 className="font-semibold text-navy">{student.name}</h4>
-                    <p className="text-sm text-grey-medium">
-                      {student.grade} • {student.reason}
-                    </p>
+                    <h4 className="font-medium text-navy">{course.title}</h4>
+                    <p className="text-sm text-grey-medium">{course.subject}</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-red">{student.progress}% progress</p>
-                      <p className="text-xs text-grey-medium">Last active: {student.lastActive}</p>
-                    </div>
-                    <Button variant="outline" size="sm">Intervene</Button>
-                  </div>
+                  <Badge variant="info" size="sm">{course.studentsCount} students</Badge>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
       )}
-
-      {/* Student Performance Overview */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Performance by Grade</CardTitle>
-            <select className="px-3 py-1 border border-grey-light rounded text-sm">
-              <option>All Grades</option>
-              <option>Form 1</option>
-              <option>Form 2</option>
-              <option>Form 3</option>
-              <option>Form 4</option>
-            </select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { grade: 'Form 4', students: 45, avgScore: 72, passRate: 85, color: 'bg-blue-600' },
-              { grade: 'Form 3', students: 38, avgScore: 68, passRate: 78, color: 'bg-green' },
-              { grade: 'Form 2', students: 40, avgScore: 75, passRate: 90, color: 'bg-purple-600' },
-              { grade: 'Form 1', students: 33, avgScore: 70, passRate: 82, color: 'bg-yellow-600' },
-            ].map((grade, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="w-32">
-                  <p className="text-sm font-medium text-navy">{grade.grade}</p>
-                  <p className="text-xs text-grey-medium">{grade.students} students</p>
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-grey-medium">Average Score</span>
-                    <span className="font-medium text-navy">{grade.avgScore}%</span>
-                  </div>
-                  <div className="w-full bg-grey-light rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${grade.color}`}
-                      style={{ width: `${grade.avgScore}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="w-24 text-right">
-                  <p className="text-sm font-medium text-green">{grade.passRate}%</p>
-                  <p className="text-xs text-grey-medium">pass rate</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Subscription Info */}
       <Card>
@@ -216,24 +227,35 @@ export default function SchoolAdminDashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-navy/5 rounded-lg">
               <p className="text-sm text-grey-medium mb-1">Current Tier</p>
-              <p className="text-xl font-bold text-navy">
-                {stats.subscriptionTier.replace('INSTITUTION_', '')}
-              </p>
-              <Badge variant="success" size="sm" className="mt-1">{stats.subscriptionStatus}</Badge>
+              <p className="text-xl font-bold text-navy">{tier}</p>
+              <Badge variant="success" size="sm" className="mt-1">
+                {data.subscription?.status || 'N/A'}
+              </Badge>
             </div>
             <div className="p-4 bg-navy/5 rounded-lg">
               <p className="text-sm text-grey-medium mb-1">Student Capacity</p>
-              <p className="text-xl font-bold text-navy">200</p>
-              <p className="text-xs text-grey-medium">{stats.totalStudents}/200 used</p>
+              <p className="text-xl font-bold text-navy">{data.institution.maxStudents}</p>
+              <p className="text-xs text-grey-medium">
+                {data.institution.currentStudents}/{data.institution.maxStudents} used
+              </p>
             </div>
             <div className="p-4 bg-navy/5 rounded-lg">
               <p className="text-sm text-grey-medium mb-1">Next Renewal</p>
-              <p className="text-xl font-bold text-navy">{new Date(stats.renewalDate).toLocaleDateString()}</p>
-              <p className="text-xs text-green">Auto-renewal enabled</p>
+              <p className="text-xl font-bold text-navy">
+                {data.subscription?.endDate ? formatDate(data.subscription.endDate) : 'N/A'}
+              </p>
+              <p className="text-xs text-green">
+                {data.subscription?.autoRenew ? 'Auto-renewal enabled' : 'Auto-renewal disabled'}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
     </div>
   );
 }

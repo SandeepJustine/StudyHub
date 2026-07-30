@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { courseService } from '@/lib/courses/course-service';
+import { prisma } from '@/lib/prisma';
 
+// src/app/api/courses/[courseId]/enroll/route.ts
 export async function POST(
   req: Request,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,14 +18,20 @@ export async function POST(
     const { paymentMethod } = await req.json();
     
     // Get student ID from session
-    const studentId = session.user.studentId;
-    if (!studentId) {
+    const student = await prisma.student.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true }
+    });
+
+    if (!student) {
       return NextResponse.json({ error: 'Student profile not found' }, { status: 400 });
     }
 
+    const studentId = student.id;
+
     const enrollment = await courseService.enrollStudent(
       studentId,
-      params.courseId,
+      courseId,
       paymentMethod
     );
 

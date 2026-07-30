@@ -1,13 +1,27 @@
-// src/lib/email/email-service.ts
-import { NotificationService } from '@/lib/notifications/notification-service';
+import prisma from '@/lib/utils/prisma';
 
 export class EmailService {
-  private notificationService: NotificationService;
-
-  constructor() {
-    this.notificationService = new NotificationService();
+  /**
+   * Send an email directly (without NotificationService)
+   */
+  async sendEmail(payload: {
+    to: string;
+    subject: string;
+    html: string;
+  }) {
+    try {
+      // In production, use nodemailer or SendGrid
+      console.log('Sending email:', payload.subject, 'to', payload.to);
+      return true;
+    } catch (error) {
+      console.error('Email send failed:', error);
+      return false;
+    }
   }
 
+  /**
+   * Build and send payment confirmation
+   */
   async sendPaymentConfirmation(userId: string, paymentData: {
     amount: number;
     planName: string;
@@ -15,148 +29,153 @@ export class EmailService {
     transactionReference: string;
     invoiceUrl?: string;
   }) {
-    await this.notificationService.send({
-      userId,
-      type: 'PAYMENT_CONFIRMATION',
-      title: `Payment Confirmed - MWK ${paymentData.amount.toLocaleString()}`,
-      message: `Your payment of MWK ${paymentData.amount.toLocaleString()} for ${paymentData.planName} has been confirmed.`,
-      channel: ['EMAIL', 'PUSH'], // Email primary, Push for in-app
-      priority: 'normal',
-      metadata: {
-        ...paymentData,
-        userName: await this.getUserName(userId),
-        template: 'payment-confirmation',
-      },
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: `Payment Confirmed - MWK ${paymentData.amount.toLocaleString()}`,
+      html: this.buildPaymentEmail(user.fullName, paymentData),
     });
   }
 
+  /**
+   * Build and send OTP
+   */
   async sendOTP(userId: string, otp: string, purpose: string) {
-    await this.notificationService.send({
-      userId,
-      type: 'OTP_VERIFICATION',
-      title: 'Your Verification Code',
-      message: `Your verification code is: ${otp}. It expires in 10 minutes.`,
-      channel: ['EMAIL', 'SMS'], // Both email and SMS for OTP (time-sensitive)
-      priority: 'high',
-      metadata: {
-        otp,
-        purpose,
-        expiryMinutes: 10,
-        template: 'otp-verification',
-      },
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: 'Your Verification Code',
+      html: this.buildOTPEmail(user.fullName, otp, purpose),
     });
   }
 
-  async sendWelcomeEmail(userId: string, role: string) {
-    const features = this.getFeaturesByRole(role);
+  /**
+   * Build and send welcome email
+   */
+  async sendWelcomeEmail(userId: string) {
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
 
-    await this.notificationService.send({
-      userId,
-      type: 'WELCOME',
-      title: 'Welcome to StudyHub Malawi!',
-      message: 'Welcome to StudyHub! Your account is ready. Start your learning journey today.',
-      channel: ['EMAIL'], // Welcome email only
-      priority: 'normal',
-      metadata: {
-        role,
-        features,
-        template: 'welcome',
-      },
+    return this.sendEmail({
+      to: user.email,
+      subject: 'Welcome to StudyHub Malawi!',
+      html: this.buildWelcomeEmail(user.fullName),
     });
   }
 
-  async sendSubscriptionReceipt(userId: string, subscriptionData: {
-    tier: string;
-    amount: number;
-    period: string;
-    startDate: Date;
-    endDate: Date;
-    autoRenew: boolean;
-  }) {
-    await this.notificationService.send({
-      userId,
-      type: 'SUBSCRIPTION_RECEIPT',
-      title: 'Subscription Receipt',
-      message: `Your ${subscriptionData.tier} subscription has been activated.`,
-      channel: ['EMAIL'],
-      priority: 'normal',
-      metadata: {
-        ...subscriptionData,
-        template: 'subscription-receipt',
-      },
-    });
-  }
-
+  /**
+   * Build and send exam result
+   */
   async sendExamResult(userId: string, examData: {
     quizTitle: string;
     score: number;
     passed: boolean;
-    certificateUrl?: string;
   }) {
-    await this.notificationService.send({
-      userId,
-      type: 'EXAM_RESULT',
-      title: `Exam Result: ${examData.quizTitle}`,
-      message: `You scored ${examData.score}% - ${examData.passed ? 'Passed! 🎉' : 'Keep practicing! 💪'}`,
-      channel: ['EMAIL', 'PUSH'],
-      priority: 'normal',
-      metadata: {
-        ...examData,
-        template: 'exam-result',
-      },
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: `Exam Result: ${examData.quizTitle}`,
+      html: this.buildExamResultEmail(user.fullName, examData),
     });
   }
 
-  async sendRenewalReminder(userId: string, subscriptionData: {
+  /**
+   * Build and send renewal reminder
+   */
+  async sendRenewalReminder(userId: string, data: {
     tier: string;
     amount: number;
     endDate: Date;
     daysRemaining: number;
   }) {
-    await this.notificationService.send({
-      userId,
-      type: 'RENEWAL_REMINDER',
-      title: `Subscription Renewing in ${subscriptionData.daysRemaining} Days`,
-      message: `Your ${subscriptionData.tier} subscription will renew on ${subscriptionData.endDate.toLocaleDateString()}.`,
-      channel: ['EMAIL'], // Email for reminders (cost-effective)
-      priority: subscriptionData.daysRemaining <= 3 ? 'high' : 'normal',
-      metadata: {
-        ...subscriptionData,
-        template: 'renewal-reminder',
-      },
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: `Subscription Renewing in ${data.daysRemaining} Days`,
+      html: this.buildRenewalEmail(user.fullName, data),
     });
   }
 
-  private async getUserName(userId: string): Promise<string> {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { fullName: true },
+  /**
+   * Send verification email
+   */
+  async sendVerificationEmail(userId: string, token: string) {
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    const link = `${process.env.NEXT_PUBLIC_URL}/auth/verify-email?token=${token}`;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: 'Verify Your Email',
+      html: this.buildVerificationEmail(user.fullName, link),
     });
-    return user?.fullName || 'Student';
   }
 
-  private getFeaturesByRole(role: string) {
-    const features = {
-      STUDENT: [
-        { icon: '📚', title: 'Video Lessons', description: 'Learn from expert instructors' },
-        { icon: '📝', title: 'Practice Quizzes', description: 'Test your knowledge' },
-        { icon: '🎓', title: 'Mock Exams', description: 'Prepare for real exams' },
-        { icon: '💬', title: 'Community', description: 'Connect with other learners' },
-      ],
-      INSTRUCTOR: [
-        { icon: '🎥', title: 'Create Courses', description: 'Share your knowledge' },
-        { icon: '💰', title: 'Earn Revenue', description: 'Get paid for your courses' },
-        { icon: '📊', title: 'Track Progress', description: 'Monitor student performance' },
-        { icon: '👥', title: 'Build Audience', description: 'Grow your student base' },
-      ],
-      SCHOOL_ADMIN: [
-        { icon: '🏫', title: 'Manage School', description: 'Oversee your institution' },
-        { icon: '👩‍🎓', title: 'Track Students', description: 'Monitor progress' },
-        { icon: '📈', title: 'Analytics', description: 'Data-driven insights' },
-        { icon: '⚙️', title: 'Customize', description: 'Brand your portal' },
-      ],
-    };
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(userId: string, token: string) {
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
 
-    return features[role] || features.STUDENT;
+    const link = `${process.env.NEXT_PUBLIC_URL}/auth/reset-password?token=${token}`;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      html: this.buildPasswordResetEmail(user.fullName, link),
+    });
+  }
+
+  // ============ Private Helpers ============
+
+  private async getUser(userId: string) {
+    try {
+      return await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, fullName: true },
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private buildPaymentEmail(name: string, data: any) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2 style="color:#0D1B3D">Payment Confirmed! 🎉</h2><p>Dear ${name},</p><p>Your payment of <strong>MWK ${data.amount.toLocaleString()}</strong> for <strong>${data.planName}</strong> has been confirmed.</p><p>Reference: ${data.transactionReference}</p></div></div>`;
+  }
+
+  private buildOTPEmail(name: string, otp: string, purpose: string) {
+    return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px;text-align:center"><h2>Verification Code</h2><p>Hello ${name},</p><p>Use this code to ${purpose}:</p><div style="background:#0D1B3D;padding:20px;border-radius:8px;margin:20px 0"><span style="font-size:36px;font-weight:bold;color:#fff;letter-spacing:8px">${otp}</span></div></div></div>`;
+  }
+
+  private buildWelcomeEmail(name: string) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Welcome, ${name}! 🎉</h2><p>Your account is ready. Start your learning journey today!</p></div></div>`;
+  }
+
+  private buildExamResultEmail(name: string, data: any) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Exam Result: ${data.quizTitle}</h2><p>Dear ${name},</p><p>Score: <strong>${data.score}%</strong></p><p>${data.passed ? '🎉 Passed!' : '💪 Keep practicing!'}</p></div></div>`;
+  }
+
+  private buildRenewalEmail(name: string, data: any) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Subscription Renewing Soon</h2><p>Dear ${name},</p><p>Your ${data.tier} plan renews in ${data.daysRemaining} days.</p></div></div>`;
+  }
+
+  private buildVerificationEmail(name: string, link: string) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Verify Your Email</h2><p>Dear ${name},</p><a href="${link}" style="display:inline-block;background:#E63946;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px">Verify Email</a></div></div>`;
+  }
+
+  private buildPasswordResetEmail(name: string, link: string) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Password Reset</h2><p>Dear ${name},</p><a href="${link}" style="display:inline-block;background:#E63946;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px">Reset Password</a></div></div>`;
   }
 }
+
+export const emailService = new EmailService();

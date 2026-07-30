@@ -75,13 +75,17 @@ enum ContentStatus {
 }
 
 enum ContentType {
-  TEXT
   VIDEO
   AUDIO
+  TEXT
   PDF
-  QUIZ
+  SLIDES
+  LINK
   LIVE_SESSION
   EMBED
+  QUIZ
+  ASSIGNMENT
+  PAST_PAPER
 }
 
 // Generic payment status used by PaymentTransaction (unified with TransactionStatus).
@@ -138,6 +142,7 @@ model User {
   referralsReceived  Referral[]   @relation("Referred")
 
   emailVerified         DateTime?
+  emailVerificationToken  String? @unique
   notificationPreferences Json?  // NotificationPreferences type
   lastLoginAt           DateTime?
 
@@ -220,6 +225,7 @@ model Student {
   grade         String?
   examBoard     String?  // MSCE, JCE, ICAM, TEVETA
   subjects      String[]
+  wishlist      String[] @default([])
   institutionId String?
   institution   Institution? @relation(fields: [institutionId], references: [id])
   parentLinks   ParentLink[]
@@ -250,6 +256,7 @@ model Instructor {
   expertise     String[]
   revenueShare  Float    @default(0.7) // 70% for free tier
   totalEarnings Int      @default(0)   // in MWK
+  pendingEarnings Int    @default(0)   // in MWK — pending payout balance
   isVerified    Boolean  @default(false)  // ➕ ADD THIS
   bankDetails   Json?                      // ➕ ADD THIS (optional, for payout info)
   courses       Course[]
@@ -369,6 +376,7 @@ model Transaction {
   paymentMethod PaymentMethod
   status        TransactionStatus
   reference     String   @unique // external payment reference
+  description   String?
   metadata      Json?
   createdAt     DateTime @default(now())
   completedAt   DateTime?
@@ -378,6 +386,9 @@ model Transaction {
   instructor    Instructor? @relation(fields: [instructorId], references: [id])
   revenueSplit  Float?
   platformFee   Int?
+  instructorPayout Int?   // Instructor's share of this transaction (in MWK)
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id])
 
   eventRegistrations EventRegistration[]
   invoice        Invoice?
@@ -429,6 +440,10 @@ model Payout {
   status        String   @default("pending") // pending, paid, failed
   paidAt        DateTime?
   reference     String?
+  paymentMethod String?  // e.g. AIRTEL_MONEY, TNM_MPAMBA, BANK_TRANSFER
+  processedAt   DateTime?
+  metadata      Json?
+  createdAt     DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------
@@ -462,6 +477,8 @@ model Course {
   enrollments   Enrollment[]
   reviews       CourseReview[]
   forumThreads  ForumThread[]
+  liveClasses   LiveClass[]
+  transactions  Transaction[]
 }
 
 model CourseReview {
@@ -566,7 +583,7 @@ model Enrollment {
   course          Course   @relation(fields: [courseId], references: [id])
   progress        Float    @default(0)
   totalModules    Int      @default(0)
-  completedModules Int     @default(0)
+  completedModules  String[] // Changed from Int to String[]
   startedAt       DateTime @default(now())
   lastAccessedAt  DateTime?
   completedAt     DateTime?
@@ -720,11 +737,19 @@ model LiveClass {
   instructor    Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
   title         String
   description   String?
+  subject       String?
   scheduledAt   DateTime
   duration      Int      @default(60) // minutes
-  status        String   @default("scheduled") // scheduled, live, completed, cancelled
+  maxParticipants Int    @default(100)
+  currentParticipants Int @default(0)
+  status        String   @default("scheduled") // scheduled, live, ended, cancelled
   meetingUrl    String?
+  meetingLink   String?  // Optional pre-shared link for participants
+  recordingUrl  String?  @db.Text
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id])
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([instructorId, status])
 }

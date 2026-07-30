@@ -18,6 +18,11 @@ export default withAuth(
     const { token } = req.nextauth;
     const { pathname } = req.nextUrl;
 
+    // Skip middleware for API routes - they handle their own auth
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next();
+    }
+
     // If user is logged in, redirect from auth pages to their dashboard
     if (token && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
       const dashboardPath = roleAccess[token.role as UserRole]?.[0] || '/student/dashboard';
@@ -37,16 +42,14 @@ export default withAuth(
       if (allowedPaths) {
         const isAuthorized = allowedPaths.some((path) => pathname.startsWith(path));
         if (!isAuthorized) {
-          // Redirect to their primary dashboard if they try to access an unauthorized area
+          // Redirect to their primary dashboard
           return NextResponse.redirect(new URL(allowedPaths[0], req.url));
         }
       } else {
-        // If role has no defined access, redirect to a default dashboard
         return NextResponse.redirect(new URL('/student/dashboard', req.url));
       }
     }
 
-    // If no token and not a public route, withAuth will handle redirection
     return NextResponse.next();
   },
   {
@@ -54,22 +57,27 @@ export default withAuth(
       authorized: ({ req, token }) => {
         const { pathname } = req.nextUrl;
 
+        // API routes are always allowed (they handle their own auth)
+        if (pathname.startsWith('/api/')) {
+          return true;
+        }
+
         // Public paths that don't require authentication
         const isPublic =
-        pathname === '/' ||
-        pathname.startsWith('/about') ||
-        pathname.startsWith('/contact') ||
-        pathname.startsWith('/pricing') ||
-        pathname.startsWith('/privacy') ||
-        pathname.startsWith('/terms') ||
-        pathname.startsWith('/api/auth') ||
-        pathname.startsWith('/api/webhooks') ||
-        pathname.startsWith('/auth/login') ||
-        pathname.startsWith('/auth/register') ||
-        pathname.startsWith('/auth/error') ||
-        pathname.startsWith('/auth/forgot-password') ||
-        pathname.startsWith('/auth/reset-password') ||
-        pathname.startsWith('/auth/verify-email');
+          pathname === '/' ||
+          pathname.startsWith('/about') ||
+          pathname.startsWith('/contact') ||
+          pathname.startsWith('/pricing') ||
+          pathname.startsWith('/privacy') ||
+          pathname.startsWith('/terms') ||
+          pathname.startsWith('/auth/login') ||
+          pathname.startsWith('/auth/register') ||
+          pathname.startsWith('/auth/error') ||
+          pathname.startsWith('/auth/forgot-password') ||
+          pathname.startsWith('/auth/reset-password') ||
+          pathname.startsWith('/auth/verify-email') ||
+          pathname.startsWith('/api/auth') ||
+          pathname.startsWith('/api/webhooks');
 
         return isPublic || !!token;
       },
@@ -84,5 +92,5 @@ export default withAuth(
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|images/|icons/|fonts/|locales/).*)',
-  ]
+  ],
 };

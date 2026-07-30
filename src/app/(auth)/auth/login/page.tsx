@@ -65,33 +65,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-grey-light px-4 py-12 overflow-hidden">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12 overflow-hidden">
 
-      {/* Background Pattern - Education Icons (larger, more subtle) */}
-      <div 
-        className="absolute inset-0 opacity-[1.5]"
-        style={{ 
-          backgroundImage: 'url("/images/patterns/education-icons.svg")',
-          backgroundRepeat: 'repeat',
-          backgroundSize: '175px 175px',
-        }}
-      />
 
-      {/* Background Pattern - Campus (very subtle) */}
-      <div 
-        className="absolute inset-0 opacity-[1.5]"
-        style={{ 
-          backgroundImage: 'url("/images/patterns/campus.svg")',
-          backgroundRepeat: 'repeat',
-          backgroundSize: '100px 100px',
-        }}
-      />
-
-      {/* Decorative Gradient Orbs */}
+      {/* Decorative Gradient Orbs 
       <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-navy/[0.04] blur-3xl" />
       <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-red/[0.04] blur-3xl" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-navy/[0.02] blur-3xl" />
-
+      */}
       {/* Logo - Outside the card */}
       <div className="relative z-10 mb-8">
         <Link href="/">

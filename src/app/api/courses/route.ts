@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { courseService } from '@/lib/courses/course-service';
+import prisma from '@/lib/utils/prisma';
 
 // Get courses (with search/filter)
 export async function GET(req: Request) {
@@ -47,8 +48,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get the actual instructor ID from the Instructor table
+    const instructor = await prisma.instructor.findFirst({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!instructor) {
+      return NextResponse.json(
+        { error: 'Instructor profile not found. Please complete your profile setup.' },
+        { status: 404 }
+      );
+    }
+
     const body = await req.json();
-    const course = await courseService.createCourse(session.user.id, body);
+    
+    // Use the actual instructor.id, not session.user.id
+    const course = await courseService.createCourse(instructor.id, body);
 
     return NextResponse.json({
       success: true,

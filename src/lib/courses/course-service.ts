@@ -28,7 +28,10 @@ export class CourseService {
     }>;
   }) {
     // Check feature access
-    await featureGating.enforceAccess(instructorId, 'course:create');
+    //await featureGating.enforceAccess(instructorId, 'course:create');
+    const instructorUser = await prisma.instructor.findUnique({ where: { id: instructorId }, select: { userId: true } });
+     if (!instructorUser) throw new AppError('Instructor profile not found', 'NOT_FOUND', 404);
+    await featureGating.enforceAccess(instructorUser.userId, 'course:create');
 
     // Validate price
     if (data.price < 0) {
@@ -591,31 +594,42 @@ export class CourseService {
       where: { id: enrollmentId },
       include: { course: { include: { modules: true } } },
     });
-
+    
     if (!enrollment) throw new NotFoundError('Enrollment');
-
+    
+    // Get current completed modules
+    const completedModules = enrollment.completedModules || [];
+    
+    // Add or remove the module ID based on the completed flag
+    if (completed && !completedModules.includes(moduleId)) {
+      completedModules.push(moduleId);
+    } else if (!completed && completedModules.includes(moduleId)) {
+      const index = completedModules.indexOf(moduleId);
+      completedModules.splice(index, 1);
+    }
+    
     // Calculate new progress
-    const completedModules = enrollment.completedModules + (completed ? 1 : -1);
-    const progress = (completedModules / enrollment.totalModules) * 100;
-
+    const progress = (completedModules.length / enrollment.course.modules.length) * 100;
+    
     // Update enrollment
     const updated = await prisma.enrollment.update({
       where: { id: enrollmentId },
       data: {
-        completedModules: Math.max(0, completedModules),
+        completedModules,
         progress: Math.min(100, Math.max(0, progress)),
         lastAccessedAt: new Date(),
-        ...(progress >= 100 && { completedAt: new Date() }),
+        ...(progress >= 100 && !enrollment.completedAt && { completedAt: new Date() }),
       },
     });
-
+    
     // Check for certificate eligibility
     if (updated.progress >= 100 && !updated.certificateId) {
       // Auto-generate certificate logic here
     }
-
+    
     return updated;
   }
+
 
   /**
    * Add course review

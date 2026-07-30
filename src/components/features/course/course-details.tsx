@@ -255,10 +255,10 @@ export function CourseDetails({
               <div className="space-y-1">
                 {course.modules.map((module, index) => (
                   <div key={module.id} className="border border-grey-light rounded-lg overflow-hidden">
-                    <button
+                    <div
                       onClick={() => setExpandedModules(!expandedModules)}
                       className="w-full flex items-center gap-3 p-4 hover:bg-grey-light/30 transition-colors text-left"
-                    >
+                    > {/* Changed from <button> to <div> */}
                       <span className="text-sm text-grey-medium font-mono">
                         {String(index + 1).padStart(2, '0')}
                       </span>
@@ -277,10 +277,24 @@ export function CourseDetails({
                         </div>
                       </div>
                       {module.isPreview && (
-                        <Badge variant="success" size="sm">Preview</Badge>
+                        <Badge variant="success" size="sm">
+                          Preview
+                        </Badge>
                       )}
-                      {expandedModules ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
+                      <div className="flex items-center gap-2 ml-auto">
+                        {onStartModule && (module.isPreview || enrollmentStatus === 'enrolled' || enrollmentStatus === 'completed') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); onStartModule(module.id); }}
+                            className="text-red hover:bg-red/10 hover:text-red"
+                          >
+                            {module.isPreview && enrollmentStatus === 'not_enrolled' ? 'Preview' : 'Start'}
+                          </Button>
+                        )}
+                        {expandedModules ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
+                    </div> {/* Changed from </button> to </div> */}
                   </div>
                 ))}
               </div>

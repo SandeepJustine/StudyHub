@@ -1,164 +1,135 @@
-import { createTransport, Transporter } from 'nodemailer';
-import { render } from '@react-email/render';
-import { rateLimiter } from '@/lib/notifications/channels';
-import {
-  PaymentConfirmationEmail,
-  WelcomeEmail,
-  OTPVerificationEmail,
-  ExamResultEmail,
-  RenewalReminderEmail,
-  PasswordResetEmail,
-  AccountVerificationEmail,
-  GenericNotificationEmail,
-} from '@/emails';
-
-interface EmailPayload {
-  to: string;
-  userId: string;
-  userName?: string;
-  subject: string;
-  type?: string;
-  template?: string;
-  metadata?: Record<string, any>;
-  locale?: string;
-}
+import prisma from '@/lib/utils/prisma';
+import { NotificationService } from '@/lib/notifications/notification-service';
 
 export class EmailService {
-  private transporter: Transporter;
-  private fromAddress: string;
-  private fromName: string;
+  private notificationService: NotificationService;
 
   constructor() {
-    this.fromName = 'StudyHub Malawi';
-    this.fromAddress = process.env.EMAIL_FROM || 'noreply@studyhub.mw';
-
-    // Configure transporter based on environment
-    if (process.env.NODE_ENV === 'production') {
-      // Use SendGrid in production
-      this.transporter = createTransport({
-        host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER || 'apikey',
-          pass: process.env.SMTP_PASS || process.env.SENDGRID_API_KEY!,
-        },
-      });
-    } else {
-      // Use Mailtrap for development
-      this.transporter = createTransport({
-        host: process.env.SMTP_HOST || 'smtp.mailtrap.io',
-        port: parseInt(process.env.SMTP_PORT || '2525'),
-        auth: {
-          user: process.env.SMTP_USER || '',
-          pass: process.env.SMTP_PASS || '',
-        },
-      });
-    }
+    this.notificationService = new NotificationService();
   }
 
-  /**
-   * Send email
-   */
-  async send(payload: EmailPayload): Promise<boolean> {
-    try {
-      // Check rate limits
-      const limit = rateLimiter.canSend(payload.userId, 'EMAIL', payload.type || 'general');
-      if (!limit.allowed) {
-        console.log(`Email rate limited for user ${payload.userId}: ${limit.reason}`);
-        return false;
-      }
-
-      // Get template component
-      const EmailComponent = this.getEmailTemplate(payload.template || 'generic');
-
-      // Render email HTML
-      const emailHtml = render(
-        EmailComponent({
-          userName: payload.userName || 'Student',
-          title: payload.subject,
-          message: payload.metadata?.message || '',
-          metadata: payload.metadata,
-          locale: payload.locale || 'en',
-        })
-      );
-
-      // Send email
-      const info = await this.transporter.sendMail({
-        from: `"${this.fromName}" <${this.fromAddress}>`,
-        to: payload.to,
-        subject: payload.subject,
-        html: emailHtml,
-        headers: {
-          'X-Notification-Type': payload.type || 'general',
-          'X-User-ID': payload.userId,
-          'X-Template': payload.template || 'generic',
-          'List-Unsubscribe': `<mailto:unsubscribe@studyhub.mw?subject=unsubscribe>`,
-        },
-        // Tracking
-        list: {
-          unsubscribe: {
-            url: `${process.env.NEXT_PUBLIC_URL}/unsubscribe?userId=${payload.userId}`,
-            comment: 'Unsubscribe from StudyHub emails',
-          },
-        },
-      });
-
-      // Record sent
-      rateLimiter.recordSent(payload.userId, 'EMAIL', payload.type || 'general');
-
-      console.log(`Email sent: ${info.messageId}`);
-      return true;
-    } catch (error) {
-      console.error('Email send failed:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Send templated email
-   */
-  async sendTemplated(
-    payload: EmailPayload & {
-      templateData?: Record<string, any>;
-    }
-  ): Promise<boolean> {
-    return this.send({
-      ...payload,
+  async sendPaymentConfirmation(userId: string, paymentData: {
+    amount: number;
+    planName: string;
+    paymentMethod: string;
+    transactionReference: string;
+    invoiceUrl?: string;
+  }) {
+    await this.notificationService.send({
+      userId,
+      type: 'PAYMENT_CONFIRMATION',
+      title: `Payment Confirmed - MWK ${paymentData.amount.toLocaleString()}`,
+      message: `Your payment of MWK ${paymentData.amount.toLocaleString()} for ${paymentData.planName} has been confirmed.`,
+      channel: ['EMAIL', 'PUSH'],
+      priority: 'normal',
       metadata: {
-        ...payload.metadata,
-        ...payload.templateData,
+        ...paymentData,
+        userName: await this.getUserName(userId),
+        template: 'payment-confirmation',
       },
     });
   }
 
-  /**
-   * Get email template component
-   */
-  private getEmailTemplate(templateName: string): React.ComponentType<any> {
-    const templates: Record<string, React.ComponentType<any>> = {
-      'payment-confirmation': PaymentConfirmationEmail,
-      'welcome': WelcomeEmail,
-      'otp-verification': OTPVerificationEmail,
-      'exam-result': ExamResultEmail,
-      'renewal-reminder': RenewalReminderEmail,
-      'password-reset': PasswordResetEmail,
-      'account-verification': AccountVerificationEmail,
-    };
-
-    return templates[templateName] || GenericNotificationEmail;
+  async sendOTP(userId: string, otp: string, purpose: string) {
+    await this.notificationService.send({
+      userId,
+      type: 'OTP_VERIFICATION',
+      title: 'Your Verification Code',
+      message: `Your verification code is: ${otp}. It expires in 10 minutes.`,
+      channel: ['EMAIL', 'SMS'],
+      priority: 'high',
+      metadata: { otp, purpose, expiryMinutes: 10, template: 'otp-verification' },
+    });
   }
 
-  /**
-   * Verify email connection
-   */
-  async verifyConnection(): Promise<boolean> {
+  async sendWelcomeEmail(userId: string, role: string) {
+    const features = this.getFeaturesByRole(role);
+    await this.notificationService.send({
+      userId,
+      type: 'WELCOME',
+      title: 'Welcome to StudyHub Malawi!',
+      message: 'Welcome to StudyHub! Your account is ready.',
+      channel: ['EMAIL'],
+      priority: 'normal',
+      metadata: { role, features, template: 'welcome' },
+    });
+  }
+
+  async sendSubscriptionReceipt(userId: string, subscriptionData: {
+    tier: string; amount: number; period: string; startDate: Date; endDate: Date; autoRenew: boolean;
+  }) {
+    await this.notificationService.send({
+      userId,
+      type: 'SUBSCRIPTION_RECEIPT',
+      title: 'Subscription Receipt',
+      message: `Your ${subscriptionData.tier} subscription has been activated.`,
+      channel: ['EMAIL'],
+      priority: 'normal',
+      metadata: { ...subscriptionData, template: 'subscription-receipt' },
+    });
+  }
+
+  async sendExamResult(userId: string, examData: {
+    quizTitle: string; score: number; passed: boolean; certificateUrl?: string;
+  }) {
+    await this.notificationService.send({
+      userId,
+      type: 'EXAM_RESULT',
+      title: `Exam Result: ${examData.quizTitle}`,
+      message: `You scored ${examData.score}% - ${examData.passed ? 'Passed! 🎉' : 'Keep practicing! 💪'}`,
+      channel: ['EMAIL', 'PUSH'],
+      priority: 'normal',
+      metadata: { ...examData, template: 'exam-result' },
+    });
+  }
+
+  async sendRenewalReminder(userId: string, subscriptionData: {
+    tier: string; amount: number; endDate: Date; daysRemaining: number;
+  }) {
+    await this.notificationService.send({
+      userId,
+      type: 'RENEWAL_REMINDER',
+      title: `Subscription Renewing in ${subscriptionData.daysRemaining} Days`,
+      message: `Your ${subscriptionData.tier} subscription will renew on ${subscriptionData.endDate.toLocaleDateString()}.`,
+      channel: ['EMAIL'],
+      priority: subscriptionData.daysRemaining <= 3 ? 'high' : 'normal',
+      metadata: { ...subscriptionData, template: 'renewal-reminder' },
+    });
+  }
+
+  private async getUserName(userId: string): Promise<string> {
     try {
-      await this.transporter.verify();
-      return true;
-    } catch (error) {
-      console.error('Email connection failed:', error);
-      return false;
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { fullName: true },
+      });
+      return user?.fullName || 'Student';
+    } catch {
+      return 'Student';
     }
+  }
+
+  private getFeaturesByRole(role: string) {
+    const features: Record<string, Array<{ icon: string; title: string; description: string }>> = {
+      STUDENT: [
+        { icon: '📚', title: 'Video Lessons', description: 'Learn from expert instructors' },
+        { icon: '📝', title: 'Practice Quizzes', description: 'Test your knowledge' },
+        { icon: '🎓', title: 'Mock Exams', description: 'Prepare for real exams' },
+        { icon: '💬', title: 'Community', description: 'Connect with other learners' },
+      ],
+      INSTRUCTOR: [
+        { icon: '🎥', title: 'Create Courses', description: 'Share your knowledge' },
+        { icon: '💰', title: 'Earn Revenue', description: 'Get paid for your courses' },
+        { icon: '📊', title: 'Track Progress', description: 'Monitor student performance' },
+        { icon: '👥', title: 'Build Audience', description: 'Grow your student base' },
+      ],
+      SCHOOL_ADMIN: [
+        { icon: '🏫', title: 'Manage School', description: 'Oversee your institution' },
+        { icon: '👩‍🎓', title: 'Track Students', description: 'Monitor progress' },
+        { icon: '📈', title: 'Analytics', description: 'Data-driven insights' },
+        { icon: '⚙️', title: 'Customize', description: 'Brand your portal' },
+      ],
+    };
+    return features[role] || features.STUDENT;
   }
 }

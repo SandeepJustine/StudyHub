@@ -263,9 +263,9 @@ export class MultimediaService {
   /**
    * Process slides content
    */
-  private async processSlidesContent(data: any): Promise<SlidesContent> {
+  async processSlidesContent(data: any): Promise<SlidesContent> {
     const { provider, url, embedCode, file } = data;
-
+    
     // Handle direct upload
     if (file) {
       this.validateFile(file, 'SLIDES');
@@ -279,7 +279,7 @@ export class MultimediaService {
         downloadUrl: uploadResult.downloadUrl,
       };
     }
-
+    
     // Handle embed providers (Google Slides, Canva, etc.)
     if (embedCode) {
       return {
@@ -288,7 +288,7 @@ export class MultimediaService {
         embedCode: this.sanitizeEmbedCode(embedCode),
       };
     }
-
+    
     // Handle direct URLs
     if (url) {
       const detectedProvider = this.detectEmbedProvider(url);
@@ -300,11 +300,12 @@ export class MultimediaService {
         embedCode: detectedProvider ? this.generateEmbedFromUrl(url, detectedProvider) : undefined,
       };
     }
-
+    
     throw new ValidationError('Invalid slides content', {
       slides: ['Must provide file, URL, or embed code'],
     });
   }
+
 
   /**
    * Process link content
