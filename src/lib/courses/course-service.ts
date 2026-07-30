@@ -377,6 +377,7 @@ export class CourseService {
           instructor: {
             select: {
               id: true,
+              userId: true,
               user: {
                 select: {
                   fullName: true,
@@ -398,8 +399,28 @@ export class CourseService {
       prisma.course.count({ where }),
     ]);
 
+    // Determine which instructors are linked to institutions (school admins)
+    const instructorUserIds = courses
+      .map(c => c.instructor?.userId)
+      .filter((id): id is string => !!id);
+
+    const schoolAdminUsers = instructorUserIds.length > 0
+      ? await prisma.schoolAdmin.findMany({
+          where: { userId: { in: instructorUserIds } },
+          select: { userId: true },
+        })
+      : [];
+
+    const institutionInstructorIds = new Set(schoolAdminUsers.map(sa => sa.userId));
+
+    // Enrich courses with institution flag
+    const enrichedCourses = courses.map(course => ({
+      ...course,
+      isInstitutionCourse: course.instructor ? institutionInstructorIds.has(course.instructor.userId) : false,
+    }));
+
     return {
-      courses,
+      courses: enrichedCourses,
       pagination: {
         page,
         limit,

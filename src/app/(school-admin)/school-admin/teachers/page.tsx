@@ -36,6 +36,7 @@ export default function SchoolAdminTeachersPage() {
     page: 1, limit: 20, total: 0, totalPages: 1,
   });
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddTeacher, setShowAddTeacher] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
@@ -54,6 +55,8 @@ export default function SchoolAdminTeachersPage() {
       if (data.success) {
         setTeachers(data.data);
         setPagination(data.pagination);
+      } else {
+        setToast({ message: data.error || 'Failed to load teachers', type: 'error' });
       }
     } catch (error) {
       setToast({ message: 'Failed to load teachers', type: 'error' });
@@ -67,6 +70,7 @@ export default function SchoolAdminTeachersPage() {
   }, [fetchTeachers]);
 
   const handleAddTeacher = async (formData: any) => {
+    setSaving(true);
     try {
       const res = await fetch('/api/institutions/teachers', {
         method: 'POST',
@@ -83,11 +87,14 @@ export default function SchoolAdminTeachersPage() {
       }
     } catch (error) {
       setToast({ message: 'Failed to add teacher', type: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEditTeacher = async (formData: any) => {
     if (!editingTeacher) return;
+    setSaving(true);
     try {
       const res = await fetch(`/api/institutions/teachers/${editingTeacher.id}`, {
         method: 'PUT',
@@ -104,6 +111,8 @@ export default function SchoolAdminTeachersPage() {
       }
     } catch (error) {
       setToast({ message: 'Failed to update teacher', type: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -264,6 +273,7 @@ export default function SchoolAdminTeachersPage() {
           teacher={editingTeacher}
           onSubmit={editingTeacher ? handleEditTeacher : handleAddTeacher}
           onCancel={() => { setShowAddTeacher(false); setEditingTeacher(null); }}
+          loading={saving}
         />
       </Modal>
 

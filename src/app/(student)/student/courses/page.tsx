@@ -1,7 +1,109 @@
-import { getServerSession } from 'next-auth'; import { authOptions } from '@/lib/auth/auth-options'; import { redirect } from 'next/navigation'; import prisma from '@/lib/utils/prisma'; import { Card, CardContent } from '@/components/ui/card'; import { Badge } from '@/components/ui/badge'; import { Button } from '@/components/ui/button'; import { BookOpen, Star, Users, Clock, ArrowRight } from 'lucide-react'; import { formatCurrency, formatDuration } from '@/utils/formatters'; import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth-options';
+import { redirect } from 'next/navigation';
+import prisma from '@/lib/utils/prisma';
+import { CourseFilterClient } from './courses-client';
+import { BookOpen, Star, Users, Clock, ArrowRight, Filter } from 'lucide-react';
+
 export default async function StudentCoursesPage() {
-  let session; try { session = await getServerSession(authOptions); } catch { redirect('/auth/login'); } if (!session?.user) redirect('/auth/login'); if (session.user.role !== 'STUDENT') redirect(`/${session.user.role.toLowerCase()}/dashboard`);
-  let courses: any[] = []; try { courses = await prisma.course.findMany({ where: { status: 'APPROVED' }, include: { instructor: { include: { user: { select: { fullName: true } } } }, _count: { select: { enrollments: true, reviews: true } } }, orderBy: { createdAt: 'desc' }, take: 12 }); } catch { courses = []; }
-  return (<div className="p-6 space-y-6"><div className="flex items-center gap-3"><div className="p-2.5 bg-green-100 rounded-xl"><BookOpen size={22} className="text-green" /></div><div><h1 className="text-2xl font-bold text-navy">Explore Courses</h1><p className="text-sm text-grey-medium">Discover courses to advance your learning</p></div></div>
-  {courses.length>0?<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{courses.map((course)=>(<Link key={course.id} href={`/student/courses/${course.id}`}><Card className="border-0 shadow-sm hover:shadow-md transition-all group cursor-pointer h-full"><CardContent className="p-5"><div className="flex items-center gap-2 mb-2"><Badge variant="info" size="sm">{course.subject}</Badge>{course.examBoard&&<Badge variant="neutral" size="sm">{course.examBoard}</Badge>}</div><h3 className="font-semibold text-navy mb-1 group-hover:text-red line-clamp-2">{course.title}</h3><p className="text-xs text-grey-dark mb-3 line-clamp-2">{course.description||'No description'}</p><div className="flex items-center gap-3 text-xs text-grey-medium mb-3"><Clock size={12} />{formatDuration(course.duration||0)}<Users size={12} />{course._count.enrollments}{course.rating>0&&<span className="flex items-center gap-1"><Star size={12} className="text-yellow-500" />{course.rating.toFixed(1)}</span>}</div><div className="flex items-center justify-between"><span className="text-lg font-bold text-navy">{course.price>0?formatCurrency(course.price):'Free'}</span><Button variant="primary" size="sm" rightIcon={<ArrowRight size={14} />}>View</Button></div></CardContent></Card></Link>))}</div>:<Card className="border-0 shadow-sm"><CardContent className="p-12 text-center"><BookOpen size={48} className="mx-auto text-grey-medium mb-4" /><h3 className="text-lg font-semibold text-navy">No Courses Available</h3></CardContent></Card>}
-  </div>);}
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect('/auth/login');
+  if (session.user.role !== 'STUDENT') redirect(`/${session.user.role.toLowerCase()}/dashboard`);
+
+  const student = await prisma.student.findFirst({
+    where: { userId: session.user.id },
+    select: { id: true, grade: true, examBoard: true, subjects: true, institutionId: true },
+  });
+
+  if (!student) {
+    redirect('/student/dashboard');
+  }
+
+  let institution: any = null;
+  let institutionId: string | null = null;
+  let institutionName: string | null = null;
+
+  if (student.institutionId) {
+    institution = await prisma.institution.findUnique({
+      where: { id: student.institutionId },
+      select: { id: true, name: true, tier: true },
+    });
+    institutionId = student.institutionId;
+    institutionName = institution?.name || null;
+  }
+
+  // Fetch all approved courses
+  const courses = await prisma.course.findMany({
+    where: { status: 'APPROVED' },
+      include: {
+        instructor: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            enrollments: true,
+            reviews: true,
+            modules: true,
+          },
+        },
+      },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+
+  // Determine which instructors are linked to institutions
+  const instructorUserIds = courses
+    .map(c => c.instructor?.userId)
+    .filter((id): id is string => !!id);
+
+  const schoolAdminUsers = instructorUserIds.length > 0
+    ? await prisma.schoolAdmin.findMany({
+        where: { userId: { in: instructorUserIds } },
+        select: { userId: true },
+      })
+    : [];
+
+  const institutionInstructorIds = new Set(schoolAdminUsers.map(sa => sa.userId));
+
+  // Enrich courses with institution flag
+  const enrichedCourses = courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    subject: course.subject,
+    examBoard: course.examBoard,
+    grade: course.grade,
+    price: course.price,
+    duration: course.duration,
+    rating: course.rating,
+    thumbnail: course.thumbnail,
+    language: course.language,
+    tags: course.tags,
+    publishedAt: course.publishedAt,
+    createdAt: course.createdAt,
+    updatedAt: course.updatedAt,
+    instructor: course.instructor,
+    _count: course._count,
+    isInstitutionCourse: course.instructor ? institutionInstructorIds.has(course.instructor.userId) : false,
+  }));
+
+  const initialFilter: 'all' | 'institution' | 'independent' = institutionId ? 'all' : 'all';
+
+  return (
+    <div className="p-6 space-y-6">
+      <CourseFilterClient
+        courses={enrichedCourses}
+        institutionId={institutionId}
+        institutionName={institutionName}
+        initialFilter={initialFilter}
+      />
+    </div>
+  );
+}

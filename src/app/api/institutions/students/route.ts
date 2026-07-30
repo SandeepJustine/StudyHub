@@ -17,6 +17,7 @@ export async function GET(req: Request) {
     const params = {
       query: searchParams.get('query') || undefined,
       grade: searchParams.get('grade') || undefined,
+      atRisk: searchParams.get('atRisk') === 'true',
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20,
     };

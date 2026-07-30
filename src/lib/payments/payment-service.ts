@@ -12,7 +12,7 @@ import {
 import { AirtelMoneyAdapter } from './adapters/airtel-money.adapter';
 import { TNMMpambaAdapter } from './adapters/tnm-mpamba.adapter';
 import { PayChanguAdapter } from './adapters/paychangu.adapter';
-import { BankTransferAdapter } from './adapters/bank-transfer.adapter';
+import { BankTransferAdapter } from './adapters/bank-transfer.adapters';
 
 export class PaymentService {
   private providers: Map<PaymentMethod, PaymentProvider> = new Map();

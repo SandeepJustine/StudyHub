@@ -136,6 +136,19 @@ export class EmailService {
     });
   }
 
+  async sendTeacherInvitation(userId: string, institutionName: string, resetToken: string) {
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    const link = `${process.env.NEXT_PUBLIC_URL}/auth/reset-password?token=${resetToken}`;
+
+    return this.sendEmail({
+      to: user.email,
+      subject: `You've been invited to teach at ${institutionName}`,
+      html: this.buildTeacherInvitationEmail(user.fullName, institutionName, link),
+    });
+  }
+
   // ============ Private Helpers ============
 
   private async getUser(userId: string) {
@@ -175,6 +188,10 @@ export class EmailService {
 
   private buildPasswordResetEmail(name: string, link: string) {
     return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Password Reset</h2><p>Dear ${name},</p><a href="${link}" style="display:inline-block;background:#E63946;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px">Reset Password</a></div></div>`;
+  }
+
+  private buildTeacherInvitationEmail(name: string, institutionName: string, link: string) {
+    return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden"><div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div><div style="padding:30px"><h2>Welcome to ${institutionName}! 🎉</h2><p>Dear ${name},</p><p>You have been invited to join <strong>${institutionName}</strong> as a teacher on StudyHub Malawi. Your account has been created and you can now access the instructor portal.</p><p>Click the button below to set your password and get started:</p><a href="${link}" style="display:inline-block;background:#E63946;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;margin:20px 0">Set Your Password</a><p>Once you set your password, you can log in at <strong>${process.env.NEXT_PUBLIC_URL}/auth/login</strong> with your email address.</p><p>Your role: <strong>Instructor</strong></p><p>If you have any questions, please contact your institution administrator.</p></div></div>`;
   }
 }
 

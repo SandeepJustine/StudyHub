@@ -1,15 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import {
   Users, GraduationCap, BookOpen, TrendingUp,
-  AlertTriangle, Download, UserPlus,
+  AlertTriangle, Download, UserPlus, CreditCard, Check,
+  Smartphone, Building2,
 } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
+import { PRICING_TIERS, getTiersForRole } from '@/lib/billing/pricing-tiers';
 
 interface DashboardData {
   institution: {
@@ -27,6 +31,16 @@ interface DashboardData {
     averageProgress: number;
     studentsAtRisk: number;
   };
+  analytics: {
+    totalEnrollments: number;
+    courseCompletion: number;
+    averageScore: number;
+    certificatesIssued: number;
+    enrollmentTrend: string;
+    completionTrend: string;
+    scoreTrend: string;
+    certificateTrend: string;
+  };
   subscription: {
     status: string;
     tier: string;
@@ -37,29 +51,129 @@ interface DashboardData {
 }
 
 export default function SchoolAdminDashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedUpgradeTier, setSelectedUpgradeTier] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const res = await fetch('/api/institutions/analytics');
+        if (!res.ok) {
+          const result = await res.json().catch(() => ({ error: 'Failed to load dashboard' }));
+          throw new Error(result.error || `Server error ${res.status}`);
+        }
         const result = await res.json();
         if (result.success) {
           setData(result.data);
         } else {
           setToast({ message: result.error || 'Failed to load dashboard', type: 'error' });
         }
-      } catch (error) {
-        setToast({ message: 'Failed to load dashboard', type: 'error' });
+      } catch (error: any) {
+        setToast({ message: error.message || 'Failed to load dashboard', type: 'error' });
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  const handleUpgrade = async () => {
+    if (!selectedUpgradeTier || !paymentMethod) {
+      setToast({ message: 'Please select a plan and payment method', type: 'error' });
+      return;
+    }
+    setSubscribing(true);
+    try {
+      const res = await fetch('/api/subscriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: selectedUpgradeTier,
+          cycle: billingCycle,
+          paymentMethod,
+          institutionId: data?.institution.name,
+        }),
+      });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({ error: 'Failed to subscribe' }));
+        throw new Error(result.error || `Server error ${res.status}`);
+      }
+      const result = await res.json();
+      if (result.success) {
+        setToast({ message: `Successfully subscribed to ${PRICING_TIERS[selectedUpgradeTier]?.name || selectedUpgradeTier}!`, type: 'success' });
+        setShowUpgradeModal(false);
+        setSelectedUpgradeTier(null);
+        setPaymentMethod('');
+        fetchData();
+      } else {
+        setToast({ message: result.error || 'Failed to subscribe', type: 'error' });
+      }
+    } catch (error: any) {
+      setToast({ message: error.message || 'Failed to subscribe', type: 'error' });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const paymentMethods = [
+    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <Smartphone size={20} /> },
+    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <Smartphone size={20} /> },
+    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={20} /> },
+    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CreditCard size={20} /> },
+  ];
+
+  const handleExportReport = () => {
+    if (!data) return;
+    try {
+      const rows = [
+        ['Metric', 'Value'],
+        ['Institution', data.institution.name],
+        ['Tier', data.institution.tier],
+        ['Total Students', data.stats.totalStudents],
+        ['Total Teachers', data.stats.totalTeachers],
+        ['Active Students', data.stats.activeStudents],
+        ['Courses Assigned', data.stats.coursesAssigned],
+        ['Average Progress', `${data.stats.averageProgress}%`],
+        ['Students at Risk', data.stats.studentsAtRisk],
+        ...(data.analytics ? [
+          ['Total Enrollments', data.analytics.totalEnrollments],
+          ['Course Completion', `${data.analytics.courseCompletion}%`],
+          ['Average Score', `${data.analytics.averageScore}%`],
+          ['Certificates Issued', data.analytics.certificatesIssued],
+          ['Enrollment Trend', data.analytics.enrollmentTrend],
+          ['Completion Trend', data.analytics.completionTrend],
+          ['Score Trend', data.analytics.scoreTrend],
+          ['Certificate Trend', data.analytics.certificateTrend],
+        ] : []),
+        ['Subscription Status', data.subscription?.status || 'N/A'],
+        ['Subscription Tier', data.subscription?.tier || 'N/A'],
+        ['Next Renewal', data.subscription?.endDate ? formatDate(data.subscription.endDate) : 'N/A'],
+        ['Auto Renew', data.subscription?.autoRenew ? 'Yes' : 'No'],
+        ...data.courses.map(c => [`Course: ${c.title}`, `${c.studentsCount} students`]),
+      ];
+      const csvContent = rows.map(e => e.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setToast({ message: 'Report exported successfully', type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to export report', type: 'error' });
+    }
+  };
+
+  const availableTiers = getTiersForRole('SCHOOL_ADMIN').filter(t => t !== data?.institution.tier);
 
   if (loading) {
     return (
@@ -99,7 +213,7 @@ export default function SchoolAdminDashboardPage() {
               </p>
             </div>
           </div>
-          <Button variant="primary" size="sm">Upgrade Now</Button>
+          <Button variant="primary" size="sm" onClick={() => setShowUpgradeModal(true)}>Upgrade Now</Button>
         </div>
       )}
 
@@ -165,10 +279,10 @@ export default function SchoolAdminDashboardPage() {
 
       {/* Quick Actions */}
       <div className="flex gap-4">
-        <Button variant="primary" leftIcon={<UserPlus size={18} />}>
+        <Button variant="primary" leftIcon={<UserPlus size={18} />} onClick={() => router.push('/school-admin/students?add=true')}>
           Add Students
         </Button>
-        <Button variant="outline" leftIcon={<Download size={18} />}>
+        <Button variant="outline" leftIcon={<Download size={18} />} onClick={handleExportReport}>
           Export Report
         </Button>
       </div>
@@ -182,7 +296,7 @@ export default function SchoolAdminDashboardPage() {
                 <AlertTriangle size={20} className="text-red" />
                 Students at Risk ({stats.studentsAtRisk})
               </CardTitle>
-              <Button variant="ghost" size="sm">View All</Button>
+               <Button variant="ghost" size="sm" onClick={() => router.push('/school-admin/students?atRisk=true')}>View All</Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -251,6 +365,105 @@ export default function SchoolAdminDashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Upgrade Modal */}
+      <Modal isOpen={showUpgradeModal} onClose={() => { setShowUpgradeModal(false); setSelectedUpgradeTier(null); setPaymentMethod(''); }} title="Upgrade Subscription" size="xl">
+        <div className="space-y-6">
+          {!selectedUpgradeTier ? (
+            <>
+              <p className="text-grey-dark text-center">Choose a plan to upgrade to</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availableTiers.map(tier => {
+                  const config = PRICING_TIERS[tier];
+                  if (!config) return null;
+                  return (
+                    <div key={tier} className="border-2 border-grey-light rounded-xl p-4 hover:border-navy transition-colors cursor-pointer" onClick={() => setSelectedUpgradeTier(tier)}>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-navy">{config.name}</h3>
+                        <span className="text-lg font-bold text-navy">{config.monthlyPrice ? `MWK ${config.monthlyPrice.toLocaleString()}/mo` : 'Custom'}</span>
+                      </div>
+                      <p className="text-sm text-grey-medium mb-3">{config.description}</p>
+                      <ul className="space-y-1 mb-4">
+                        {config.features.slice(0, 4).map((feature, i) => (
+                          <li key={i} className="text-sm text-grey-dark flex items-center gap-2">
+                            <Check size={14} className="text-green flex-shrink-0" /> <span className="truncate">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button variant="primary" className="w-full" leftIcon={<CreditCard size={16} />}>
+                        Select {config.name}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-navy">{PRICING_TIERS[selectedUpgradeTier]?.name}</h3>
+                  <p className="text-sm text-grey-medium">{PRICING_TIERS[selectedUpgradeTier]?.description}</p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedUpgradeTier(null)}>Change Plan</Button>
+              </div>
+
+              {/* Billing Cycle */}
+              <div className="flex justify-center">
+                <div className="bg-grey-light rounded-lg p-1 inline-flex">
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${billingCycle === 'MONTHLY' ? 'bg-white shadow text-navy' : 'text-grey-dark hover:text-navy'}`}
+                    onClick={() => setBillingCycle('MONTHLY')}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${billingCycle === 'ANNUAL' ? 'bg-white shadow text-navy' : 'text-grey-dark hover:text-navy'}`}
+                    onClick={() => setBillingCycle('ANNUAL')}
+                  >
+                    Annual
+                    <Badge variant="success" size="sm" className="ml-2">Save 58%</Badge>
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div>
+                <h4 className="text-sm font-medium text-grey-dark mb-3">Select Payment Method</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {paymentMethods.map(method => (
+                    <button
+                      key={method.id}
+                      onClick={() => setPaymentMethod(method.id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${paymentMethod === method.id ? 'border-navy bg-navy/5' : 'border-grey-light hover:border-navy/50'}`}
+                    >
+                      <span className={paymentMethod === method.id ? 'text-navy' : 'text-grey-medium'}>{method.icon}</span>
+                      <span className="text-sm font-medium text-grey-dark">{method.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="bg-grey-light/50 rounded-lg p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-grey-medium">Total Amount</p>
+                  <p className="text-2xl font-bold text-navy">
+                    {billingCycle === 'MONTHLY'
+                      ? `MWK ${(PRICING_TIERS[selectedUpgradeTier]?.monthlyPrice || 0).toLocaleString()}`
+                      : `MWK ${(PRICING_TIERS[selectedUpgradeTier]?.annualPrice || 0).toLocaleString()}`}
+                  </p>
+                </div>
+                <p className="text-xs text-grey-medium">{billingCycle === 'MONTHLY' ? 'per month' : 'per year'}</p>
+              </div>
+
+              <Button variant="primary" className="w-full" size="lg" onClick={handleUpgrade} loading={subscribing} leftIcon={<CreditCard size={18} />}>
+                {subscribing ? 'Processing...' : `Subscribe to ${PRICING_TIERS[selectedUpgradeTier]?.name}`}
+              </Button>
+            </>
+          )}
+        </div>
+      </Modal>
 
       {/* Toast */}
       {toast && (

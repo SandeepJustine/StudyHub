@@ -5,7 +5,7 @@ import { InstitutionService } from '@/lib/institution/institution-service';
 
 const institutionService = new InstitutionService();
 
-// List courses for the institution
+// Get institution settings
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,19 +13,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const courses = await institutionService.getCourses(
+    const settings = await institutionService.getSettings(
       session.user.institutionId!
     );
 
-    return NextResponse.json({ success: true, data: courses });
+    return NextResponse.json({ success: true, data: settings });
   } catch (error: any) {
     const status = error.statusCode || 500;
-    return NextResponse.json({ error: error.message || 'Failed to fetch courses' }, { status });
+    return NextResponse.json({ error: error.message || 'Failed to fetch settings' }, { status });
   }
 }
 
-// Create a course
-export async function POST(req: Request) {
+// Update institution settings
+export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== 'SCHOOL_ADMIN') {
@@ -33,15 +33,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const course = await institutionService.createCourse(
+    const updated = await institutionService.updateSettings(
       session.user.institutionId!,
-      body,
-      session.user.id
+      body
     );
 
-    return NextResponse.json({ success: true, data: course }, { status: 201 });
+    return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     const status = error.statusCode || 500;
-    return NextResponse.json({ error: error.message || 'Failed to create course' }, { status });
+    return NextResponse.json({ error: error.message || 'Failed to update settings' }, { status });
   }
 }

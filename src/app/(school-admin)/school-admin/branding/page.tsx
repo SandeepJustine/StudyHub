@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Toast } from '@/components/ui/toast';
-import { Upload, Palette, Eye, Save } from 'lucide-react';
+import { Upload, Palette, Eye, Save, X } from 'lucide-react';
 
 interface BrandingData {
   logo: string | null;
@@ -29,12 +29,17 @@ export default function BrandingPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchBranding = async () => {
       setLoading(true);
       try {
         const res = await fetch('/api/institutions/branding');
+        if (!res.ok) {
+          const result = await res.json().catch(() => ({ error: 'Failed to load branding' }));
+          throw new Error(result.error || `Server error ${res.status}`);
+        }
         const data = await res.json();
         if (data.success) {
           setBranding({
@@ -44,24 +49,27 @@ export default function BrandingPage() {
             tagline: data.data.tagline || '',
             customDomain: data.data.customDomain || '',
           });
-        } else if (data.error && data.error.includes('Silver')) {
+        } else if (data.error) {
           setToast({ message: data.error, type: 'error' });
         }
-      } catch (error) {
-        // Silently fail - may be Bronze tier
+      } catch (error: any) {
+        setToast({ message: error.message || 'Failed to load branding', type: 'error' });
       } finally {
         setLoading(false);
       }
 
-      // Also fetch institution name
       try {
         const res = await fetch('/api/institutions');
+        if (!res.ok) {
+          const result = await res.json().catch(() => ({ error: 'Failed to load institution' }));
+          throw new Error(result.error || `Server error ${res.status}`);
+        }
         const data = await res.json();
         if (data.success && data.data) {
           setSchoolName(data.data.name || '');
         }
-      } catch (error) {
-        // ignore
+      } catch (error: any) {
+        setToast({ message: error.message || 'Failed to load institution name', type: 'error' });
       }
     };
     fetchBranding();
@@ -70,12 +78,26 @@ export default function BrandingPage() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        setToast({ message: 'Please select a valid image file', type: 'error' });
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setBranding({ ...branding, logo: e.target?.result as string });
+      reader.onload = (event) => {
+        setBranding({ ...branding, logo: event.target?.result as string });
+      };
+      reader.onerror = () => {
+        setToast({ message: 'Failed to read image file', type: 'error' });
       };
       reader.readAsDataURL(file);
     }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSave = async () => {
@@ -88,9 +110,13 @@ export default function BrandingPage() {
           logo: branding.logo,
           primaryColor: branding.primaryColor,
           accentColor: branding.accentColor,
-          customDomain: branding.customDomain,
+          tagline: branding.tagline,
         }),
       });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({ error: 'Failed to save branding' }));
+        throw new Error(result.error || `Server error ${res.status}`);
+      }
       const data = await res.json();
       if (data.success) {
         setSaved(true);
@@ -99,8 +125,8 @@ export default function BrandingPage() {
       } else {
         setToast({ message: data.error || 'Failed to save branding', type: 'error' });
       }
-    } catch (error) {
-      setToast({ message: 'Failed to save branding', type: 'error' });
+    } catch (error: any) {
+      setToast({ message: error.message || 'Failed to save branding', type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -134,32 +160,33 @@ export default function BrandingPage() {
                 School Logo
               </label>
               <div className="border-2 border-dashed border-grey-light rounded-xl p-8 text-center">
-                {branding.logo ? (
-                  <div className="space-y-4">
-                    <img src={branding.logo} alt="School logo" className="h-20 mx-auto object-contain" />
-                    <Button
-                      variant="ghost" size="sm"
-                      onClick={() => setBranding({ ...branding, logo: null })}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
+                  {branding.logo ? (
+                    <div className="space-y-4">
+                      <img src={branding.logo} alt="School logo" className="h-20 mx-auto object-contain" />
+                      <div className="flex items-center justify-center gap-3">
+                        <Button variant="ghost" size="sm" onClick={triggerFileUpload}>
+                          Change
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setBranding({ ...branding, logo: null }); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
+                          <X size={14} className="mr-1" /> Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
                   <>
                     <Upload size={32} className="mx-auto text-grey-medium mb-2" />
                     <p className="text-sm text-grey-dark mb-2">Upload your school logo</p>
-                    <p className="text-xs text-grey-medium mb-4">PNG or SVG, max 2MB</p>
-                    <label className="cursor-pointer">
-                      <Button variant="outline" size="sm">
-                        Choose File
-                      </Button>
-                      <input
-                        type="file"
-                        accept=".png,.svg"
-                        onChange={handleLogoUpload}
-                        className="hidden"
-                      />
-                    </label>
+                    <p className="text-xs text-grey-medium mb-4">PNG, JPG or SVG, max 2MB</p>
+                    <Button variant="outline" size="sm" onClick={triggerFileUpload}>
+                      Choose File
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
                   </>
                 )}
               </div>

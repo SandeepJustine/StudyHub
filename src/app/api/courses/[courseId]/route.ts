@@ -6,10 +6,11 @@ import { courseService } from '@/lib/courses/course-service';
 // Get course details
 export async function GET(
   req: Request,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const course = await courseService.getCourseById(params.courseId);
+    const { courseId } = await params;
+    const course = await courseService.getCourseById(courseId);
 
     return NextResponse.json({
       success: true,
@@ -31,7 +32,7 @@ export async function GET(
 // Update course
 export async function PUT(
   req: Request,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,9 +40,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { courseId } = await params;
     const body = await req.json();
     const course = await courseService.updateCourse(
-      params.courseId,
+      courseId,
       session.user.id,
       body
     );
@@ -62,7 +64,7 @@ export async function PUT(
 // Delete course
 export async function DELETE(
   req: Request,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -70,7 +72,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await courseService.archiveCourse(params.courseId, session.user.id);
+    const { courseId } = await params;
+    await courseService.archiveCourse(courseId, session.user.id);
 
     return NextResponse.json({
       success: true,

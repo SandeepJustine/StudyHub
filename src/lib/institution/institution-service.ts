@@ -1,6 +1,8 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError } from '@/lib/utils/errors';
 import bcrypt from 'bcryptjs';
+import { emailService } from '@/services/email-service';
+import { AuthService } from '@/lib/auth/auth-service';
 
 export class InstitutionService {
   async getInstitutionByUserId(userId: string) {
@@ -34,6 +36,7 @@ export class InstitutionService {
   async getStudents(institutionId: string, params: {
     query?: string;
     grade?: string;
+    atRisk?: boolean;
     page: number;
     limit: number;
   }) {
@@ -52,30 +55,51 @@ export class InstitutionService {
       where.grade = params.grade;
     }
 
-    const [students, total] = await Promise.all([
-      prisma.student.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              fullName: true,
-              email: true,
-              phone: true,
-              lastLoginAt: true,
-            },
-          },
-          enrollments: {
-            select: {
-              progress: true,
-              course: { select: { title: true, subject: true } },
-            },
-          },
+    const include = {
+      user: {
+        select: {
+          fullName: true,
+          email: true,
+          phone: true,
+          lastLoginAt: true,
         },
-        skip: (params.page - 1) * params.limit,
-        take: params.limit,
-      }),
-      prisma.student.count({ where }),
-    ]);
+      },
+      enrollments: {
+        select: {
+          progress: true,
+          course: { select: { title: true, subject: true } },
+        },
+      },
+    };
+
+    let students: any[] = [];
+    let total = 0;
+
+    if (params.atRisk) {
+      const allStudents = await prisma.student.findMany({
+        where,
+        include,
+      });
+
+      const atRiskStudents = allStudents.filter(s => {
+        const avg = s.enrollments.reduce((sum: number, e: any) => sum + e.progress, 0) / (s.enrollments.length || 1);
+        return avg < 50;
+      });
+
+      total = atRiskStudents.length;
+      const start = (params.page - 1) * params.limit;
+      students = atRiskStudents.slice(start, start + params.limit);
+    } else {
+      [students, total] = await Promise.all([
+        prisma.student.findMany({
+          where,
+          include,
+          skip: (params.page - 1) * params.limit,
+          take: params.limit,
+        }),
+        prisma.student.count({ where }),
+      ]);
+    }
 
     return {
       students: students.map(s => ({
@@ -84,6 +108,7 @@ export class InstitutionService {
         email: s.user.email,
         phone: s.user.phone,
         grade: s.grade,
+        examBoard: s.examBoard,
         subjects: s.subjects,
         enrollmentCount: s.enrollments.length,
         averageProgress: s.enrollments.reduce((sum, e) => sum + e.progress, 0) / (s.enrollments.length || 1),
@@ -213,6 +238,7 @@ export class InstitutionService {
     email: string;
     name: string;
     grade?: string;
+    examBoard?: string;
     subjects?: string[];
     courseIds?: string[];
   }>) {
@@ -258,12 +284,14 @@ export class InstitutionService {
           create: {
             userId: user.id,
             grade: studentData.grade,
+            examBoard: studentData.examBoard,
             subjects: studentData.subjects || [],
             institutionId,
           },
           update: {
             institutionId,
             grade: studentData.grade,
+            examBoard: studentData.examBoard,
           },
         });
 
@@ -394,7 +422,6 @@ export class InstitutionService {
         },
       });
     } else {
-      // Update existing user
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -404,7 +431,11 @@ export class InstitutionService {
       });
     }
 
-    // Create school admin record
+    const institution = await prisma.institution.findUnique({
+      where: { id: institutionId },
+      select: { id: true, name: true },
+    });
+
     const teacher = await prisma.schoolAdmin.create({
       data: {
         userId: user.id,
@@ -413,6 +444,35 @@ export class InstitutionService {
       },
       include: { user: true },
     });
+
+    await prisma.instructor.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        bio: '',
+        expertise: [],
+      },
+      update: {},
+    });
+
+    // Send invitation email with password reset link
+    if (institution) {
+      try {
+        const authService = new AuthService();
+        const resetResult = await authService.requestPasswordReset(user.email);
+        if (resetResult.sent) {
+          const updatedUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { passwordResetToken: true },
+          });
+          if (updatedUser?.passwordResetToken) {
+            await emailService.sendTeacherInvitation(user.id, institution.name, updatedUser.passwordResetToken);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to send teacher invitation email:', error);
+      }
+    }
 
     return {
       id: teacher.id,
@@ -484,6 +544,90 @@ export class InstitutionService {
   // INSTITUTION SETTINGS & BRANDING
   // ──────────────────────────────────────────────────────────────
 
+  async getSettings(institutionId: string) {
+    const institution = await prisma.institution.findUnique({
+      where: { id: institutionId },
+      select: {
+        name: true,
+        settings: true,
+      },
+    });
+
+    if (!institution) throw new NotFoundError('Institution');
+
+    const settings = (institution.settings as any) || {};
+
+    return {
+      name: institution.name,
+      email: settings.email || '',
+      phone: settings.phone || '',
+      address: settings.address || '',
+      website: settings.website || '',
+      emailNotifications: settings.emailNotifications ?? true,
+      smsNotifications: settings.smsNotifications ?? false,
+      twoFactorEnabled: settings.twoFactorEnabled ?? false,
+    };
+  }
+
+  async updateSettings(institutionId: string, data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    website?: string;
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    twoFactorEnabled?: boolean;
+  }) {
+    const institution = await prisma.institution.findUnique({
+      where: { id: institutionId },
+    });
+
+    if (!institution) throw new NotFoundError('Institution');
+
+    const existingSettings = (institution.settings as any) || {};
+
+    const updatedSettings = {
+      ...existingSettings,
+      email: data.email ?? existingSettings.email,
+      phone: data.phone ?? existingSettings.phone,
+      address: data.address ?? existingSettings.address,
+      website: data.website ?? existingSettings.website,
+      emailNotifications: data.emailNotifications ?? existingSettings.emailNotifications,
+      smsNotifications: data.smsNotifications ?? existingSettings.smsNotifications,
+      twoFactorEnabled: data.twoFactorEnabled ?? existingSettings.twoFactorEnabled,
+    };
+
+    // Update institution name if provided
+    if (data.name) {
+      await prisma.institution.update({
+        where: { id: institutionId },
+        data: {
+          name: data.name,
+          settings: updatedSettings,
+        },
+      });
+    } else {
+      await prisma.institution.update({
+        where: { id: institutionId },
+        data: {
+          settings: updatedSettings,
+        },
+      });
+    }
+
+    return {
+      name: data.name || institution.name,
+      email: updatedSettings.email,
+      phone: updatedSettings.phone,
+      address: updatedSettings.address,
+      website: updatedSettings.website,
+      emailNotifications: updatedSettings.emailNotifications,
+      smsNotifications: updatedSettings.smsNotifications,
+      twoFactorEnabled: updatedSettings.twoFactorEnabled,
+    };
+  }
+
   async updateInstitution(institutionId: string, data: any) {
     return prisma.institution.update({
       where: { id: institutionId },
@@ -495,9 +639,9 @@ export class InstitutionService {
     logo?: string;
     primaryColor?: string;
     accentColor?: string;
+    tagline?: string;
     customDomain?: string;
   }) {
-    // Check tier allows branding
     const institution = await prisma.institution.findUnique({
       where: { id: institutionId },
     });
@@ -508,10 +652,12 @@ export class InstitutionService {
       throw new AppError('Branding requires Silver tier or higher', 'TIER_RESTRICTED', 403);
     }
 
+    const { customDomain, ...allowed } = branding;
+
     return prisma.institutionBranding.upsert({
       where: { institutionId },
-      create: { institutionId, ...branding },
-      update: branding,
+      create: { institutionId, ...allowed },
+      update: allowed,
     });
   }
 
@@ -609,6 +755,130 @@ export class InstitutionService {
 
     const activeSubscription = institution.subscriptions[0];
 
+    // Get total enrollments and certificates for analytics
+    // Get total enrollments and certificates for analytics
+  const totalEnrollments = await prisma.enrollment.count({
+    where: {
+      student: { institutionId },
+    },
+  });
+
+  const certificatesIssued = await prisma.certificate.count({
+    where: {
+      student: { institutionId },
+    },
+  });
+
+  // Calculate completion rate
+  const completedEnrollments = await prisma.enrollment.count({
+    where: {
+      student: { institutionId },
+      completedAt: { not: null },
+    },
+  });
+
+
+    const courseCompletion = totalEnrollments > 0
+      ? Math.round((completedEnrollments / totalEnrollments) * 100)
+      : 0;
+
+    // Calculate average exam score
+    const examAttempts = await prisma.examAttempt.findMany({
+      where: {
+        student: { institutionId },
+      },
+      select: { score: true, completedAt: true },
+    });
+
+    const averageScore = examAttempts.length > 0
+      ? Math.round(examAttempts.reduce((sum, a) => sum + a.score, 0) / examAttempts.length)
+      : 0;
+
+    // Compute trend strings (comparing current month vs previous month)
+    const now = new Date();
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const startOfLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+    const endOfLastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999));
+
+    const currentMonthEnrollments = await prisma.enrollment.count({
+      where: {
+        student: { institutionId },
+        enrolledAt: { gte: startOfMonth },
+      },
+    });
+
+    const lastMonthEnrollments = await prisma.enrollment.count({
+      where: {
+        student: { institutionId },
+        enrolledAt: {
+          gte: startOfLastMonth,
+          lte: endOfLastMonth
+        },
+      },
+    });
+
+    const enrollmentTrend = lastMonthEnrollments > 0
+      ? `+${Math.round(((currentMonthEnrollments - lastMonthEnrollments) / lastMonthEnrollments) * 100)}% from last month`
+      : currentMonthEnrollments > 0
+        ? `+${currentMonthEnrollments} this month`
+        : 'No data';
+
+    const currentMonthCertificates = await prisma.certificate.count({
+      where: {
+        student: { institutionId },
+        issuedAt: { gte: startOfMonth },
+      },
+    });
+
+    const lastMonthCertificates = await prisma.certificate.count({
+      where: {
+        student: { institutionId },
+        issuedAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+      },
+    });
+
+    const certificateTrend = lastMonthCertificates > 0
+      ? `+${Math.round(((currentMonthCertificates - lastMonthCertificates) / lastMonthCertificates) * 100)}% from last month`
+      : currentMonthCertificates > 0
+        ? `+${currentMonthCertificates} this month`
+        : 'No data';
+
+    const currentMonthExams = examAttempts.filter(
+      a => a.completedAt && a.completedAt >= startOfMonth
+    ).length;
+    const lastMonthExams = examAttempts.filter(
+      a => a.completedAt && a.completedAt >= startOfLastMonth && a.completedAt <= endOfLastMonth
+    ).length;
+
+    const scoreTrend = lastMonthExams > 0
+      ? `+${Math.round(((currentMonthExams - lastMonthExams) / lastMonthExams) * 100)}% from last month`
+      : currentMonthExams > 0
+        ? `+${currentMonthExams} this month`
+        : 'No data';
+
+    const currentMonthCompleted = await prisma.enrollment.count({
+      where: {
+        student: { institutionId },
+        completedAt: { gte: startOfMonth },
+      },
+    });
+
+    const lastMonthCompleted = await prisma.enrollment.count({
+      where: {
+        student: { institutionId },
+        completedAt: {
+          gte: startOfLastMonth,
+          lte: endOfLastMonth,
+        },
+      },
+    });
+
+    const completionTrend = lastMonthCompleted > 0
+      ? `+${Math.round(((currentMonthCompleted - lastMonthCompleted) / lastMonthCompleted) * 100)}% from last month`
+      : currentMonthCompleted > 0
+        ? `+${currentMonthCompleted} this month`
+        : 'No data';
+
     return {
       institution: {
         name: institution.name,
@@ -625,6 +895,16 @@ export class InstitutionService {
         averageProgress: Math.round(averageProgress),
         studentsAtRisk,
       },
+      analytics: {
+        totalEnrollments,
+        courseCompletion,
+        averageScore,
+        certificatesIssued,
+        enrollmentTrend,
+        completionTrend,
+        scoreTrend,
+        certificateTrend,
+      },
       subscription: activeSubscription
         ? {
             status: activeSubscription.status,
@@ -637,12 +917,8 @@ export class InstitutionService {
     };
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // COURSES
-  // ──────────────────────────────────────────────────────────────
-
-  async getCourses(institutionId: string) {
-    return prisma.course.findMany({
+  async getInstitutionCourses(institutionId: string) {
+    const courses = await prisma.course.findMany({
       where: {
         enrollments: {
           some: {
@@ -655,6 +931,336 @@ export class InstitutionService {
         _count: { select: { enrollments: true } },
       },
     });
+  }
+
+  async getCourses(institutionId: string) {
+    const teachers = await prisma.schoolAdmin.findMany({
+      where: { institutionId, role: 'TEACHER' },
+      select: { userId: true },
+    });
+
+    const instructorIds = (
+      await prisma.instructor.findMany({
+        where: { userId: { in: teachers.map(t => t.userId) } },
+        select: { id: true },
+      })
+    ).map(i => i.id);
+
+    const courses = await prisma.course.findMany({
+      where: {
+        OR: [
+          { instructorId: { in: instructorIds } },
+          {
+            enrollments: {
+              some: {
+                student: { institutionId },
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        instructor: { select: { user: { select: { fullName: true } } } },
+        _count: { select: { enrollments: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return courses.map(c => ({
+      id: c.id,
+      title: c.title,
+      subject: c.subject,
+      grade: c.grade || 'N/A',
+      enrolledStudents: c._count.enrollments,
+      status: this.mapCourseStatus(c.status),
+      instructor: c.instructor?.user?.fullName || 'Unassigned',
+      instructorId: c.instructorId,
+      lastUpdated: c.updatedAt,
+    }));
+  }
+
+  async getCourseById(institutionId: string, courseId: string) {
+    const teachers = await prisma.schoolAdmin.findMany({
+      where: { institutionId, role: 'TEACHER' },
+      select: { userId: true },
+    });
+
+    const instructorIds = (
+      await prisma.instructor.findMany({
+        where: { userId: { in: teachers.map(t => t.userId) } },
+        select: { id: true },
+      })
+    ).map(i => i.id);
+
+    const course = await prisma.course.findFirst({
+      where: {
+        id: courseId,
+        OR: [
+          { enrollments: { some: { student: { institutionId } } } },
+          { instructorId: { in: instructorIds } },
+        ],
+      },
+      include: {
+        instructor: { select: { user: { select: { fullName: true } } } },
+        _count: { select: { enrollments: true } },
+      },
+    });
+
+    if (!course) throw new NotFoundError('Course');
+
+    return {
+      id: course.id,
+      title: course.title,
+      subject: course.subject,
+      grade: course.grade || 'N/A',
+      description: course.description || '',
+      examBoard: course.examBoard || '',
+      price: course.price,
+      status: this.mapCourseStatus(course.status),
+      instructor: course.instructor?.user?.fullName || 'Unassigned',
+      instructorId: course.instructorId,
+      enrolledStudents: course._count.enrollments,
+      lastUpdated: course.updatedAt,
+    };
+  }
+
+  async createCourse(institutionId: string, data: {
+    title: string;
+    subject: string;
+    grade?: string;
+    description?: string;
+    examBoard?: string;
+    price?: number;
+    status?: string;
+    instructorId?: string;
+  }, fallbackUserId?: string) {
+    const instructorId = await this.resolveInstructorId(institutionId, data.instructorId, fallbackUserId);
+
+    const course = await prisma.course.create({
+      data: {
+        title: data.title,
+        subject: data.subject,
+        grade: data.grade,
+        description: data.description,
+        examBoard: data.examBoard,
+        price: data.price || 0,
+        status: this.unmapCourseStatus(data.status || 'draft'),
+        instructorId,
+      },
+      include: {
+        instructor: { select: { user: { select: { fullName: true } } } },
+        _count: { select: { enrollments: true } },
+      },
+    });
+
+    return {
+      id: course.id,
+      title: course.title,
+      subject: course.subject,
+      grade: course.grade || 'N/A',
+      enrolledStudents: course._count.enrollments,
+      status: this.mapCourseStatus(course.status),
+      instructor: course.instructor?.user?.fullName || 'Unassigned',
+      lastUpdated: course.updatedAt,
+    };
+  }
+
+  private async resolveInstructorId(institutionId: string, instructorId?: string, fallbackUserId?: string): Promise<string> {
+    if (instructorId) {
+      const existingInstructor = await prisma.instructor.findUnique({
+        where: { id: instructorId },
+        select: { id: true },
+      });
+      if (existingInstructor) {
+        return instructorId;
+      }
+
+      const teacher = await prisma.schoolAdmin.findUnique({
+        where: { id: instructorId, institutionId },
+        include: { user: true },
+      });
+
+      if (teacher) {
+        let instructor = await prisma.instructor.findUnique({
+          where: { userId: teacher.userId },
+        });
+
+        if (!instructor) {
+          instructor = await prisma.instructor.create({
+            data: {
+              userId: teacher.userId,
+              bio: '',
+              expertise: [],
+            },
+          });
+        }
+
+        return instructor.id;
+      }
+    }
+
+    const teacher = await prisma.schoolAdmin.findFirst({
+      where: { institutionId, role: 'TEACHER' },
+      include: { user: true },
+    });
+
+    let instructor = await prisma.instructor.findUnique({
+      where: { userId: teacher?.userId || '' },
+    });
+
+    if (!instructor && teacher) {
+      instructor = await prisma.instructor.create({
+        data: {
+          userId: teacher.userId,
+          bio: '',
+          expertise: [],
+        },
+      });
+    }
+
+    if (!instructor && fallbackUserId) {
+      instructor = await prisma.instructor.create({
+        data: {
+          userId: fallbackUserId,
+          bio: '',
+          expertise: [],
+        },
+      });
+    }
+
+    if (!instructor) {
+      throw new AppError('No instructor available to assign to this course. Please add a teacher first.', 'NO_INSTRUCTOR', 400);
+    }
+
+    return instructor.id;
+  }
+
+  async updateCourse(institutionId: string, courseId: string, data: {
+    title?: string;
+    subject?: string;
+    grade?: string;
+    description?: string;
+    examBoard?: string;
+    price?: number;
+    status?: string;
+    instructorId?: string;
+  }) {
+    const teachers = await prisma.schoolAdmin.findMany({
+      where: { institutionId, role: 'TEACHER' },
+      select: { userId: true },
+    });
+
+    const instructorIds = (
+      await prisma.instructor.findMany({
+        where: { userId: { in: teachers.map(t => t.userId) } },
+        select: { id: true },
+      })
+    ).map(i => i.id);
+
+    const course = await prisma.course.findFirst({
+      where: {
+        id: courseId,
+        OR: [
+          { enrollments: { some: { student: { institutionId } } } },
+          { instructorId: { in: instructorIds } },
+        ],
+      },
+    });
+
+    if (!course) throw new NotFoundError('Course');
+
+    const resolvedInstructorId = data.instructorId
+      ? await this.resolveInstructorId(institutionId, data.instructorId)
+      : undefined;
+
+    const updated = await prisma.course.update({
+      where: { id: courseId },
+      data: {
+        title: data.title,
+        subject: data.subject,
+        grade: data.grade,
+        description: data.description,
+        examBoard: data.examBoard,
+        price: data.price,
+        status: data.status ? this.unmapCourseStatus(data.status) : undefined,
+        ...(resolvedInstructorId && { instructorId: resolvedInstructorId }),
+      },
+      include: {
+        instructor: { select: { user: { select: { fullName: true } } } },
+        _count: { select: { enrollments: true } },
+      },
+    });
+
+    return {
+      id: updated.id,
+      title: updated.title,
+      subject: updated.subject,
+      grade: updated.grade || 'N/A',
+      enrolledStudents: updated._count.enrollments,
+      status: this.mapCourseStatus(updated.status),
+      instructor: updated.instructor?.user?.fullName || 'Unassigned',
+      lastUpdated: updated.updatedAt,
+    };
+  }
+
+  async deleteCourse(institutionId: string, courseId: string) {
+    const teachers = await prisma.schoolAdmin.findMany({
+      where: { institutionId, role: 'TEACHER' },
+      select: { userId: true },
+    });
+
+    const instructorIds = (
+      await prisma.instructor.findMany({
+        where: { userId: { in: teachers.map(t => t.userId) } },
+        select: { id: true },
+      })
+    ).map(i => i.id);
+
+    const course = await prisma.course.findFirst({
+      where: {
+        id: courseId,
+        OR: [
+          { enrollments: { some: { student: { institutionId } } } },
+          { instructorId: { in: instructorIds } },
+        ],
+      },
+    });
+
+    if (!course) throw new NotFoundError('Course');
+
+    await prisma.course.delete({
+      where: { id: courseId },
+    });
+
+    return { success: true };
+  }
+
+  // Helper: map Prisma ContentStatus to page status
+  private mapCourseStatus(status: string): 'active' | 'draft' | 'archived' {
+    switch (status) {
+      case 'APPROVED':
+        return 'active';
+      case 'ARCHIVED':
+      case 'REJECTED':
+        return 'archived';
+      case 'DRAFT':
+      case 'PENDING_REVIEW':
+      default:
+        return 'draft';
+    }
+  }
+
+  // Helper: map page status to Prisma ContentStatus
+  private unmapCourseStatus(status: string): any {
+    switch (status) {
+      case 'active':
+        return 'APPROVED';
+      case 'archived':
+        return 'ARCHIVED';
+      case 'draft':
+      default:
+        return 'DRAFT';
+    }
   }
 
   // ──────────────────────────────────────────────────────────────

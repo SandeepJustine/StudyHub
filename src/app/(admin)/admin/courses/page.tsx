@@ -124,8 +124,8 @@ export default function AdminCoursesPage() {
       header: 'Instructor',
       accessor: (course: any) => (
         <div className="text-sm">
-          <p>{course.instructor?.user?.fullName || 'Unknown'}</p>
-          <p className="text-xs text-grey-medium">{course.instructor?.user?.email}</p>
+          <p>{course.instructor?.name || 'Unknown'}</p>
+          <p className="text-xs text-grey-medium">{course.instructor?.email || 'N/A'}</p>
         </div>
       ),
     },
@@ -326,8 +326,8 @@ export default function AdminCoursesPage() {
             </div>
             <div className="p-3 bg-grey-light/50 rounded-lg">
               <p className="text-xs text-grey-medium">Instructor</p>
-              <p className="font-medium">{selectedCourse.instructor?.user?.fullName || 'Unknown'}</p>
-              <p className="text-xs text-grey-medium">{selectedCourse.instructor?.user?.email}</p>
+              <p className="font-medium">{selectedCourse.instructor?.name || 'Unknown'}</p>
+              <p className="text-xs text-grey-medium">{selectedCourse.instructor?.email || 'N/A'}</p>
             </div>
           </div>
         )}

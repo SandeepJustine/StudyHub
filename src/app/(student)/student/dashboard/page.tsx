@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Clock, TrendingUp, Award, ChevronRight, Play, Star, GraduationCap, Target } from 'lucide-react';
-import { formatRelativeTime } from '@/utils/formatters';
+import { formatRelativeTime, formatCurrency } from '@/utils/formatters';
 import Link from 'next/link';
 
 export default async function StudentDashboard() {
@@ -17,7 +17,7 @@ export default async function StudentDashboard() {
 
   const student = await prisma.student.findFirst({
     where: { userId: session.user.id },
-    select: { id: true, grade: true, examBoard: true, subjects: true },
+    select: { id: true, grade: true, examBoard: true, subjects: true, institutionId: true },
   });
 
   if (!student) {
@@ -31,10 +31,55 @@ export default async function StudentDashboard() {
     );
   }
 
+  let institution: any = null;
+  let institutionCourses: any[] = [];
+  let enrolledCourseIds = new Set<string>();
   let enrollments: any[] = [];
   let examAttempts: any[] = [];
 
   try {
+    // Get institution info
+    if (student.institutionId) {
+      institution = await prisma.institution.findUnique({
+        where: { id: student.institutionId },
+        select: { id: true, name: true, tier: true },
+      });
+
+      // Get institution courses (courses taught by institution's teachers)
+      const teachers = await prisma.schoolAdmin.findMany({
+        where: { institutionId: student.institutionId, role: 'TEACHER' },
+        select: { userId: true },
+      });
+
+      const instructorIds = teachers.length > 0
+        ? await prisma.instructor.findMany({
+            where: { userId: { in: teachers.map(t => t.userId) } },
+            select: { id: true },
+          })
+        : [];
+
+      const instructorIdList = instructorIds.map(i => i.id);
+
+      institutionCourses = await prisma.course.findMany({
+        where: {
+          status: 'APPROVED',
+          instructorId: { in: instructorIdList },
+          NOT: {
+            enrollments: {
+              some: { studentId: student.id },
+            },
+          },
+        },
+        include: {
+          instructor: { include: { user: { select: { fullName: true, avatar: true } } } },
+          _count: { select: { modules: true, enrollments: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      });
+    }
+
+    // Get student's enrolled courses
     enrollments = await prisma.enrollment.findMany({
       where: { studentId: student.id },
       include: {
@@ -47,6 +92,8 @@ export default async function StudentDashboard() {
       orderBy: { lastAccessedAt: 'desc' },
       take: 5,
     });
+
+    enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
 
     examAttempts = await prisma.examAttempt.findMany({
       where: { studentId: student.id },
@@ -224,6 +271,46 @@ export default async function StudentDashboard() {
             )}
           </div>
         </div>
+
+        {/* Institution Courses */}
+        {institution && institutionCourses.length > 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                    <BookOpen size={18} className="text-blue-600" />
+                    {institution.name} Courses
+                  </h2>
+                  <p className="text-sm text-grey-medium">Recommended courses from your institution</p>
+                </div>
+                <Link href="/student/courses">
+                  <Button variant="ghost" size="sm" rightIcon={<ChevronRight size={14} />}>View All</Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {institutionCourses.slice(0, 3).map((course) => (
+                  <Link key={course.id} href={`/student/courses/${course.id}`}>
+                    <Card className="border-0 shadow-sm hover:shadow-md transition-all group cursor-pointer h-full">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="info" size="sm">{course.subject}</Badge>
+                          {course.examBoard && <Badge variant="neutral" size="sm">{course.examBoard}</Badge>}
+                        </div>
+                        <h3 className="font-semibold text-navy text-sm mb-1 group-hover:text-red transition-colors line-clamp-2">{course.title}</h3>
+                        <p className="text-xs text-grey-medium mb-3">{course.instructor?.user?.fullName || 'Unknown'}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-navy">{course.price > 0 ? formatCurrency(course.price) : 'Free'}</span>
+                          <Button variant="primary" size="sm">Enroll</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sidebar - Recent Exams */}
         <div className="space-y-4">

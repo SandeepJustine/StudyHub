@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,7 @@ import { Toast } from '@/components/ui/toast';
 import { StudentForm } from '@/components/features/institution/student-form';
 import { StudentDetailModal } from '@/components/features/institution/student-detail-modal';
 import {
-  Search, Filter, Download, UserPlus, Upload, Eye, Edit, Trash2,
+  Search, Filter, Download, UserPlus, Upload, Eye, Edit, Trash2, AlertTriangle,
 } from 'lucide-react';
 
 interface Student {
@@ -34,6 +35,10 @@ interface Pagination {
 }
 
 export default function SchoolAdminStudentsPage() {
+  const searchParams = useSearchParams();
+  const atRiskFilter = searchParams.get('atRisk') === 'true';
+  const addStudentParam = searchParams.get('add') === 'true';
+
   const [students, setStudents] = useState<Student[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1, limit: 20, total: 0, totalPages: 1,
@@ -41,7 +46,7 @@ export default function SchoolAdminStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('');
-  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [showAddStudent, setShowAddStudent] = useState(addStudentParam);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [viewingStudent, setViewingStudent] = useState<any>(null);
@@ -55,6 +60,7 @@ export default function SchoolAdminStudentsPage() {
         limit: '20',
         ...(query && { query }),
         ...(grade && { grade }),
+        ...(atRiskFilter && { atRisk: 'true' }),
       });
       const res = await fetch(`/api/institutions/students?${params}`);
       const data = await res.json();
@@ -67,11 +73,17 @@ export default function SchoolAdminStudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedGrade]);
+  }, [searchQuery, selectedGrade, atRiskFilter]);
 
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
+  useEffect(() => {
+    if (addStudentParam) {
+      setShowAddStudent(true);
+    }
+  }, [addStudentParam]);
 
   const handleAddStudent = async (formData: any) => {
     try {
@@ -246,6 +258,28 @@ export default function SchoolAdminStudentsPage() {
           </Button>
         </div>
       </div>
+
+      {/* At Risk Banner */}
+      {atRiskFilter && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={20} className="text-red-600" />
+            <div>
+              <p className="font-medium text-red-800">Students at Risk</p>
+              <p className="text-sm text-red-700">
+                Showing students with average progress below 50%
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('atRisk');
+            window.location.href = url.toString();
+          }}>
+            Show All Students
+          </Button>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
