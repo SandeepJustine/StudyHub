@@ -21,6 +21,15 @@ export class AuthService {
     role: UserRole;
     phone?: string;
     locale?: string;
+    institution?: {
+      name: string;
+      slug: string;
+      maxStudents?: number;
+    };
+    corporate?: {
+      companyName: string;
+      industry?: string;
+    };
   }) {
     // Validate inputs
     const errors: Record<string, string[]> = {};
@@ -82,11 +91,6 @@ export class AuthService {
         ...(data.role === 'INSTRUCTOR' && {
           instructor: { create: { expertise: [] } },
         }),
-        ...(data.role === 'CORPORATE_CLIENT' && {
-          corporateClient: {
-            create: { companyName: data.fullName },
-          },
-        }),
         ...(data.role === 'PARENT' && {
           parent: { create: {} },
         }),
@@ -98,6 +102,44 @@ export class AuthService {
         parent: true,
       },
     });
+
+    // Create institution and school admin profile if role is SCHOOL_ADMIN
+    if (data.role === 'SCHOOL_ADMIN' && data.institution) {
+      const slug = data.institution.slug || data.institution.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const existingInstitution = await prisma.institution.findUnique({
+        where: { slug },
+      });
+
+      let institution = existingInstitution;
+      if (!institution) {
+        institution = await prisma.institution.create({
+          data: {
+            name: data.institution.name,
+            slug,
+            maxStudents: data.institution.maxStudents || 200,
+          },
+        });
+      }
+
+      await prisma.schoolAdmin.create({
+        data: {
+          userId: user.id,
+          institutionId: institution.id,
+          role: 'HEAD',
+        },
+      });
+    }
+
+    // Create corporate client profile if role is CORPORATE_CLIENT
+    if (data.role === 'CORPORATE_CLIENT' && data.corporate) {
+      await prisma.corporateClient.create({
+        data: {
+          userId: user.id,
+          companyName: data.corporate.companyName,
+          industry: data.corporate.industry,
+        },
+      });
+    }
 
     // Send verification email
     try {

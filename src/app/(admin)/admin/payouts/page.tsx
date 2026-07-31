@@ -34,6 +34,12 @@ export default function AdminPayoutsPage() {
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
   const [actionType, setActionType] = useState<'process' | 'cancel' | 'mark_paid'>('process');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [payoutMethod, setPayoutMethod] = useState('AIRTEL_MONEY');
+  const [payoutPhone, setPayoutPhone] = useState('');
+  const [payoutOperatorRefId, setPayoutOperatorRefId] = useState('');
+  const [payoutBankUuid, setPayoutBankUuid] = useState('');
+  const [payoutBankAccountName, setPayoutBankAccountName] = useState('');
+  const [payoutBankAccountNumber, setPayoutBankAccountNumber] = useState('');
   const [stats, setStats] = useState({ 
     pending: 0, 
     completed: 0, 
@@ -112,17 +118,28 @@ export default function AdminPayoutsPage() {
     if (!selectedPayout) return;
 
     try {
+      const body: any = {
+        action: actionType,
+        data: { payoutId: selectedPayout.id },
+      };
+
+      if (actionType === 'process') {
+        body.data.method = payoutMethod;
+        body.data.accountDetails =
+          payoutMethod === 'AIRTEL_MONEY' || payoutMethod === 'TNM_MPAMBA'
+            ? { phone: payoutPhone, operatorRefId: payoutOperatorRefId }
+            : { bankUuid: payoutBankUuid, bankAccountName: payoutBankAccountName, bankAccountNumber: payoutBankAccountNumber };
+      }
+
       const response = await fetch('/api/admin/payouts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: actionType,
-          data: { payoutId: selectedPayout.id },
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
-        throw new Error('Action failed');
+        const result = await response.json().catch(() => ({ error: 'Action failed' }));
+        throw new Error(result.error || 'Action failed');
       }
 
       setToast({ message: `Payout ${actionType.replace(/_/g, ' ')} successful`, type: 'success' });
@@ -402,28 +419,114 @@ export default function AdminPayoutsPage() {
       {/* Action Confirmation Modal */}
       <Modal
         isOpen={showActionModal}
-        onClose={() => setShowActionModal(false)}
+        onClose={() => {
+          setShowActionModal(false);
+          setPayoutMethod('AIRTEL_MONEY');
+          setPayoutPhone('');
+          setPayoutOperatorRefId('');
+          setPayoutBankUuid('');
+          setPayoutBankAccountName('');
+          setPayoutBankAccountNumber('');
+        }}
         title={`${actionType === 'process' ? 'Process' : actionType === 'cancel' ? 'Cancel' : 'Mark as Paid'} Payout`}
-        size="sm"
+        size="md"
       >
         <div className="space-y-4">
-          <p className="text-grey-dark">
-            {actionType === 'process'
-              ? `Process payout of ${formatCurrency(selectedPayout?.amount)} to ${selectedPayout?.instructor?.user?.fullName || selectedPayout?.instructor?.name}?`
-              : actionType === 'cancel'
-              ? 'Are you sure you want to cancel this payout?'
-              : 'Confirm that this payout has been paid manually?'}
-          </p>
+          {actionType === 'process' ? (
+            <>
+              <div className="p-3 bg-grey-light/50 rounded-lg">
+                <p className="text-sm text-grey-dark">Instructor: <strong>{selectedPayout?.instructor?.user?.fullName || selectedPayout?.instructor?.name}</strong></p>
+                <p className="text-sm text-grey-dark">Amount: <strong>{formatCurrency(selectedPayout?.amount)}</strong></p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-grey-dark mb-2">Payment Method</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: '📱' },
+                    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: '📱' },
+                    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: '🏦' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPayoutMethod(m.id)}
+                      className={`p-2 rounded-lg border-2 text-center transition-all ${
+                        payoutMethod === m.id ? 'border-navy bg-navy/5' : 'border-grey-light'
+                      }`}
+                    >
+                      <div className="text-lg mb-1">{m.icon}</div>
+                      <p className="text-xs font-medium text-navy">{m.name}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {payoutMethod === 'AIRTEL_MONEY' || payoutMethod === 'TNM_MPAMBA' ? (
+                <>
+                  <Input
+                    label="Phone Number"
+                    placeholder="+265 888 000 000"
+                    value={payoutPhone}
+                    onChange={(e) => setPayoutPhone(e.target.value)}
+                  />
+                  <Input
+                    label="Mobile Money Operator Ref ID"
+                    placeholder="e.g., 20be6c20-adeb-4b5b-a7ba-0769820df4fb"
+                    value={payoutOperatorRefId}
+                    onChange={(e) => setPayoutOperatorRefId(e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <Input
+                    label="Bank UUID"
+                    placeholder="Bank UUID from PayChangu"
+                    value={payoutBankUuid}
+                    onChange={(e) => setPayoutBankUuid(e.target.value)}
+                  />
+                  <Input
+                    label="Account Name"
+                    placeholder="John Doe"
+                    value={payoutBankAccountName}
+                    onChange={(e) => setPayoutBankAccountName(e.target.value)}
+                  />
+                  <Input
+                    label="Account Number"
+                    placeholder="2652493369"
+                    value={payoutBankAccountNumber}
+                    onChange={(e) => setPayoutBankAccountNumber(e.target.value)}
+                  />
+                </>
+              )}
+            </>
+          ) : (
+            <p className="text-grey-dark">
+              {actionType === 'cancel'
+                ? 'Are you sure you want to cancel this payout?'
+                : 'Confirm that this payout has been paid manually?'}
+            </p>
+          )}
+
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setShowActionModal(false)}>
               No, Go Back
             </Button>
-            <Button
-              variant={actionType === 'cancel' ? 'danger' : 'primary'}
-              onClick={handlePayoutAction}
-            >
-              Yes, {actionType === 'process' ? 'Process' : actionType === 'cancel' ? 'Cancel' : 'Mark Paid'}
-            </Button>
+            {actionType === 'process' && (
+              <Button variant="primary" onClick={handlePayoutAction}>
+                Process Payout
+              </Button>
+            )}
+            {actionType === 'cancel' && (
+              <Button variant="danger" onClick={handlePayoutAction}>
+                Cancel Payout
+              </Button>
+            )}
+            {actionType === 'mark_paid' && (
+              <Button variant="success" onClick={handlePayoutAction}>
+                Mark as Paid
+              </Button>
+            )}
           </div>
         </div>
       </Modal>

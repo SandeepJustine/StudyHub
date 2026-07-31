@@ -76,7 +76,6 @@ export class TrainingService {
       where: { id: contractId },
       data: {
         status: 'active',
-        signedAt: new Date(),
       },
     });
   }

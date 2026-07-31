@@ -1,6 +1,9 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError, ValidationError } from '@/lib/utils/errors';
 import { PaymentMethod } from '@prisma/client';
+import { PayChanguAdapter } from './adapters/paychangu.adapter';
+
+const payChangu = new PayChanguAdapter();
 
 export class PayoutService {
   /**
@@ -178,9 +181,53 @@ export class PayoutService {
       payout.instructor?.bankDetails?.preferredMethod || 
       'AIRTEL_MONEY';
 
-    // In production, integrate with payment provider for disbursement
-    // For now, simulate processing
-    const reference = `PO-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`.toUpperCase();
+    const chargeId = `PO-${payout.id}-${Date.now()}`.toUpperCase();
+    let payoutResult: { success: boolean; message?: string; providerReference?: string; transactionId?: string } = { success: false };
+
+    // Initiate payout via PayChangu
+    if (paymentMethod === 'AIRTEL_MONEY' || paymentMethod === 'TNM_MPAMBA') {
+      const operatorRefId = accountDetails?.operatorRefId || '';
+      const mobile = accountDetails?.phone || payout.instructor?.user?.phone || '';
+      
+      if (!mobile || !operatorRefId) {
+        throw new AppError('Mobile money payout requires phone number and operator', 'MISSING_DETAILS', 400);
+      }
+
+      payoutResult = await payChangu.initiateMobileMoneyPayout({
+        mobile,
+        operatorRefId,
+        amount: payout.amount.toString(),
+        chargeId,
+        email: payout.instructor?.user?.email,
+        firstName: payout.instructor?.user?.fullName?.split(' ')[0],
+        lastName: payout.instructor?.user?.fullName?.split(' ').slice(1).join(' ') || '',
+      });
+    } else if (paymentMethod === 'BANK_TRANSFER') {
+      const bankUuid = accountDetails?.bankUuid || '';
+      const bankAccountName = accountDetails?.bankAccountName || payout.instructor?.user?.fullName || '';
+      const bankAccountNumber = accountDetails?.bankAccountNumber || '';
+      
+      if (!bankUuid || !bankAccountName || !bankAccountNumber) {
+        throw new AppError('Bank payout requires bank UUID, account name, and account number', 'MISSING_DETAILS', 400);
+      }
+
+      payoutResult = await payChangu.initiateBankPayout({
+        bankUuid,
+        amount: payout.amount.toString(),
+        chargeId,
+        bankAccountName,
+        bankAccountNumber,
+        email: payout.instructor?.user?.email,
+        firstName: payout.instructor?.user?.fullName?.split(' ')[0],
+        lastName: payout.instructor?.user?.fullName?.split(' ').slice(1).join(' ') || '',
+      });
+    } else {
+      throw new AppError(`Unsupported payout method: ${paymentMethod}`, 'UNSUPPORTED_METHOD', 400);
+    }
+
+    if (!payoutResult.success) {
+      throw new AppError(payoutResult.message || 'Payout initialization failed', 'PAYOUT_FAILED', 400);
+    }
 
     // Update payout status
     const updatedPayout = await prisma.payout.update({
@@ -188,14 +235,17 @@ export class PayoutService {
       data: {
         status: 'processing',
         paymentMethod,
-        reference,
+        reference: payoutResult.providerReference || chargeId,
         metadata: {
           ...(payout.metadata as any),
           processingStartedAt: new Date().toISOString(),
           method: paymentMethod,
+          chargeId,
+          providerTransactionId: payoutResult.transactionId,
           accountDetails: accountDetails ? {
             phone: accountDetails.phone?.slice(-4),
             bank: accountDetails.bank,
+            operatorRefId: accountDetails.operatorRefId,
           } : undefined,
         },
       },
@@ -203,8 +253,9 @@ export class PayoutService {
 
     return {
       payout: updatedPayout,
-      message: 'Payout processing initiated',
-      estimatedCompletion: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 business days
+      message: 'Payout processing initiated via PayChangu',
+      estimatedCompletion: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      providerReference: payoutResult.providerReference,
     };
   }
 

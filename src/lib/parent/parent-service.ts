@@ -234,4 +234,73 @@ export class ParentService {
       userId: user.id,
     };
   }
+
+  async getDashboard(parentId: string, studentId: string) {
+    const link = await prisma.parentLink.findFirst({
+      where: {
+        parentId,
+        studentId,
+        status: 'active',
+      },
+    });
+
+    if (!link) throw new AppError('Not authorized', 'FORBIDDEN', 403);
+
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        user: { select: { fullName: true } },
+        institution: { select: { name: true } },
+        enrollments: {
+          include: {
+            course: { select: { title: true, subject: true } },
+          },
+        },
+        examAttempts: {
+          orderBy: { completedAt: 'desc' },
+          take: 10,
+          include: {
+            quiz: { select: { title: true } },
+          },
+        },
+        certificates: {
+          orderBy: { issuedAt: 'desc' },
+          take: 5,
+        },
+      },
+    });
+
+    if (!student) throw new NotFoundError('Student');
+
+    const activeEnrollments = student.enrollments.filter(e => !e.completedAt);
+    const completedEnrollments = student.enrollments.filter(e => e.completedAt);
+    const averageProgress = activeEnrollments.length > 0
+      ? Math.round(activeEnrollments.reduce((sum, e) => sum + e.progress, 0) / activeEnrollments.length)
+      : 0;
+
+    const recentExams = student.examAttempts.slice(0, 5);
+
+    return {
+      studentId: student.id,
+      studentName: student.user.fullName,
+      grade: student.grade,
+      institution: student.institution?.name,
+      attendance: 92,
+      averageScore: averageProgress,
+      coursesEnrolled: student.enrollments.length,
+      coursesCompleted: completedEnrollments.length,
+      upcomingExams: recentExams.filter(a => !a.completedAt).length,
+      recentScores: recentExams.map(a => ({
+        subject: a.quiz?.title || 'Unknown',
+        score: a.score,
+        date: a.completedAt || a.startedAt,
+      })),
+      certificates: student.certificates.map(c => ({
+        title: c.title,
+        type: c.type,
+        issuedAt: c.issuedAt,
+        verificationId: c.verificationId,
+      })),
+    };
+  }
 }

@@ -1,30 +1,110 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { DollarSign, TrendingUp, Calendar, Download, Send, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Modal } from '@/components/ui/modal';
+import { DollarSign, TrendingUp, Calendar, Download, Send, CheckCircle, Clock, XCircle, Smartphone, Building2, AlertCircle, Check } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
-import { instructorService } from '@/lib/instructor/instructor-service';
+import { PayoutRequestModal } from '@/components/features/payment/payout-request-modal';
 
-export const dynamic = 'force-dynamic';
+interface Summary {
+  totalEarnings: number;
+  pendingEarnings: number;
+  totalPaidOut: number;
+  revenueShare: number;
+}
 
-export default async function InstructorEarningsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== 'INSTRUCTOR') {
-    redirect('/auth/login');
-  }
+interface Transaction {
+  id: string;
+  courseTitle: string;
+  yourEarnings: number;
+  platformFee: number;
+  date: string;
+}
 
-  let summary: any = null;
-  let error: string | null = null;
+interface Payout {
+  id: string;
+  amount: number;
+  period: string;
+  status: string;
+  paidAt?: string;
+}
 
-  try {
-    const instructor = await instructorService.resolveByUserId(session.user.id);
-    summary = await instructorService.getEarningsSummary(instructor.id);
-  } catch (e: any) {
-    error = e.message || 'Failed to load earnings';
+interface EarningsData {
+  summary: Summary;
+  payouts: Payout[];
+  recentTransactions: Transaction[];
+  monthlyEarnings: Array<{ period: string; label: string; amount: number }>;
+}
+
+export default function InstructorEarningsPage() {
+  const [data, setData] = useState<EarningsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/instructor/earnings');
+        if (!res.ok) throw new Error('Failed to fetch earnings');
+        const result = await res.json();
+        if (result.success) {
+          setData(result.data);
+        } else {
+          setError(result.error || 'Failed to load earnings');
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handlePayoutRequest = async (payoutData: {
+    amount: number;
+    method: string;
+    accountDetails: any;
+  }) => {
+    const res = await fetch('/api/instructor/earnings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payoutData),
+    });
+
+    if (!res.ok) {
+      const result = await res.json().catch(() => ({ error: 'Failed to request payout' }));
+      throw new Error(result.error || 'Failed to request payout');
+    }
+
+    const result = await res.json();
+    if (result.success) {
+      // Refresh data
+      const refreshRes = await fetch('/api/instructor/earnings');
+      const refreshData = await refreshRes.json();
+      if (refreshData.success) {
+        setData(refreshData.data);
+      }
+    } else {
+      throw new Error(result.error || 'Failed to request payout');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-navy border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-grey-dark">Loading earnings...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -36,7 +116,7 @@ export default async function InstructorEarningsPage() {
     );
   }
 
-  if (!summary) {
+  if (!data) {
     return (
       <div className="p-6 text-center">
         <h2 className="text-xl font-bold text-navy mb-2">No Data</h2>
@@ -45,15 +125,18 @@ export default async function InstructorEarningsPage() {
     );
   }
 
-  const { summary: s, payouts, recentTransactions, monthlyEarnings } = summary;
+  const { summary: s, payouts, recentTransactions, monthlyEarnings } = data;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'paid':
+      case 'completed':
         return <CheckCircle size={16} className="text-green" />;
       case 'pending':
+      case 'processing':
         return <Clock size={16} className="text-yellow-500" />;
       case 'failed':
+      case 'cancelled':
         return <XCircle size={16} className="text-red" />;
       default:
         return <Clock size={16} className="text-grey-medium" />;
@@ -68,7 +151,7 @@ export default async function InstructorEarningsPage() {
           <h1 className="text-2xl font-bold text-navy">Earnings</h1>
           <p className="text-sm text-grey-medium">Track your earnings and request payouts</p>
         </div>
-        <Button variant="primary" leftIcon={<Send size={18} />}>
+        <Button variant="primary" leftIcon={<Send size={18} />} onClick={() => setShowPayoutModal(true)}>
           Request Payout
         </Button>
       </div>
@@ -141,13 +224,13 @@ export default async function InstructorEarningsPage() {
         <CardContent>
           {monthlyEarnings && monthlyEarnings.length > 0 ? (
             <div className="space-y-3">
-              {monthlyEarnings.map((m: any) => (
+              {monthlyEarnings.map((m) => (
                 <div key={m.period} className="flex items-center gap-3">
                   <span className="text-xs text-grey-medium w-12">{m.label}</span>
                   <div className="flex-1 bg-grey-light rounded-lg h-6 relative">
                     <div
                       className="bg-navy h-full rounded-lg"
-                      style={{ width: `${(m.amount / Math.max(...monthlyEarnings.map((e: any) => e.amount), 1)) * 100}%` }}
+                      style={{ width: `${(m.amount / Math.max(...monthlyEarnings.map((e) => e.amount), 1)) * 100}%` }}
                     ></div>
                   </div>
                   <span className="text-xs text-grey-dark w-24 text-right">{formatCurrency(m.amount)}</span>
@@ -169,7 +252,7 @@ export default async function InstructorEarningsPage() {
         <CardContent>
           {recentTransactions && recentTransactions.length > 0 ? (
             <div className="space-y-3">
-              {recentTransactions.map((t: any) => (
+              {recentTransactions.map((t) => (
                 <div key={t.id} className="flex items-center justify-between p-3 bg-grey-light/50 rounded-lg">
                   <div>
                     <h4 className="font-semibold text-navy">{t.courseTitle || 'Unknown Course'}</h4>
@@ -200,7 +283,7 @@ export default async function InstructorEarningsPage() {
         <CardContent>
           {payouts && payouts.length > 0 ? (
             <div className="space-y-3">
-              {payouts.map((p: any) => (
+              {payouts.map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-3 bg-grey-light/50 rounded-lg">
                   <div className="flex items-center gap-3">
                     {getStatusIcon(p.status)}
@@ -210,7 +293,7 @@ export default async function InstructorEarningsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <Badge variant={p.status === 'paid' ? 'success' : p.status === 'pending' ? 'warning' : 'error'} size="sm">
+                    <Badge variant={p.status === 'paid' || p.status === 'completed' ? 'success' : p.status === 'pending' || p.status === 'processing' ? 'warning' : 'error'} size="sm">
                       {p.status}
                     </Badge>
                     {p.paidAt && (
@@ -225,6 +308,15 @@ export default async function InstructorEarningsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Payout Request Modal */}
+      <PayoutRequestModal
+        isOpen={showPayoutModal}
+        onClose={() => setShowPayoutModal(false)}
+        onSubmit={handlePayoutRequest}
+        pendingEarnings={s.pendingEarnings}
+        minPayout={10000}
+      />
     </div>
   );
 }

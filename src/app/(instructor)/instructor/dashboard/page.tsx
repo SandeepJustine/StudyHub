@@ -114,7 +114,7 @@ export default async function InstructorDashboardPage() {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Link href="/instructor/courses/new">
           <Button variant="primary" leftIcon={<Plus size={16} />}>
             Create New Course
@@ -128,6 +128,11 @@ export default async function InstructorDashboardPage() {
         <Link href="/instructor/community/new">
           <Button variant="outline" leftIcon={<BookOpen size={16} />}>
             Post Announcement
+          </Button>
+        </Link>
+        <Link href="/instructor/earnings">
+          <Button variant="outline" leftIcon={<DollarSign size={16} />}>
+            Request Payout
           </Button>
         </Link>
       </div>

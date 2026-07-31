@@ -121,12 +121,6 @@ export class RecruitmentService {
       },
     });
 
-    // Update application count
-    await prisma.recruitmentPosting.update({
-      where: { id: postingId },
-      data: { applicationsCount: { increment: 1 } },
-    });
-
     return application;
   }
 

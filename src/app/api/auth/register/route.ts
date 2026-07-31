@@ -4,9 +4,8 @@ import { AuthService } from '@/lib/auth/auth-service';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, fullName, role, phone, locale } = body;
+    const { email, password, fullName, role, phone, locale, institution, corporate } = body;
 
-    // Validate required fields
     if (!email || !password || !fullName || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -22,6 +21,8 @@ export async function POST(req: Request) {
       role,
       phone,
       locale,
+      institution,
+      corporate,
     });
 
     return NextResponse.json({
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('Registration error:', error);
-    
+
     if (error.code === 'EMAIL_EXISTS') {
       return NextResponse.json(
         { error: error.message },
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { error: 'Registration failed' },
+      { error: error.message || 'Registration failed' },
       { status: 500 }
     );
   }

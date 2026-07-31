@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,22 +11,52 @@ import { Phone, Lock, ArrowLeft, Eye, User } from 'lucide-react';
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/parent/session');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+          }
+        }
+      } catch {
+        // Not authenticated
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkSession();
+  }, []);
 
   const handleSendOTP = async () => {
     setIsLoading(true);
+    setError('');
     try {
-      await fetch('/api/parent/auth', {
+      const res = await fetch('/api/parent/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone }),
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send OTP');
+      }
+
       setStep('otp');
-    } catch (error) {
-      console.error('Failed to send OTP:', error);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -34,28 +64,58 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
   const handleVerifyOTP = async () => {
     setIsLoading(true);
+    setError('');
     try {
-      const response = await fetch('/api/parent/verify', {
+      const res = await fetch('/api/parent/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, otp }),
       });
-      
-      if (response.ok) {
-        setIsAuthenticated(true);
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Verification failed');
       }
-    } catch (error) {
-      console.error('OTP verification failed:', error);
+
+      setIsAuthenticated(true);
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/parent/session', { method: 'DELETE' });
+      setIsAuthenticated(false);
+      setStep('phone');
+      setPhone('');
+      setOtp('');
+      router.refresh();
+    } catch {
+      // ignore
+    }
+  };
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-grey-light flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-navy border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-grey-dark">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-grey-light flex flex-col items-center justify-center p-4">
         <Logo size="lg" className="mb-8" />
-        
+
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle>Parent Portal</CardTitle>
@@ -67,6 +127,12 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
           </CardHeader>
 
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red">
+                {error}
+              </div>
+            )}
+
             {step === 'phone' ? (
               <div className="space-y-4">
                 <Input
@@ -146,7 +212,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       <header className="bg-navy text-white p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Logo variant="white" size="sm" />
-          <Button variant="ghost" className="text-white" onClick={() => setIsAuthenticated(false)}>
+          <Button variant="ghost" className="text-white" onClick={handleLogout}>
             Sign Out
           </Button>
         </div>

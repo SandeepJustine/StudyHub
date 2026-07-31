@@ -309,9 +309,150 @@ export class PaymentService {
   /**
    * Handle payment webhook
    */
-  async handleWebhook(method: PaymentMethod, payload: any) {
-    const provider = this.getProvider(method);
+  async handleWebhook(method: any, payload: any) {
+    const provider = this.getProvider(method as any);
     await provider.handleWebhook(payload);
+
+    // Process webhook payload
+    const chargeId = payload.data?.charge_id || payload.data?.ref_id || payload.id;
+    const status = payload.data?.status || payload.status;
+    const eventType = payload.event_type || payload.type;
+
+    if (!chargeId) {
+      return;
+    }
+
+    // Find transaction by provider reference
+    const transaction = await prisma.transaction.findFirst({
+      where: {
+        OR: [
+          { providerRef: chargeId },
+          { reference: chargeId },
+          { providerRef: payload.data?.trans_id },
+        ],
+      },
+    });
+
+    if (!transaction) {
+      console.warn(`Webhook received for unknown transaction: ${chargeId}`);
+      return;
+    }
+
+    const normalizedStatus = this.normalizeStatus(status);
+
+    // Only update if status changed
+    if (transaction.status !== normalizedStatus) {
+      if (normalizedStatus === 'COMPLETED') {
+        await this.completeTransaction(transaction.id, {
+          verified: true,
+          status: 'COMPLETED',
+          providerReference: chargeId,
+          metadata: payload,
+        });
+      } else if (normalizedStatus === 'FAILED') {
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: 'FAILED',
+            metadata: {
+              ...((transaction.metadata as any) || {}),
+              webhookFailureReason: payload.data?.logs || payload.message,
+            },
+          },
+        });
+      }
+    }
+  }
+
+  /**
+   * Auto-verify pending payments (fallback when webhook fails)
+   * Call this from a cron job or scheduled task
+   */
+  async verifyPendingPayments(maxAgeMinutes: number = 30) {
+    const cutoffTime = new Date(Date.now() - maxAgeMinutes * 60 * 1000);
+
+    const pendingTransactions = await prisma.transaction.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: { lt: cutoffTime },
+        paymentMethod: { not: 'BANK_TRANSFER' },
+      },
+      take: 50,
+    });
+
+    const results = {
+      verified: 0,
+      failed: 0,
+      stillPending: 0,
+    };
+
+    for (const transaction of pendingTransactions) {
+      try {
+        const provider = this.getProvider(transaction.paymentMethod);
+        const verification = await provider.verifyPayment(transaction.reference);
+
+        if (verification.verified && verification.status === 'COMPLETED') {
+          await this.completeTransaction(transaction.id, verification);
+          results.verified++;
+        } else if (verification.status === 'FAILED') {
+          await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              status: 'FAILED',
+              metadata: {
+                ...((transaction.metadata as any) || {}),
+                autoVerificationFailed: true,
+                verificationError: verification.metadata,
+              },
+            },
+          });
+          results.failed++;
+        } else {
+          results.stillPending++;
+        }
+      } catch (error) {
+        console.error(`Auto-verification failed for ${transaction.reference}:`, error);
+        results.stillPending++;
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Get pending payments that need verification
+   */
+  async getPendingVerifications(maxAgeMinutes: number = 30) {
+    const cutoffTime = new Date(Date.now() - maxAgeMinutes * 60 * 1000);
+
+    return prisma.transaction.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: { lt: cutoffTime },
+        paymentMethod: { not: 'BANK_TRANSFER' },
+      },
+      select: {
+        id: true,
+        reference: true,
+        providerRef: true,
+        paymentMethod: true,
+        amount: true,
+        createdAt: true,
+        attempts: true,
+      },
+      take: 50,
+    });
+  }
+
+  private normalizeStatus(status: string): 'PENDING' | 'COMPLETED' | 'FAILED' {
+    const normalized = status.toLowerCase();
+    if (['success', 'completed', 'paid', 'active'].includes(normalized)) {
+      return 'COMPLETED';
+    }
+    if (['failed', 'cancelled', 'declined', 'expired'].includes(normalized)) {
+      return 'FAILED';
+    }
+    return 'PENDING';
   }
 
   /**
