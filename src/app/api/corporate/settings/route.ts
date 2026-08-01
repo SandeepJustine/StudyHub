@@ -1,0 +1,39 @@
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth-options';
+import { RecruitmentService } from '@/lib/corporate/recruitment-service';
+
+const recruitmentService = new RecruitmentService();
+
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || session.user.role !== 'CORPORATE_CLIENT') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const profile = await recruitmentService.getCompanyProfile(session.user.id);
+
+    return NextResponse.json({ success: true, data: profile });
+  } catch (error: any) {
+    const status = error.statusCode || 500;
+    return NextResponse.json({ error: error.message || 'Failed to fetch company profile' }, { status });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || session.user.role !== 'CORPORATE_CLIENT') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const updated = await recruitmentService.updateCompanyProfile(session.user.id, body);
+
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error: any) {
+    const status = error.statusCode || 500;
+    return NextResponse.json({ error: error.message || 'Failed to update company profile' }, { status });
+  }
+}

@@ -664,11 +664,16 @@ model RecruitmentPosting {
   title         String
   description   String
   requirements  String?
+  qualifications String?
   salary        String?
   location      String?
+  type          String?  @default("Full-time")
   deadline      DateTime?
   status        String   @default("active")
-  price         Int      // In MWK (50,000 - 300,000)
+  price         Int      @default(50000) // In MWK
+  featured      Boolean  @default(false)
+  urgent        Boolean  @default(false)
+  applicationsCount Int @default(0)
   createdAt     DateTime @default(now())
 
   applications  JobApplication[]
@@ -690,6 +695,9 @@ model CorporateContract {
   id            String   @id @default(cuid())
   clientId      String
   client        CorporateClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  employees     Int      @default(0)
   courses       Json     // Array of course packages
   totalAmount   Int
   status        String   @default("draft")

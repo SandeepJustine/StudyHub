@@ -4,6 +4,87 @@ import { paymentService } from '@/lib/payments/payment-service';
 
 export class RecruitmentService {
   /**
+   * Resolve the CorporateClient ID from a User ID
+   */
+  async getClientId(userId: string): Promise<string> {
+    const client = await prisma.corporateClient.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!client) throw new NotFoundError('Corporate client');
+    return client.id;
+  }
+
+  /**
+   * Get company profile for a corporate client
+   */
+  async getCompanyProfile(userId: string) {
+    const client = await prisma.corporateClient.findUnique({
+      where: { userId },
+      include: {
+        user: { select: { fullName: true, email: true, phone: true } },
+      },
+    });
+    if (!client) throw new NotFoundError('Corporate client');
+
+    return {
+      companyName: client.companyName,
+      industry: client.industry,
+      isVerified: client.isVerified,
+      logo: client.logo,
+      contactName: client.user.fullName,
+      contactEmail: client.user.email,
+      contactPhone: client.user.phone,
+    };
+  }
+
+  /**
+   * Update company profile for a corporate client
+   */
+  async updateCompanyProfile(userId: string, data: {
+    companyName?: string;
+    industry?: string;
+    logo?: string;
+    contactName?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+  }) {
+    const client = await prisma.corporateClient.findUnique({
+      where: { userId },
+    });
+    if (!client) throw new NotFoundError('Corporate client');
+
+    // Update user fields
+    if (data.contactName || data.contactEmail || data.contactPhone) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          fullName: data.contactName,
+          email: data.contactEmail,
+          phone: data.contactPhone,
+        },
+      });
+    }
+
+    // Update client fields
+    const updated = await prisma.corporateClient.update({
+      where: { id: client.id },
+      data: {
+        companyName: data.companyName,
+        industry: data.industry,
+        logo: data.logo,
+      },
+    });
+
+    return {
+      companyName: updated.companyName,
+      industry: updated.industry,
+      isVerified: updated.isVerified,
+      logo: updated.logo,
+    };
+  }
+
+  /**
    * Create job posting
    */
   async createJobPosting(clientId: string, data: {
@@ -15,28 +96,27 @@ export class RecruitmentService {
     location?: string;
     type?: string;
     deadline?: Date;
+    featured?: boolean;
+    urgent?: boolean;
   }) {
-    // Calculate price based on features
     const price = this.calculatePostingPrice(data);
-
-    // Process payment
-    const payment = await paymentService.processPayment({
-      userId: clientId,
-      amount: price,
-      method: 'BANK_TRANSFER',
-      metadata: {
-        type: 'job_posting',
-        description: `Job posting: ${data.title}`,
-      },
-    });
 
     // Create posting
     const posting = await prisma.recruitmentPosting.create({
       data: {
         clientId,
-        ...data,
+        title: data.title,
+        description: data.description,
+        requirements: data.requirements,
+        qualifications: data.qualifications,
+        salary: data.salary,
+        location: data.location,
+        type: data.type,
+        deadline: data.deadline,
         price,
-        status: payment.success ? 'active' : 'draft',
+        featured: data.featured || false,
+        urgent: data.urgent || false,
+        status: 'active',
       },
     });
 
@@ -80,7 +160,23 @@ export class RecruitmentService {
     ]);
 
     return {
-      postings,
+      postings: postings.map(p => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        requirements: p.requirements,
+        qualifications: p.qualifications,
+        salary: p.salary,
+        location: p.location,
+        type: p.type,
+        deadline: p.deadline,
+        status: p.status,
+        price: p.price,
+        featured: p.featured,
+        urgent: p.urgent,
+        applications: p._count.applications,
+        createdAt: p.createdAt,
+      })),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
@@ -151,6 +247,67 @@ export class RecruitmentService {
         reviewedAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Get all applications for a client across all postings
+   */
+  async getAllApplications(clientId: string, params?: {
+    status?: string;
+    query?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const { status, query, page = 1, limit = 20 } = params || {};
+
+    const where: any = {
+      posting: { clientId },
+    };
+    if (status) where.status = status;
+    if (query) {
+      where.OR = [
+        { student: { user: { fullName: { contains: query, mode: 'insensitive' } } } },
+        { student: { user: { email: { contains: query, mode: 'insensitive' } } } },
+        { posting: { title: { contains: query, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [applications, total] = await Promise.all([
+      prisma.jobApplication.findMany({
+        where,
+        include: {
+          student: {
+            include: {
+              user: { select: { fullName: true, email: true, phone: true } },
+            },
+          },
+          posting: {
+            select: { title: true },
+          },
+        },
+        orderBy: { appliedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.jobApplication.count({ where }),
+    ]);
+
+    return {
+      applications: applications.map(a => ({
+        id: a.id,
+        applicantName: a.student?.user?.fullName || 'Unknown',
+        applicantEmail: a.student?.user?.email || '',
+        position: a.posting?.title || '',
+        postingId: a.postingId,
+        postingTitle: a.posting?.title || '',
+        appliedAt: a.appliedAt,
+        status: a.status,
+        coverLetter: a.coverLetter,
+        cvUrl: a.cvUrl,
+        notes: a.notes,
+      })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   /**

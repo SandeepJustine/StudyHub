@@ -3,11 +3,24 @@ import { AppError, NotFoundError } from '@/lib/utils/errors';
 
 export class TrainingService {
   /**
+   * Resolve the CorporateClient ID from a User ID
+   */
+  async getClientId(userId: string): Promise<string> {
+    const client = await prisma.corporateClient.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!client) throw new NotFoundError('Corporate client');
+    return client.id;
+  }
+
+  /**
    * Create corporate training package
    */
   async createTrainingPackage(clientId: string, data: {
     title: string;
     description?: string;
+    employees?: number;
     courses: Array<{ courseId: string; quantity: number }>;
     startDate: Date;
     endDate: Date;
@@ -37,8 +50,8 @@ export class TrainingService {
 
     // Apply bulk discount
     let discount = 0;
-    if (data.courses.length >= 10) discount = 0.15; // 15% for 10+ courses
-    else if (data.courses.length >= 5) discount = 0.10; // 10% for 5+ courses
+    if (data.courses.length >= 10) discount = 0.15;
+    else if (data.courses.length >= 5) discount = 0.10;
     
     const finalAmount = Math.floor(totalAmount * (1 - discount));
 
@@ -48,6 +61,7 @@ export class TrainingService {
         clientId,
         title: data.title,
         description: data.description,
+        employees: data.employees || 0,
         courses: courseDetails,
         totalAmount: finalAmount,
         status: 'draft',

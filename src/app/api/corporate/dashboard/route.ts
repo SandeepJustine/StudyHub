@@ -26,7 +26,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Corporate client not found' }, { status: 404 });
     }
 
-    const [activePostings, totalApplications, activeContracts, recentPostings] = await Promise.all([
+    const [activePostings, totalApplications, activeContracts, recentPostings, recentApplications, recentContracts] = await Promise.all([
       prisma.recruitmentPosting.count({ where: { clientId: client.id, status: 'active' } }),
       prisma.jobApplication.count({
         where: {
@@ -42,7 +42,37 @@ export async function GET(req: Request) {
           _count: { select: { applications: true } },
         },
       }),
+      prisma.jobApplication.findMany({
+        where: {
+          posting: { clientId: client.id },
+        },
+        orderBy: { appliedAt: 'desc' },
+        take: 10,
+        include: {
+          student: {
+            include: {
+              user: { select: { fullName: true } },
+            },
+          },
+          posting: {
+            select: { title: true },
+          },
+        },
+      }),
+      prisma.corporateContract.findMany({
+        where: { clientId: client.id },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
     ]);
+
+    const totalSpent = await prisma.transaction.aggregate({
+      where: {
+        userId: session.user.id,
+        status: 'COMPLETED',
+      },
+      _sum: { amount: true },
+    });
 
     return NextResponse.json({
       success: true,
@@ -54,6 +84,7 @@ export async function GET(req: Request) {
           activePostings,
           totalApplications,
           activeContracts,
+          totalSpent: totalSpent._sum.amount || 0,
         },
         recentPostings: recentPostings.map(p => ({
           id: p.id,
@@ -61,6 +92,23 @@ export async function GET(req: Request) {
           status: p.status,
           applications: p._count.applications,
           createdAt: p.createdAt,
+        })),
+        recentApplications: recentApplications.map(a => ({
+          id: a.id,
+          applicantName: a.student.user.fullName,
+          position: a.posting.title,
+          appliedAt: a.appliedAt,
+          status: a.status,
+        })),
+        recentContracts: recentContracts.map(c => ({
+          id: c.id,
+          title: c.title,
+          employees: c.employees,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          status: c.status,
+          amount: c.totalAmount,
+          courses: c.courses,
         })),
       },
     });

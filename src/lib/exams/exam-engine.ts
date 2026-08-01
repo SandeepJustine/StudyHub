@@ -117,26 +117,39 @@ export class ExamEngine {
       throw new AppError('Exam already submitted', 'ALREADY_SUBMITTED', 400);
     }
 
-    // Auto-grade the exam
+    // Auto-grade objective questions, flag essay questions for review
     const gradingResult = this.gradeExam(attempt.quiz.questions, answers);
+
+    // Check if there are essay questions that need instructor review
+    const hasEssayQuestions = attempt.quiz.questions.some((q: any) => q.type === 'ESSAY');
+    const autoScore = hasEssayQuestions ? gradingResult.autoScore : gradingResult.percentage;
+    const autoPassed = hasEssayQuestions ? false : gradingResult.passed; // Require instructor review for mixed exams
 
     // Update attempt
     const updatedAttempt = await prisma.examAttempt.update({
       where: { id: attemptId },
       data: {
-        score: gradingResult.percentage,
-        passed: gradingResult.passed,
+        score: autoScore,
+        passed: autoPassed,
         completedAt: new Date(),
         timeSpent: Math.floor(
           (new Date().getTime() - attempt.startedAt.getTime()) / 1000
         ),
-        answers: JSON.stringify(answers),
+        answers: JSON.stringify({
+          ...answers,
+          _meta: {
+            hasEssayQuestions,
+            autoScore,
+            autoPassed,
+            pendingReview: hasEssayQuestions,
+          },
+        }),
       },
     });
 
-    // Generate certificate if passed
+    // Generate certificate only if fully passed (no pending essays) or auto-passed
     let certificate = null;
-    if (gradingResult.passed) {
+    if (!hasEssayQuestions && gradingResult.passed) {
       certificate = await this.generateExamCertificate(
         studentId,
         updatedAttempt.id
@@ -145,7 +158,12 @@ export class ExamEngine {
 
     return {
       attempt: updatedAttempt,
-      result: gradingResult,
+      result: {
+        ...gradingResult,
+        score: autoScore,
+        passed: autoPassed,
+        pendingReview: hasEssayQuestions,
+      },
       certificate,
     };
   }
@@ -159,6 +177,7 @@ export class ExamEngine {
   ) {
     let totalPoints = 0;
     let earnedPoints = 0;
+    let autoEarnedPoints = 0;
     const details: any[] = [];
 
     for (const question of questions) {
@@ -168,25 +187,32 @@ export class ExamEngine {
       totalPoints += question.points;
       earnedPoints += result.points;
       
+      if (question.type !== 'ESSAY') {
+        autoEarnedPoints += result.points;
+      }
+      
       details.push({
         questionId: question.id,
+        type: question.type,
         correct: result.correct,
         points: result.points,
         maxPoints: question.points,
         correctAnswer: question.correctAnswer || question.options?.filter((o: any) => o.isCorrect).map((o: any) => o.text),
         studentAnswer,
+        pendingReview: question.type === 'ESSAY',
       });
     }
 
-    const percentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
-    const passingScore = questions[0]?.quiz?.passingScore || 60;
+    const autoPercentage = totalPoints > 0 ? (autoEarnedPoints / totalPoints) * 100 : 0;
+    const totalPercentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
 
     return {
       earnedPoints,
       totalPoints,
-      percentage: Math.round(percentage * 100) / 100,
-      passed: percentage >= passingScore,
-      passingScore,
+      autoScore: Math.round(autoPercentage * 100) / 100,
+      percentage: Math.round(totalPercentage * 100) / 100,
+      passed: totalPercentage >= (questions[0]?.quiz?.passingScore || 60),
+      passingScore: questions[0]?.quiz?.passingScore || 60,
       details,
     };
   }
@@ -194,7 +220,7 @@ export class ExamEngine {
   /**
    * Grade individual question
    */
-  private gradeQuestion(question: any, studentAnswer: any): { correct: boolean; points: number } {
+  private gradeQuestion(question: any, studentAnswer: any): { correct: boolean; points: number; pendingReview?: boolean } {
     switch (question.type) {
       case 'MULTIPLE_CHOICE': {
         const correctOptions = (question.options as any[])
@@ -226,8 +252,8 @@ export class ExamEngine {
       }
 
       case 'ESSAY': {
-        // Essays require manual grading - give partial credit as placeholder
-        return { correct: false, points: 0 };
+        // Essays require manual grading - return 0 points but mark as pending review
+        return { correct: false, points: 0, pendingReview: true };
       }
 
       default:
