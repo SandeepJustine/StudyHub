@@ -1,14 +1,14 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { redirect } from 'next/navigation';
-import { labService } from '@/lib/lab/lab-store';
+import { labService } from '@/lib/lab/lab-service';
 import { instructorService } from '@/lib/instructor/instructor-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Beaker, Users, BookOpen, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { formatDate } from '@/utils/formatters';
 
 export default async function InstructorVirtualLabPage() {
   const session = await getServerSession(authOptions);
@@ -62,7 +62,7 @@ export default async function InstructorVirtualLabPage() {
                             </p>
                             <div className="flex items-center gap-4 mt-2 text-xs text-grey-dark">
                               <span className="flex items-center gap-1"><Users size={12} /> {lab._count.attempts} attempts</span>
-                              <span>Created: {format(new Date(lab.createdAt), 'dd MMM yyyy')}</span>
+                              <span>Created: {formatDate(lab.createdAt)}</span>
                             </div>
                           </div>
                           <ChevronRight size={20} className="text-grey-medium" />

@@ -2,7 +2,7 @@ import { cn } from '@/utils/cn';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
+  variant?: 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'purple' | 'red';
   size?: 'sm' | 'md';
   className?: string;
 }
@@ -14,6 +14,8 @@ export function Badge({ children, variant = 'neutral', size = 'sm', className }:
     error: 'bg-red-100 text-red-800',
     info: 'bg-blue-100 text-blue-800',
     neutral: 'bg-grey-light text-grey-dark',
+    purple: 'bg-purple-100 text-purple-800',
+    red: 'bg-red-100 text-red-800',
   };
 
   const sizeClasses = {

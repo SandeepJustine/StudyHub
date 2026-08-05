@@ -237,6 +237,7 @@ model Student {
   assignmentSubmissions AssignmentSubmission[]
   studentExperiments StudentExperiment[]
   studentBadges StudentBadge[]
+  virtualLabAttempts VirtualLabAttempt[]
 }
 
 model SchoolAdmin {
@@ -491,6 +492,8 @@ model Course {
   forumThreads  ForumThread[]
   liveClasses   LiveClass[]
   transactions  Transaction[]
+  experiments   Experiment[]
+  virtualLabs   VirtualLab[]
 }
 
 model CourseReview {
@@ -533,6 +536,8 @@ model CourseModule {
   quiz            Quiz?
   assignments     Assignment[]
   progress        ModuleProgress[]
+  experiments     Experiment[]
+  virtualLabs     VirtualLab[]
 
   @@index([courseId, order])
 }
@@ -1067,7 +1072,7 @@ model StudentExperiment {
   experiment    Experiment @relation(fields: [experimentId], references: [id])
   studentId     String
   student       Student  @relation(fields: [studentId], references: [id])
-  status        String   @default("not_started") // not_started, in_progress, completed, failed
+  status        String   @default("not_started")
   startedAt     DateTime?
   completedAt   DateTime?
   score         Int      @default(0)
@@ -1079,4 +1084,41 @@ model StudentExperiment {
 
   @@index([studentId, status])
   @@index([experimentId])
+}
+
+model VirtualLab {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  moduleId    String
+  module      CourseModule @relation(fields: [moduleId], references: [id])
+  title       String
+  description String?
+  templateId  String
+  labState    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attempts    VirtualLabAttempt[]
+
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+model VirtualLabAttempt {
+  id          String   @id @default(cuid())
+  virtualLabId String
+  virtualLab  VirtualLab @relation(fields: [virtualLabId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  status      String   @default("not_started")
+  completedAt DateTime?
+  score       Int      @default(0)
+  xpEarned    Int      @default(0)
+  observations Json    @default("[]")
+  currentStep Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([studentId])
+  @@index([virtualLabId])
 }
