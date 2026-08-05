@@ -86,9 +86,20 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   const enrollment = await prisma.enrollment.findFirst({ where: { studentId: student.id, courseId } });
 
-  let enrollmentStatus: 'not_enrolled' | 'enrolled' | 'completed' = 'not_enrolled';
+  // Check for pending payment transaction
+  const pendingTransaction = await prisma.transaction.findFirst({
+    where: {
+      courseId,
+      userId: student.userId,
+      status: 'PENDING',
+    },
+  });
+
+  let enrollmentStatus: 'not_enrolled' | 'enrolled' | 'completed' | 'payment_pending' = 'not_enrolled';
   if (enrollment) {
     enrollmentStatus = enrollment.completedAt ? 'completed' : 'enrolled';
+  } else if (pendingTransaction) {
+    enrollmentStatus = 'payment_pending';
   }
 
   const course = {

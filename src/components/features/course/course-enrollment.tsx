@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PaymentMethods } from '@/components/features/payment/payment-methods';
@@ -27,13 +28,14 @@ interface CourseEnrollmentProps {
       user: { fullName: string };
     };
   };
-  onEnroll: (courseId: string, paymentMethod: string) => void;
+  onEnroll: (courseId: string, paymentMethod: string, phone?: string) => void;
   onCancel: () => void;
 }
 
 export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmentProps) {
   const [step, setStep] = useState<'review' | 'payment'>('review');
   const [selectedPayment, setSelectedPayment] = useState('');
+  const [phone, setPhone] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,7 +49,7 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
     setError('');
 
     try {
-      await onEnroll(course.id, selectedPayment);
+      await onEnroll(course.id, selectedPayment, phone || undefined);
     } catch (err: any) {
       setError(err.message || 'Enrollment failed');
     } finally {
@@ -149,6 +151,19 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
             selectedMethod={selectedPayment}
             onSelect={setSelectedPayment}
           />
+
+          {/* Phone Number for Mobile Money */}
+          {(selectedPayment === 'AIRTEL_MONEY' || selectedPayment === 'TNM_MPAMBA') && (
+            <Input
+              label={selectedPayment === 'AIRTEL_MONEY' ? 'Airtel Phone Number' : 'TNM Phone Number'}
+              placeholder={selectedPayment === 'AIRTEL_MONEY' ? '+265 999 000 000' : '+265 888 000 000'}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              disabled={isProcessing}
+              helperText={selectedPayment === 'AIRTEL_MONEY' ? 'Your Airtel Money registered phone number' : 'Your TNM Mpamba registered phone number'}
+            />
+          )}
 
           {/* Error */}
           {error && (

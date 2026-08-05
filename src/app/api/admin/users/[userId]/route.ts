@@ -10,9 +10,10 @@ import { NotFoundError } from '@/lib/utils/errors';
  */
 export async function GET(
   req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'PLATFORM_ADMIN') {
@@ -20,7 +21,7 @@ export async function GET(
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: params.userId },
+      where: { id: userId },
       include: {
         student: {
           include: {
@@ -116,9 +117,10 @@ export async function GET(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'PLATFORM_ADMIN') {
@@ -128,7 +130,7 @@ export async function DELETE(
     const { reason } = await req.json();
 
     // Prevent self-deletion
-    if (params.userId === session.user.id) {
+    if (userId === session.user.id) {
       return NextResponse.json(
         { error: 'Cannot delete your own account' },
         { status: 400 }
@@ -137,10 +139,10 @@ export async function DELETE(
 
     // Soft delete - just deactivate
     await prisma.user.update({
-      where: { id: params.userId },
+      where: { id: userId },
       data: {
         lockedUntil: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // Lock for 100 years
-        email: `deleted_${params.userId}@studyhub.mw`, // Free up email
+        email: `deleted_${userId}@studyhub.mw`, // Free up email
       },
     });
 
@@ -150,7 +152,7 @@ export async function DELETE(
         adminId: session.user.id,
         action: 'DELETE_USER',
         entity: 'USER',
-        entityId: params.userId,
+        entityId: userId,
         changes: { reason },
         timestamp: new Date(),
       },

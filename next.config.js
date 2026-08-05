@@ -1,11 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['studyhub.mw', 'localhost'],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '**.studyhub.mw',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'http',
+        hostname: '**.localhost',
       },
     ],
   },

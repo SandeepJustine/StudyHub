@@ -353,6 +353,10 @@ model Subscription {
   cycle         BillingCycle
   status        String   @default("active") // active, cancelled, expired
   amount        Int      // in MWK (integer)
+  discountAmount Int?
+  paymentMethod String?
+  promoCode     String?
+  metadata      Json?
   startDate     DateTime
   endDate       DateTime
   autoRenew     Boolean  @default(true)
@@ -389,6 +393,14 @@ model Transaction {
   instructorPayout Int?   // Instructor's share of this transaction (in MWK)
   courseId      String?
   course        Course?  @relation(fields: [courseId], references: [id])
+
+  // Provider reference (e.g. PayChangu charge_id)
+  providerRef   String?
+  // Refund tracking
+  refundedAmount Int?
+  refundedAt    DateTime?
+  // Verification attempts
+  attempts      Int      @default(0)
 
   eventRegistrations EventRegistration[]
   invoice        Invoice?
@@ -1013,15 +1025,23 @@ model Experiment {
   xpReward      Int      @default(50)
   badgeId       String?
   status        String   @default("published") // draft, published, archived
-  createdBy      String?
+  createdBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  // Assignment to courses and modules
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id])
+  moduleId      String?
+  module        CourseModule? @relation(fields: [moduleId], references: [id])
 
   steps         ExperimentStep[]
   attempts      StudentExperiment[]
 
   @@index([subject])
   @@index([difficulty])
+  @@index([courseId])
+  @@index([moduleId])
 }
 
 model ExperimentStep {

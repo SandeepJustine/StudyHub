@@ -1,5 +1,16 @@
-import { PaymentProvider, PaymentResult, PaymentVerification, RefundResult } from '../types';
+// services/payments/paychangu.adapter.ts
+
+import { 
+  PaymentProvider, 
+  PaymentResult, 
+  PaymentVerification, 
+  RefundResult,
+  PaymentRequest 
+} from '@/types/payment';
 import { TransactionStatus } from '@/types/subscription';
+import { logger } from '@/lib/utils/logger';
+
+// ─── Response Types ───────────────────────────────────────────
 
 interface PayChanguMobileMoneyResponse {
   status: string;
@@ -25,6 +36,25 @@ interface PayChanguMobileMoneyResponse {
       country: string;
     };
   };
+}
+
+interface PayChanguOperator {
+  id: number;
+  name: string;
+  ref_id: string;
+  short_code: string;
+  logo: string | null;
+  supports_withdrawals: boolean;
+  supported_country: {
+    name: string;
+    currency: string;
+  };
+}
+
+interface PayChanguOperatorsResponse {
+  status: string;
+  message: string;
+  data: PayChanguOperator[];
 }
 
 interface PayChanguDirectChargeResponse {
@@ -80,28 +110,14 @@ interface PayChanguDirectChargeResponse {
   };
 }
 
-interface PayChanguCardResponse {
-  status: string;
-  message: string;
-  data: {
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    created_at: string;
-    customer: {
-      email: string;
-      first_name: string;
-      last_name: string;
-    };
-    card: {
-      brand: string;
-      last4: string;
-      exp_month: string;
-      exp_year: string;
-    };
-  };
-}
+// ─── Constants ─────────────────────────────────────────────────
+
+const OPERATOR_REF_ID_MAP: Record<string, string> = {
+  AIRTEL_MONEY: '20be6c20-adeb-4b5b-a7ba-0769820df4fb',
+  TNM_MPAMBA: '27494cb5-ba9e-437f-a114-4e7a7686bcca',
+};
+
+// ─── Main Adapter Class ────────────────────────────────────────
 
 export class PayChanguAdapter implements PaymentProvider {
   name = 'PAYCHANGU';
@@ -113,171 +129,164 @@ export class PayChanguAdapter implements PaymentProvider {
     webhookSecret: process.env.PAYCHANGU_WEBHOOK_SECRET || '',
   };
 
+  private get isDevMode(): boolean {
+    return (
+      process.env.NODE_ENV === 'development' && 
+      process.env.PAYMENT_SIMULATION_ENABLED !== 'false'
+    );
+  }
+
+  private validateConfig(): void {
+    if (!this.isDevMode) {
+      if (!this.config.secretKey) {
+        throw new Error('PAYCHANGU_SECRET_KEY is not configured');
+      }
+    }
+  }
+
+  // ─── HTTP Request Helper ─────────────────────────────────────
+
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${this.config.baseUrl}${path}`, {
-      ...options,
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        Authorization: `Bearer ${this.config.secretKey}`,
-        ...options.headers,
-      },
+    const url = `${this.config.baseUrl}${path}`;
+    
+    logger.info('PayChangu API request', { 
+      url, 
+      method: options.method || 'GET',
+      isDevMode: this.isDevMode,
+      hasSecretKey: !!this.config.secretKey,
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `PayChangu API error: ${response.status}`);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.secretKey}`,
+          ...options.headers,
+        },
+      });
+
+      const responseText = await response.text();
+      
+      let responseData: any;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = responseText;
+      }
+
+      // Log response
+      logger.info('PayChangu API response', {
+        httpStatus: response.status,
+        ok: response.ok,
+        bodyPreview: typeof responseData === 'object' 
+          ? JSON.stringify(responseData).substring(0, 300) 
+          : String(responseData).substring(0, 300),
+      });
+
+      if (!response.ok) {
+        const errorMsg = this.extractErrorMessage(responseData, response.status);
+        logger.error('PayChangu API error', { httpStatus: response.status, errorMsg });
+        throw new Error(errorMsg);
+      }
+
+      return responseData as T;
+      
+    } catch (error: any) {
+      if (!error.message?.includes('PayChangu API error')) {
+        logger.error('PayChangu request failed', { 
+          path,
+          errorMessage: error.message,
+        });
+      }
+      throw error;
+    }
+  }
+
+  private extractErrorMessage(responseData: any, httpStatus: number): string {
+    if (typeof responseData === 'string') return responseData;
+    if (!responseData) return `PayChangu API error (HTTP ${httpStatus})`;
+    
+    const message = responseData?.message || 'Unknown error';
+    return `${message} (HTTP ${httpStatus})`;
+  }
+
+  // ─── Operator Management ─────────────────────────────────────
+
+  async getMobileMoneyOperators(): Promise<PayChanguOperatorsResponse> {
+    return this.request<PayChanguOperatorsResponse>('/mobile-money');
+  }
+
+  getOperatorRefId(method: string): string | undefined {
+    return OPERATOR_REF_ID_MAP[method];
+  }
+
+  async resolveOperatorRefId(method: string): Promise<string> {
+    const hardcoded = OPERATOR_REF_ID_MAP[method];
+    if (hardcoded) return hardcoded;
+
+    const operators = await this.getMobileMoneyOperators();
+    const operator = operators.data?.find(
+      (op) => 
+        op.short_code?.toLowerCase() === method.toLowerCase() ||
+        op.name?.toLowerCase().includes(method.toLowerCase())
+    );
+
+    if (!operator) {
+      throw new Error(`No mobile money operator found for method: ${method}`);
+    }
+    
+    return operator.ref_id;
+  }
+
+  // ─── Payment Initiation ──────────────────────────────────────
+
+  async initiatePayment(request: PaymentRequest): Promise<PaymentResult> {
+    this.validateConfig();
+
+    const { amount, method, currency = 'MWK', metadata = {} } = request;
+    const reference = metadata.reference || `SH-${Date.now()}`;
+
+    // ── Development mode: simulate ─────────────────────────────
+    if (this.isDevMode) {
+      logger.info('PayChangu [DEV]: simulating payment', { amount, method, reference });
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      return {
+        success: true,
+        transactionId: `dev-txn-${Date.now()}`,
+        providerReference: reference,
+        message: `[DEV] Simulated ${method} payment of MWK ${amount}. Check phone for USSD prompt.`,
+        metadata: {
+          refId: reference,
+          status: 'success',
+          mode: 'test',
+          simulated: true,
+          amount,
+          currency,
+          method,
+        },
+      };
     }
 
-    return response.json();
-  }
-
-  async getMobileMoneyOperators() {
-    return this.request<{ data: Array<{ name: string; ref_id: string; country: string }> }>('/mobile-money');
-  }
-
-  async initiatePayment(request: any): Promise<PaymentResult> {
+    // ── Production: route to correct handler ───────────────────
     try {
-      const { amount, method, metadata } = request;
-      const reference = metadata?.reference || `SH-${Date.now()}`;
-
-      // Mobile Money (Airtel Money / Mpamba)
-      if (['AIRTEL_MONEY', 'TNM_MPAMBA', 'MOBILE_MONEY'].includes(method)) {
-        const operatorRefId = metadata?.mobileMoneyOperatorRefId || metadata?.operatorRefId;
-
-        if (!operatorRefId) {
-          // Auto-fetch operators and use first available
-          const operators = await this.getMobileMoneyOperators();
-          const operator = operators.data?.[0];
-          if (!operator) {
-            return {
-              success: false,
-              message: 'No mobile money operators available',
-            };
-          }
-        }
-
-        const payload: any = {
-          mobile_money_operator_ref_id: operatorRefId || '',
-          amount,
-        };
-
-        if (metadata?.phone) {
-          payload.mobile = metadata.phone;
-        }
-        if (metadata?.email) {
-          payload.email = metadata.email;
-        }
-        if (metadata?.name) {
-          const names = metadata.name.split(' ');
-          payload.first_name = names[0];
-          payload.last_name = names.slice(1).join(' ') || '';
-        }
-
-        const response = await this.request<PayChanguMobileMoneyResponse>('/mobile-money/payments/initialize', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
-
-        if (response.status === 'success') {
-          return {
-            success: true,
-            transactionId: response.data.trans_id,
-            providerReference: response.data.charge_id,
-            message: response.message,
-            metadata: {
-              refId: response.data.ref_id,
-              mobileMoney: response.data.mobile_money,
-              status: response.data.status,
-              attempts: response.data.attempts,
-              created_at: response.data.created_at,
-            },
-          };
-        }
-
-        return {
-          success: false,
-          message: response.message || 'Mobile money payment failed',
-        };
+      if (method === 'AIRTEL_MONEY' || method === 'TNM_MPAMBA' || method === 'MOBILE_MONEY') {
+        return this.initiateMobileMoneyPayment(amount, method, currency, metadata);
       }
 
-      // Direct Charge - Bank Transfer
       if (method === 'BANK_TRANSFER' || method === 'DIRECT_CHARGE') {
-        const response = await this.request<PayChanguDirectChargeResponse>('/direct-charge/payments/initialize', {
-          method: 'POST',
-          body: JSON.stringify({
-            currency: 'MWK',
-            payment_method: 'mobile_bank_transfer',
-            amount,
-            ...(metadata?.email && { email: metadata.email }),
-            ...(metadata?.name && {
-              first_name: metadata.name.split(' ')[0],
-              last_name: metadata.name.split(' ').slice(1).join(' ') || '',
-            }),
-          }),
-        });
-
-        if (response.status === 'success') {
-          return {
-            success: true,
-            transactionId: response.data.transaction.charge_id,
-            providerReference: response.data.transaction.trace_id,
-            message: response.message,
-            metadata: {
-              accountDetails: response.data.payment_account_details,
-              transaction: response.data.transaction,
-            },
-          };
-        }
-
-        return {
-          success: false,
-          message: response.message || 'Bank transfer initialization failed',
-        };
-      }
-
-      // Card Payment
-      if (['PAYCHANGU', 'VISA', 'MASTERCARD', 'CARD'].includes(method)) {
-        const response = await this.request<PayChanguCardResponse>('/charge-card/payments', {
-          method: 'POST',
-          body: JSON.stringify({
-            card_number: metadata?.cardNumber,
-            expiry: metadata?.cardExpiry,
-            cvv: metadata?.cardCvv,
-            cardholder_name: metadata?.name || metadata?.cardholderName,
-            amount: amount.toString(),
-            currency: 'MWK',
-            email: metadata?.email,
-            charge_id: reference,
-            redirect_url: `${process.env.NEXT_PUBLIC_URL}/payment/checkout?ref=${reference}`,
-          }),
-        });
-
-        if (response.status === 'success') {
-          return {
-            success: true,
-            transactionId: response.data.id,
-            providerReference: response.data.id,
-            redirectUrl: response.data.id,
-            message: response.message,
-            metadata: {
-              card: response.data.card,
-              customer: response.data.customer,
-            },
-          };
-        }
-
-        return {
-          success: false,
-          message: response.message || 'Card payment failed',
-        };
+        return this.initiateBankTransferPayment(amount, currency, metadata);
       }
 
       return {
         success: false,
         message: `Unsupported payment method: ${method}`,
       };
+
     } catch (error: any) {
+      logger.error('Payment initiation failed', { method, amount, errorMessage: error.message });
       return {
         success: false,
         message: error.message || 'Payment initialization failed',
@@ -285,230 +294,247 @@ export class PayChanguAdapter implements PaymentProvider {
     }
   }
 
+  /**
+   * Mobile Money Payment (Airtel Money / TNM Mpamba)
+   * Uses: POST /mobile-money/payments/initialize
+   */
+  // services/payments/paychangu.adapter.ts
+
+  // Update the initiateMobileMoneyPayment method to handle the actual response:
+
+  private async initiateMobileMoneyPayment(
+    amount: number, 
+    method: string, 
+    currency: string,
+    metadata: Record<string, any>
+  ): Promise<PaymentResult> {
+    let operatorRefId = metadata?.mobileMoneyOperatorRefId || metadata?.operatorRefId;
+
+    if (!operatorRefId) {
+      operatorRefId = await this.resolveOperatorRefId(method);
+    }
+
+    const mobile = (metadata?.phone || '').replace(/[\s\-\(\)\+]/g, '');
+    const chargeId = metadata?.reference || `SH-${Date.now()}`;
+
+    // Correct payload for mobile money
+    const payload: Record<string, any> = {
+      mobile_money_operator_ref_id: operatorRefId,
+      amount: amount.toString(),
+      charge_id: chargeId,
+      mobile: mobile,
+      currency: currency || 'MWK',
+    };
+
+    if (metadata?.email) payload.email = metadata.email;
+    if (metadata?.name) {
+      const names = metadata.name.trim().split(' ');
+      payload.first_name = names[0] || 'Customer';
+      payload.last_name = names.slice(1).join(' ') || 'User';
+    }
+
+    logger.info('PayChangu mobile money request', { 
+      amount, 
+      method, 
+      mobile, 
+      chargeId 
+    });
+
+    const response = await this.request<any>(
+      '/mobile-money/payments/initialize',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (response.status === 'success' && response.data) {
+      const data = response.data;
+      
+      return {
+        success: true,
+        transactionId: data.trans_id || data.charge_id,
+        providerReference: data.ref_id || data.charge_id,
+        message: `Payment initiated via ${method}. ` +
+                `Please check your phone (${data.mobile}) for a USSD prompt and enter your PIN to complete payment. ` +
+                `Reference: ${data.ref_id}`,
+        metadata: {
+          chargeId: data.charge_id,
+          refId: data.ref_id,
+          transId: data.trans_id,
+          status: data.status,
+          mobile: data.mobile,
+          currency: data.currency,
+          amount: data.amount,
+          mobileMoney: data.mobile_money,
+          attempts: data.attempts,
+          createdAt: data.created_at,
+          customer: data.customer,
+          transactionCharges: data.transaction_charges,
+          gatewayResponse: response.gateway_response,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      message: response.message || 'Mobile money payment failed',
+    };
+  }
+
+  /**
+   * Bank Transfer Payment
+   * Uses: POST /direct-charge/payments/initialize
+   */
+  private async initiateBankTransferPayment(
+    amount: number,
+    currency: string,
+    metadata: Record<string, any>
+  ): Promise<PaymentResult> {
+    const payload: Record<string, any> = {
+      currency: currency || 'MWK',
+      payment_method: 'mobile_bank_transfer',
+      amount: amount.toString(),
+    };
+
+    if (metadata?.email) payload.email = metadata.email;
+    if (metadata?.name) {
+      const names = metadata.name.trim().split(' ');
+      payload.first_name = names[0] || 'Customer';
+      payload.last_name = names.slice(1).join(' ') || 'User';
+    }
+
+    const response = await this.request<PayChanguDirectChargeResponse>(
+      '/mobile-money/payments/initialize',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (response.status === 'success') {
+      const accountDetails = response.data.payment_account_details;
+      return {
+        success: true,
+        transactionId: response.data.transaction.charge_id,
+        providerReference: response.data.transaction.trace_id,
+        message: [
+          `Bank transfer initiated. Please transfer MWK ${amount.toLocaleString()} to:`,
+          `Bank: ${accountDetails.bank_name}`,
+          `Account: ${accountDetails.account_number}`,
+          `Name: ${accountDetails.account_name}`,
+        ].join('\n'),
+        metadata: {
+          accountDetails,
+          transaction: response.data.transaction,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      message: response.message || 'Bank transfer initialization failed',
+    };
+  }
+
+  // ─── Payment Verification ────────────────────────────────────
+
   async verifyPayment(reference: string): Promise<PaymentVerification> {
-    try {
-      // Try mobile money verify first
-      try {
-        const response = await this.request<PayChanguMobileMoneyResponse>(`/mobile-money/payments/${reference}/verify`);
-        if (response.status === 'success') {
-          return {
-            verified: response.data.status === 'success' || response.data.status === 'completed',
-            status: this.mapStatus(response.data.status),
-            providerReference: response.data.charge_id,
-            metadata: response.data,
-          };
-        }
-      } catch {
-        // Not a mobile money payment, try direct charge
-      }
-
-      // Try direct charge details
-      try {
-        const response = await this.request<PayChanguDirectChargeResponse>(`/direct-charge/transactions/${encodeURIComponent(reference)}/details`);
-        if (response.status === 'success') {
-          return {
-            verified: response.data.transaction.status === 'completed' || response.data.transaction.status === 'success',
-            status: this.mapStatus(response.data.transaction.status),
-            providerReference: response.data.transaction.charge_id,
-            metadata: response.data.transaction,
-          };
-        }
-      } catch {
-        // Not a direct charge payment
-      }
-
+    if (this.isDevMode) {
+      logger.info('PayChangu [DEV]: simulating verification', { reference });
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       return {
-        verified: false,
-        status: 'PENDING',
-      };
-    } catch (error) {
-      return {
-        verified: false,
-        status: 'FAILED',
+        verified: true,
+        status: 'COMPLETED' as TransactionStatus,
+        providerReference: reference,
+        metadata: {
+          mode: 'test',
+          simulated: true,
+          status: 'success',
+        },
       };
     }
-  }
 
-  async getPaymentDetails(chargeId: string, method: 'mobile_money' | 'direct_charge' | 'card') {
     try {
-      if (method === 'mobile_money') {
-        return this.request<PayChanguMobileMoneyResponse>(`/mobile-money/payments/${chargeId}/details`);
-      }
-      if (method === 'direct_charge') {
-        return this.request<PayChanguDirectChargeResponse>(`/direct-charge/transactions/${encodeURIComponent(chargeId)}/details`);
-      }
-      throw new Error(`Unsupported method: ${method}`);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async initiateMobileMoneyPayout(params: {
-    mobile: string;
-    operatorRefId: string;
-    amount: string;
-    chargeId: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-  }): Promise<PaymentResult> {
-    try {
-      const response = await this.request<PayChanguMobileMoneyResponse>('/mobile-money/payouts/initialize', {
-        method: 'POST',
-        body: JSON.stringify({
-          mobile: params.mobile,
-          mobile_money_operator_ref_id: params.operatorRefId,
-          amount: params.amount,
-          charge_id: params.chargeId,
-          ...(params.email && { email: params.email }),
-          ...(params.firstName && { first_name: params.firstName }),
-          ...(params.lastName && { last_name: params.lastName }),
-        }),
-      });
-
+      // Try mobile money verification endpoint
+      const response = await this.request<PayChanguMobileMoneyResponse>(
+        `/mobile-money/payments/${reference}/verify`
+      );
+      
       if (response.status === 'success') {
         return {
-          success: true,
-          transactionId: response.data.trans_id,
+          verified: ['success', 'completed'].includes(response.data.status?.toLowerCase()),
+          status: this.mapStatus(response.data.status),
           providerReference: response.data.charge_id,
-          message: response.message,
-          metadata: {
-            refId: response.data.ref_id,
-            mobileMoney: response.data.mobile_money,
-            status: response.data.status,
-            attempts: response.data.attempts,
-            created_at: response.data.created_at,
-          },
+          metadata: response.data,
         };
       }
-
-      return {
-        success: false,
-        message: response.message || 'Mobile money payout failed',
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || 'Mobile money payout initialization failed',
-      };
+    } catch (err) {
+      logger.info('Mobile money verify failed, trying direct charge', { reference });
     }
+
+    return {
+      verified: false,
+      status: 'PENDING' as TransactionStatus,
+      providerReference: reference,
+    };
   }
 
-  async initiateBankPayout(params: {
-    bankUuid: string;
-    amount: string;
-    chargeId: string;
-    bankAccountName: string;
-    bankAccountNumber: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-  }): Promise<PaymentResult> {
-    try {
-      const response = await this.request<PayChanguDirectChargeResponse>('/direct-charge/payouts/initialize', {
-        method: 'POST',
-        body: JSON.stringify({
-          payout_method: 'bank_transfer',
-          bank_uuid: params.bankUuid,
-          amount: params.amount,
-          charge_id: params.chargeId,
-          bank_account_name: params.bankAccountName,
-          bank_account_number: params.bankAccountNumber,
-          ...(params.email && { email: params.email }),
-          ...(params.firstName && { first_name: params.firstName }),
-          ...(params.lastName && { last_name: params.lastName }),
-        }),
-      });
-
-      if (response.status === 'success') {
-        return {
-          success: true,
-          transactionId: response.data.transaction.charge_id,
-          providerReference: response.data.transaction.trace_id,
-          message: response.message,
-          metadata: {
-            transaction: response.data.transaction,
-            accountDetails: response.data.payment_account_details,
-          },
-        };
-      }
-
-      return {
-        success: false,
-        message: response.message || 'Bank payout failed',
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || 'Bank payout initialization failed',
-      };
-    }
-  }
-
-  async getPayoutDetails(payoutId: string, method: 'mobile_money' | 'bank_transfer') {
-    try {
-      if (method === 'mobile_money') {
-        return this.request<PayChanguMobileMoneyResponse>(`/mobile-money/payments/${payoutId}/details`);
-      }
-      if (method === 'bank_transfer') {
-        return this.request<PayChanguDirectChargeResponse>(`/direct-charge/payouts/${encodeURIComponent(payoutId)}/details`);
-      }
-      throw new Error(`Unsupported payout method: ${method}`);
-    } catch (error) {
-      return null;
-    }
-  }
+  // ─── Refunds ─────────────────────────────────────────────────
 
   async refundPayment(transactionId: string, amount?: number): Promise<RefundResult> {
-    try {
-      // PayChangu doesn't have a direct refund endpoint in the docs provided
-      // This would need to be implemented based on PayChangu's actual refund API
+    if (this.isDevMode) {
+      logger.info('PayChangu [DEV]: simulating refund', { transactionId, amount });
       return {
-        success: false,
+        success: true,
         amount: amount || 0,
-        message: 'Refunds must be processed through PayChangu dashboard or support',
-      };
-    } catch (error) {
-      return {
-        success: false,
-        amount: amount || 0,
-        message: 'Refund failed',
+        transactionId: `dev-refund-${Date.now()}`,
+        message: `[DEV] Simulated refund of MWK ${amount || 'full amount'}`,
       };
     }
+
+    return {
+      success: false,
+      amount: amount || 0,
+      message: 'Refunds must be processed through PayChangu dashboard.',
+    };
   }
 
+  // ─── Webhook ─────────────────────────────────────────────────
+
   async handleWebhook(payload: any): Promise<void> {
-    // Verify webhook signature if available
-    if (payload.signature && this.config.webhookSecret) {
-      // Implement signature verification based on PayChangu's webhook signing
-      // This is a placeholder - actual implementation depends on PayChangu's webhook format
-    }
+    logger.info('PayChangu webhook received', { 
+      eventType: payload.event_type || payload.type,
+      chargeId: payload.data?.charge_id || payload.charge_id,
+    });
 
-    // Process webhook based on event type
-    const eventType = payload.event_type || payload.type;
-    const chargeId = payload.data?.charge_id || payload.charge_id;
-    const status = payload.data?.status || payload.status;
-
-    if (!chargeId || !status) {
+    if (this.isDevMode) {
+      logger.info('PayChangu [DEV]: webhook processed (simulated)');
       return;
     }
 
-    // Update transaction status based on webhook
-    // The payment service will handle the actual database update
-    return;
+    const chargeId = payload.data?.charge_id || payload.charge_id;
+    const status = payload.data?.status || payload.status;
+
+    if (chargeId && status) {
+      logger.info('Webhook processed', { chargeId, status });
+    }
   }
 
+  // ─── Status Mapping ──────────────────────────────────────────
+
   private mapStatus(status: string): TransactionStatus {
-    const normalized = status.toLowerCase();
-    if (['success', 'completed', 'paid'].includes(normalized)) {
-      return 'COMPLETED';
-    }
-    if (['failed', 'cancelled', 'declined'].includes(normalized)) {
-      return 'FAILED';
-    }
-    if (['pending', 'processing', 'initiated'].includes(normalized)) {
-      return 'PENDING';
-    }
+    const normalized = status?.toLowerCase() || '';
+    
+    if (['success', 'completed', 'paid', 'settled'].includes(normalized)) return 'COMPLETED';
+    if (['failed', 'cancelled', 'declined', 'expired'].includes(normalized)) return 'FAILED';
+    if (['pending', 'processing', 'initiated', 'in_progress'].includes(normalized)) return 'PENDING';
+    if (['refunded', 'reversed'].includes(normalized)) return 'REFUNDED';
+    
     return 'PENDING';
   }
 }
+
+// Export singleton
+export const payChanguAdapter = new PayChanguAdapter();

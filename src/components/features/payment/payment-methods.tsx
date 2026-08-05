@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Smartphone, 
-  CreditCard, 
-  Building2, 
+import {
+  Smartphone,
+  Building2,
   QrCode,
   Shield,
   Clock,
   Check,
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface PaymentMethod {
   id: string;
@@ -33,13 +33,54 @@ interface PaymentMethodsProps {
   selectedMethod?: string;
 }
 
+function AirtelLogo() {
+  return (
+    <div className="relative w-8 h-8 flex items-center justify-center">
+      <Image
+        src="/images/payments/airtel.webp"
+        alt="Airtel Money"
+        width={32}
+        height={32}
+        className="object-contain"
+      />
+    </div>
+  );
+}
+
+function TnmLogo() {
+  return (
+    <div className="relative w-8 h-8 flex items-center justify-center">
+      <Image
+        src="/images/payments/tnm.webp"
+        alt="TNM Mpamba"
+        width={32}
+        height={32}
+        className="object-contain"
+      />
+    </div>
+  );
+}
+
+function CardPaymentIcon() {
+  return (
+    <div className="relative w-8 h-8 flex items-center justify-center">
+      <svg viewBox="0 0 64 40" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <rect x="1" y="1" width="62" height="38" rx="4" fill="#1A1A2E" stroke="#16213E" strokeWidth="1"/>
+        <rect x="4" y="6" width="56" height="28" rx="2" fill="#0F3460"/>
+        <text x="32" y="24" textAnchor="middle" fill="#E94560" fontSize="8" fontWeight="bold" fontFamily="Arial, sans-serif">VISA</text>
+        <rect x="4" y="34" width="56" height="2" rx="1" fill="#1A1A2E"/>
+      </svg>
+    </div>
+  );
+}
+
 export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMethodsProps) {
   const methods: PaymentMethod[] = [
     {
       id: 'AIRTEL_MONEY',
       name: 'Airtel Money',
       description: 'Pay using your Airtel Money wallet',
-      icon: <Smartphone size={28} />,
+      icon: <AirtelLogo />,
       color: 'text-red',
       bgColor: 'bg-red-50',
       enabled: true,
@@ -52,7 +93,7 @@ export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMeth
       id: 'TNM_MPAMBA',
       name: 'TNM Mpamba',
       description: 'Pay using your TNM Mpamba wallet',
-      icon: <Smartphone size={28} />,
+      icon: <TnmLogo />,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       enabled: true,
@@ -76,9 +117,9 @@ export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMeth
     },
     {
       id: 'PAYCHANGU',
-      name: 'Card Payment',
-      description: 'Pay with Visa or Mastercard',
-      icon: <CreditCard size={28} />,
+      name: 'Credit / Debit Card',
+      description: 'Pay securely with Visa or Mastercard',
+      icon: <CardPaymentIcon />,
       color: 'text-green',
       bgColor: 'bg-green-50',
       enabled: true,
@@ -92,7 +133,7 @@ export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMeth
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-navy">Select Payment Method</h3>
-      
+
       <div className="grid gap-3">
         {methods.map((method) => {
           const isSelected = selectedMethod === method.id;
@@ -112,12 +153,10 @@ export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMeth
               }`}
             >
               <div className="flex items-center gap-4">
-                {/* Icon */}
                 <div className={`p-3 rounded-lg ${method.bgColor} ${method.color}`}>
                   {method.icon}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-semibold text-navy">{method.name}</h4>
@@ -141,7 +180,6 @@ export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMeth
                   </div>
                 </div>
 
-                {/* Radio */}
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                   isSelected ? 'border-navy' : 'border-grey-medium'
                 }`}>
@@ -149,7 +187,6 @@ export function PaymentMethods({ amount, onSelect, selectedMethod }: PaymentMeth
                 </div>
               </div>
 
-              {/* Disabled Message */}
               {isDisabled && (
                 <p className="text-xs text-red mt-2 ml-[68px]">
                   {amount < method.minAmount

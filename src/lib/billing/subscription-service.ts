@@ -1,5 +1,5 @@
 import prisma from '../utils/prisma';
-import { AppError, SubscriptionError } from '@/lib/utils/errors';
+import { AppError, SubscriptionError, PaymentError } from '@/lib/utils/errors';
 import { PRICING_TIERS, getTierPricing, calculateProration } from './pricing-tiers';
 import { PaymentService } from '@/lib/payments/payment-service';
 import { NotificationService } from '@/lib/notifications/notification-service';
@@ -24,6 +24,7 @@ export class SubscriptionService {
     paymentMethod: PaymentMethod;
     institutionId?: string;
     promoCode?: string;
+    phone?: string;
     metadata?: any;
   }) {
     const pricing = PRICING_TIERS[data.tier];
@@ -56,11 +57,12 @@ export class SubscriptionService {
 
     // Handle upgrade/downgrade
     if (existingSub) {
-      return this.upgradeSubscription(existingSub.id, data.tier, data.cycle);
+      return this.upgradeSubscription(existingSub.id, data.tier, data.cycle, data.paymentMethod, data.phone);
     }
 
     // Process payment (free tiers skip payment)
     let transaction = null;
+    let paymentVerified = true; // Free subscriptions are always "verified"
     if (finalAmount > 0) {
       const paymentResult = await this.paymentService.processPayment({
         userId: data.userId,
@@ -72,6 +74,7 @@ export class SubscriptionService {
           cycle: data.cycle,
           description: `${pricing.name} - ${data.cycle.toLowerCase()}`,
           ...data.metadata,
+          ...(data.phone && { phone: data.phone }),
         },
       });
 
@@ -82,20 +85,24 @@ export class SubscriptionService {
       transaction = await prisma.transaction.findUnique({
         where: { reference: paymentResult.reference },
       });
+
+      // Check if payment was verified (in dev mode, processPayment auto-verifies)
+      paymentVerified = transaction?.status === 'COMPLETED';
     }
 
     // Calculate subscription dates
     const startDate = new Date();
     const endDate = this.calculateEndDate(startDate, data.cycle);
 
-    // Create subscription
+    // Create subscription — only mark as 'active' if payment is verified
+    // (in dev mode, payment is auto-completed so this will be 'active')
     const subscription = await prisma.subscription.create({
       data: {
         userId: data.userId,
         institutionId: data.institutionId,
         tier: data.tier,
         cycle: data.cycle,
-        status: finalAmount > 0 ? 'active' : 'active',
+        status: paymentVerified ? 'active' : 'pending',
         amount: finalAmount,
         discountAmount,
         startDate,
@@ -142,7 +149,9 @@ export class SubscriptionService {
   async upgradeSubscription(
     subscriptionId: string,
     newTier: SubscriptionTier,
-    newCycle: BillingCycle
+    newCycle: BillingCycle,
+    paymentMethod: PaymentMethod,
+    phone?: string
   ) {
     const existingSub = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -163,35 +172,67 @@ export class SubscriptionService {
     );
 
     // Process additional charge if needed
+    let transaction = null;
+    let paymentVerified = proration.netAmount <= 0; // No payment needed means it's "verified"
+
     if (proration.netAmount > 0) {
-      await this.paymentService.processPayment({
+      const paymentResult = await this.paymentService.processPayment({
         userId: existingSub.userId,
         amount: proration.netAmount,
-        method: existingSub.paymentMethod as PaymentMethod,
+        method: paymentMethod,
         metadata: {
           type: 'subscription_upgrade',
           oldTier: existingSub.tier,
           newTier,
+          newCycle,
+          subscriptionId: existingSub.id,
           prorationCredit: proration.credit,
+          ...(phone && { phone }),
         },
       });
+
+      if (!paymentResult.success) {
+        throw new PaymentError(paymentResult.message || 'Payment failed');
+      }
+
+      transaction = await prisma.transaction.findUnique({
+        where: { reference: paymentResult.reference },
+      });
+
+      paymentVerified = transaction?.status === 'COMPLETED';
     }
 
-    // Update subscription
-    const subscription = await prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: {
-        tier: newTier,
-        cycle: newCycle,
-        amount: getTierPricing(newTier, newCycle),
-        endDate: this.calculateEndDate(new Date(), newCycle),
-        metadata: {
-          ...(existingSub.metadata as any),
-          upgradedFrom: existingSub.tier,
-          upgradedAt: new Date().toISOString(),
+    let subscription = existingSub;
+
+    // Only update subscription if payment is verified or not needed
+    if (paymentVerified) {
+      subscription = await prisma.subscription.update({
+        where: { id: subscriptionId },
+        data: {
+          tier: newTier,
+          cycle: newCycle,
+          amount: getTierPricing(newTier, newCycle),
+          paymentMethod,
+          endDate: this.calculateEndDate(new Date(), newCycle),
+          status: 'active',
+          metadata: {
+            ...(existingSub.metadata as any),
+            upgradedFrom: existingSub.tier,
+            upgradedAt: new Date().toISOString(),
+            proration: {
+              credit: proration.credit,
+              netAmount: proration.netAmount,
+              transactionId: transaction?.id,
+            },
+          },
         },
-      },
-    });
+      });
+
+      // Update institution tier if applicable
+      if (subscription.institutionId && newTier.startsWith('INSTITUTION_')) {
+        await this.updateInstitutionTier(subscription.institutionId, newTier);
+      }
+    }
 
     return subscription;
   }

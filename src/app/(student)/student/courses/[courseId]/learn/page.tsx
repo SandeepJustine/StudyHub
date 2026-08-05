@@ -22,7 +22,7 @@ export default async function CourseLearningPage({
   // Get student profile
   const student = await prisma.student.findUnique({
     where: { userId: session.user.id },
-    select: { id: true },
+    select: { id: true, userId: true },
   });
 
   if (!student) {
@@ -46,6 +46,52 @@ export default async function CourseLearningPage({
           <p className="text-grey-dark mb-4">You need to enroll in this course to access its content.</p>
           <a href={`/student/courses/${courseId}`} className="text-red hover:underline">
             View Course Details
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if payment is confirmed for this enrollment
+  const transaction = await prisma.transaction.findFirst({
+    where: {
+      courseId,
+      userId: student.userId,
+      status: 'COMPLETED',
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!transaction) {
+    // Check for any pending transaction for this course
+    const pendingTransaction = await prisma.transaction.findFirst({
+      where: {
+        courseId,
+        userId: student.userId,
+        status: 'PENDING',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return (
+      <div className="min-h-screen bg-grey-light flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-bold text-navy mb-2">Payment Pending</h2>
+          <p className="text-grey-dark mb-4">
+            {pendingTransaction
+              ? `Your payment is being processed. Please wait for confirmation before accessing course content.`
+              : 'No payment record found. Please complete your enrollment payment to access this course.'}
+          </p>
+          {pendingTransaction && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-left">
+              <p className="text-sm text-yellow-800 font-medium">Transaction Reference</p>
+              <p className="text-sm text-yellow-700 font-mono">{pendingTransaction.reference}</p>
+              <p className="text-sm text-yellow-700 mt-1">Amount: MWK {pendingTransaction.amount.toLocaleString()}</p>
+              <p className="text-sm text-yellow-700">Status: {pendingTransaction.status}</p>
+            </div>
+          )}
+          <a href={`/student/courses/${courseId}`} className="text-red hover:underline">
+            Back to Course Details
           </a>
         </div>
       </div>

@@ -16,6 +16,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/#features" className="text-slate-300 hover:text-white transition-colors">
               Features
             </Link>
+            <Link href="/courses" className="text-slate-300 hover:text-white transition-colors">
+              Courses
+            </Link>
+            <Link href="/trainings" className="text-slate-300 hover:text-white transition-colors">
+              Trainings
+            </Link>
             <Link href="/pricing" className="text-slate-300 hover:text-white transition-colors">
               Pricing
             </Link>

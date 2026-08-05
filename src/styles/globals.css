@@ -294,3 +294,87 @@
 .duration-10000 {
   transition-duration: 10000ms;
 }
+
+/* Google Translate Widget Styles */
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+body > iframe.goog-te-banner-frame {
+  display: none !important;
+}
+
+.goog-te-gadget-simple {
+  background: #fff !important;
+  border: 2px solid var(--color-navy) !important;
+  border-radius: 0.5rem !important;
+  padding: 4px 8px !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 0.875rem !important;
+  color: var(--color-navy) !important;
+  box-shadow: 0 1px 3px rgba(13, 27, 61, 0.1) !important;
+  transition: border-color 150ms ease !important;
+}
+
+.goog-te-gadget-simple:hover {
+  border-color: var(--color-red) !important;
+}
+
+.goog-te-gadget-simple .goog-te-b-XXX,
+.goog-te-gadget-simple .goog-te-gadget-loading {
+  background: none !important;
+  opacity: 1 !important;
+}
+
+.goog-te-gadget-simple .goog-te-gadget-simple {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+.goog-te-gadget-simple:focus {
+  outline: 2px solid var(--color-navy) !important;
+  outline-offset: 2px !important;
+}
+
+.goog-te-gadget-icon {
+  display: none !important;
+}
+
+.goog-te-gadget {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.goog-te-banner-simple {
+  display: none !important;
+}
+
+.translate-container {
+  position: fixed !important;
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+  z-index: 50 !important;
+  background: #ffffff !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px rgba(13, 27, 61, 0.15) !important;
+  border: 1px solid var(--color-grey-light) !important;
+  max-width: 200px !important;
+}
+
+.translate-inner {
+  padding-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .translate-container {
+    bottom: 1rem !important;
+    right: 1rem !important;
+    padding: 0.5rem 0.75rem !important;
+    max-width: 160px !important;
+  }
+}

@@ -11,16 +11,17 @@ import { NotFoundError, AppError } from '@/lib/utils/errors';
  */
 export async function GET(
   req: Request,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
+    const { transactionId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const transaction = await prisma.transaction.findUnique({
-      where: { id: params.transactionId },
+      where: { id: transactionId },
       include: {
         subscription: {
           select: {
@@ -79,16 +80,17 @@ export async function GET(
  */
 export async function POST(
   req: Request,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
+    const { transactionId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const transaction = await prisma.transaction.findUnique({
-      where: { id: params.transactionId },
+      where: { id: transactionId },
     });
 
     if (!transaction) {
@@ -131,9 +133,10 @@ export async function POST(
  */
 export async function PUT(
   req: Request,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
+    const { transactionId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -142,7 +145,7 @@ export async function PUT(
     const { amount, reason } = await req.json();
 
     const transaction = await prisma.transaction.findUnique({
-      where: { id: params.transactionId },
+      where: { id: transactionId },
     });
 
     if (!transaction) {
@@ -181,7 +184,7 @@ export async function PUT(
     // Process refund
     const refundAmount = amount || transaction.amount - transaction.refundedAmount;
     const result = await paymentService.processRefund(
-      params.transactionId,
+      transactionId,
       refundAmount,
       reason
     );

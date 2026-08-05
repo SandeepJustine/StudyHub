@@ -206,18 +206,19 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     platformFee: 0.30,
   },
 
-  INSTRUCTOR_PRO: {
+INSTRUCTOR_PRO: {
     name: 'Instructor Pro',
     description: 'Maximize your teaching potential',
     monthlyPrice: 25000,
     annualPrice: null,
-     features: [
-      'course:create:unlimited',  // Changed from 'Unlimited courses'
-      'analytics:advanced',       // Changed from 'Advanced analytics'
-      'listing:priority',         // Changed from 'Priority listing'
-      'marketing:tools',          // Changed from 'Marketing tools'
-      'coupons:custom',           // Changed from 'Custom coupons'
-      'support:dedicated',        // Changed from 'Dedicated support'
+    features: [
+      'course:create:unlimited',
+      'analytics:advanced',
+      'listing:priority',
+      'marketing:tools',
+      'coupons:custom',
+      'support:dedicated',
+      'experiment:manage',
     ],
     limits: {
       courses: -1, // unlimited

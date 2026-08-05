@@ -9,6 +9,12 @@ out/
 build/
 dist/
 
+
+# Add to .gitignore
+echo "certificates/" >> .gitignore
+echo "localhost+2.pem" >> .gitignore
+echo "localhost+2-key.pem" >> .gitignore
+
 # Environment
 .env
 .env.local

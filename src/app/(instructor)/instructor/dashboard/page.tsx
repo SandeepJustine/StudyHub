@@ -149,7 +149,7 @@ export default async function InstructorDashboardPage() {
           {recentCourses.length > 0 ? (
             recentCourses.map((course: any) => (
               <Link key={course.id} href={`/instructor/courses/${course.id}`}>
-                <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer mb-5">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-navy text-sm">{course.title}</h3>

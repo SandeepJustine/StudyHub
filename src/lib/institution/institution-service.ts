@@ -881,6 +881,7 @@ export class InstitutionService {
 
     return {
       institution: {
+        id: institution.id,
         name: institution.name,
         tier: institution.tier,
         studentCount: totalStudents,

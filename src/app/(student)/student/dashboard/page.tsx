@@ -221,11 +221,11 @@ export default async function StudentDashboard() {
             {activeEnrollments.length > 0 ? (
               activeEnrollments.map((enrollment) => (
                 <Link key={enrollment.id} href={`/student/courses/${enrollment.courseId}`}>
-                  <Card className="border-0 shadow-sm hover:shadow-md transition-all group cursor-pointer">
+                  <Card className="border-0 shadow-sm hover:shadow-md transition-all group cursor-pointer mb-5">
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-5">
                             <h3 className="font-semibold text-navy group-hover:text-red transition-colors">
                               {enrollment.course.title}
                             </h3>

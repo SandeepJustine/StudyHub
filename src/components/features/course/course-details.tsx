@@ -74,7 +74,7 @@ interface CourseDetailsProps {
     modules: Module[];
     reviews?: Review[];
   };
-  enrollmentStatus?: 'not_enrolled' | 'enrolled' | 'completed';
+  enrollmentStatus?: 'not_enrolled' | 'enrolled' | 'completed' | 'payment_pending';
   enrollmentProgress?: number;
   onEnroll: (courseId: string) => void;
   onContinue?: (courseId: string) => void;
@@ -175,6 +175,20 @@ export function CourseDetails({
           </div>
 
           {/* Enrollment Status */}
+          {enrollmentStatus === 'payment_pending' && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <Clock size={24} className="text-yellow-600" />
+                <div>
+                  <p className="font-medium text-yellow-800">Payment Pending</p>
+                  <p className="text-sm text-yellow-700">
+                    Your payment is being processed. You will be able to access the course content once payment is confirmed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {enrollmentStatus === 'enrolled' && (
             <div className="bg-navy/5 rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between mb-2">
@@ -212,6 +226,11 @@ export function CourseDetails({
             {enrollmentStatus === 'not_enrolled' && (
               <Button variant="primary" size="lg" onClick={() => onEnroll(course.id)}>
                 {course.price > 0 ? `Enroll Now - ${formatCurrency(course.price)}` : 'Enroll Free'}
+              </Button>
+            )}
+            {enrollmentStatus === 'payment_pending' && (
+              <Button variant="warning" size="lg" disabled>
+                Payment Pending
               </Button>
             )}
             <Button variant="outline" size="lg" leftIcon={<Share2 size={16} />}>
@@ -282,7 +301,7 @@ export function CourseDetails({
                         </Badge>
                       )}
                       <div className="flex items-center gap-2 ml-auto">
-                        {onStartModule && (module.isPreview || enrollmentStatus === 'enrolled' || enrollmentStatus === 'completed') && (
+                        {onStartModule && (module.isPreview || enrollmentStatus === 'enrolled' || enrollmentStatus === 'completed') && enrollmentStatus !== 'payment_pending' && (
                           <Button
                             variant="ghost"
                             size="sm"

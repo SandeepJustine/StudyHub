@@ -1,39 +1,64 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-options';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, TrendingUp, Users, DollarSign, Star, Calendar } from 'lucide-react';
-import { formatCurrency, formatPercentage } from '@/utils/formatters';
-import { instructorService } from '@/lib/instructor/instructor-service';
+import { BarChart3, Users, DollarSign, Star } from 'lucide-react';
+import { formatCurrency } from '@/utils/formatters';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export const dynamic = 'force-dynamic';
 
-export default async function InstructorAnalyticsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from?: string; to?: string }>;
-}) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== 'INSTRUCTOR') {
-    redirect('/auth/login');
-  }
+export default function InstructorAnalyticsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('enrollment');
 
-  const params = await searchParams;
-  const range = {
-    ...(params.from ? { from: new Date(params.from) } : {}),
-    ...(params.to ? { to: new Date(params.to) } : {}),
-  };
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session?.user || session.user.role !== 'INSTRUCTOR') {
+      router.push('/auth/login');
+      return;
+    }
 
-  let data: any = null;
-  let error: string | null = null;
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
 
-  try {
-    const instructor = await instructorService.resolveByUserId(session.user.id);
-    data = await instructorService.getAnalytics(instructor.id, range);
-  } catch (e: any) {
-    error = e.message || 'Failed to load analytics';
+    fetch(`/api/instructor/analytics?${params.toString()}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch analytics');
+        return res.json();
+      })
+      .then((json) => {
+        if (json.success && json.data) {
+          setData(json.data);
+        } else {
+          setError(json.error || 'Failed to load analytics');
+        }
+      })
+      .catch((err) => {
+        setError(err.message || 'Failed to load analytics');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [session, status, router, searchParams]);
+
+  if (status === 'loading') {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy mx-auto"></div>
+      </div>
+    );
   }
 
   if (error) {
@@ -56,14 +81,12 @@ export default async function InstructorAnalyticsPage({
 
   const { overview, enrollmentByDay, revenueTrend, revenueByCourse, ratingDistribution, topCourses } = data;
 
-  // Calculate date range display
   const fromDate = data.range.from;
   const toDate = data.range.to;
   const rangeDays = Math.round((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-navy">Analytics</h1>
@@ -76,7 +99,6 @@ export default async function InstructorAnalyticsPage({
         </div>
       </div>
 
-      {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -137,8 +159,7 @@ export default async function InstructorAnalyticsPage({
         </Card>
       </div>
 
-      {/* Tabs for detailed analytics */}
-      <Tabs value="enrollment" onValueChange={() => {}}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="enrollment">Enrollment Trend</TabsTrigger>
           <TabsTrigger value="revenue">Revenue Trend</TabsTrigger>

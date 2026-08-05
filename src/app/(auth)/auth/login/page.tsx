@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { signIn } from 'next-auth/react';
 import { getSession } from 'next-auth/react';  // ← Import getSession
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Logo } from '@/components/ui/logo';
+import { Recaptcha, RecaptchaHandle, isRecaptchaClientEnabled } from '@/components/ui/recaptcha';
 import { Loader2, Mail, Lock, AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import Link from "next/link";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+const USE_RECAPTCHA = isRecaptchaClientEnabled();
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,16 +22,45 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<RecaptchaHandle>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
+
+    if (USE_RECAPTCHA) {
+      if (!recaptchaToken) {
+        setError('Please complete the reCAPTCHA');
+        return;
+      }
+
+      setIsLoading(true);
+
+      const verifyRes = await fetch('/api/auth/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: recaptchaToken }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok || !verifyData.success) {
+        setError(verifyData.error || 'reCAPTCHA verification failed');
+        if (recaptchaRef.current) recaptchaRef.current.reset();
+        setRecaptchaToken(null);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    setIsLoading(true);
 
     try {
       const result = await signIn('credentials', {
         email,
         password,
+        recaptchaToken: USE_RECAPTCHA ? recaptchaToken : undefined,
         redirect: false,
       });
 
@@ -36,7 +69,8 @@ export default function LoginPage() {
           ? 'Invalid email or password' 
           : result.error
         );
-        setIsLoading(false);
+        if (recaptchaRef.current) recaptchaRef.current.reset();
+        setRecaptchaToken(null);
         return;
       }
 
@@ -160,19 +194,32 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember Me */}
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="w-4 h-4 rounded border-grey-light text-navy focus:ring-navy focus:ring-offset-0"
-                />
-                <label htmlFor="remember" className="text-sm text-grey-dark cursor-pointer select-none">
-                  Remember me for 30 days
-                </label>
-              </div>
+               {/* Remember Me */}
+               <div className="flex items-center gap-2.5">
+                 <input
+                   type="checkbox"
+                   id="remember"
+                   className="w-4 h-4 rounded border-grey-light text-navy focus:ring-navy focus:ring-offset-0"
+                 />
+                 <label htmlFor="remember" className="text-sm text-grey-dark cursor-pointer select-none">
+                   Remember me for 30 days
+                 </label>
+               </div>
 
-              {/* Submit Button */}
+               {/* reCAPTCHA */}
+               {USE_RECAPTCHA && RECAPTCHA_SITE_KEY && (
+                 <div className="flex justify-center py-2">
+                   <Recaptcha
+                     ref={recaptchaRef}
+                     siteKey={RECAPTCHA_SITE_KEY}
+                     onVerify={setRecaptchaToken}
+                     onExpired={() => setRecaptchaToken(null)}
+                     theme="light"
+                   />
+                 </div>
+               )}
+
+               {/* Submit Button */}
               <Button 
                 type="submit"
                 variant="primary"

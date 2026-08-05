@@ -15,7 +15,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { paymentMethod } = await req.json();
+    const { courseId } = await params;
+    const { paymentMethod, phone } = await req.json();
     
     // Get student ID from session
     const student = await prisma.student.findUnique({
@@ -29,15 +30,25 @@ export async function POST(
 
     const studentId = student.id;
 
-    const enrollment = await courseService.enrollStudent(
+    const result = await courseService.enrollStudent(
       studentId,
       courseId,
-      paymentMethod
+      paymentMethod,
+      phone
     );
+
+    if (result.redirectUrl) {
+      return NextResponse.json({
+        success: true,
+        redirectUrl: result.redirectUrl,
+        transaction: result.transaction,
+      }, { status: 200 });
+    }
 
     return NextResponse.json({
       success: true,
-      data: enrollment,
+      data: result.enrollment,
+      transaction: result.transaction,
     }, { status: 201 });
 
   } catch (error: any) {

@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { tier, cycle, paymentMethod, institutionId, promoCode } = body;
+    const { tier, cycle, paymentMethod, institutionId, promoCode, phone } = body;
 
     if (!tier || !cycle || !paymentMethod) {
       return NextResponse.json(
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       paymentMethod,
       institutionId,
       promoCode,
+      phone,
     });
 
     return NextResponse.json({

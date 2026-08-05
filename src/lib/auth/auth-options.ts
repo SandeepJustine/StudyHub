@@ -5,6 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/utils/prisma";
 import { UserRole } from "@/types/common";
+import { verifyRecaptcha, isRecaptchaEnabled } from "@/lib/captcha";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -19,6 +20,20 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password are required");
+        }
+
+        const recaptchaToken = (credentials as Record<string, string>)?.recaptchaToken;
+
+        if (isRecaptchaEnabled()) {
+          if (!recaptchaToken) {
+            throw new Error("reCAPTCHA verification is required");
+          }
+
+          try {
+            await verifyRecaptcha(recaptchaToken);
+          } catch (error: any) {
+            throw new Error(error.message || "reCAPTCHA verification failed");
+          }
         }
 
         const user = await prisma.user.findUnique({

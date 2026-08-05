@@ -1,6 +1,6 @@
 import { PaymentMethod, PaymentStatus, PaymentTransaction } from '@/types/payment';
 import { AirtelMoneyAdapter } from '@/lib/payments/adapters/airtel-money.adapter';
-import { TNMMpambaAdapter } from '@/lib/payments/adapters/tnm-mpamba.adapter';
+import { MpambaAdapter } from '@/lib/payments/adapters/tnm-mpamba.adapter';
 import { PayChanguAdapter } from '@/lib/payments/adapters/paychangu.adapter';
 import { BankTransferAdapter } from '@/lib/payments/adapters/bank-transfer.adapters';
 import { prisma } from '@/lib/prisma';
@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
 export class PaymentService {
   private static adapters = {
     [PaymentMethod.AIRTEL_MONEY]: new AirtelMoneyAdapter(),
-    [PaymentMethod.TNM_MPAMBA]: new TNMMpambaAdapter(),
+    [PaymentMethod.TNM_MPAMBA]: new MpambaAdapter(),
     [PaymentMethod.PAYCHANGU]: new PayChanguAdapter(),
     [PaymentMethod.BANK_TRANSFER]: new BankTransferAdapter(),
     [PaymentMethod.CREDIT_CARD]: new PayChanguAdapter(), // Using PayChangu for card payments

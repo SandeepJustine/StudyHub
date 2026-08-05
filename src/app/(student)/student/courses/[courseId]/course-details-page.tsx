@@ -6,6 +6,7 @@ import { CourseDetails } from '@/components/features/course/course-details';
 import { CourseEnrollment } from '@/components/features/course/course-enrollment';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 
 interface Module {
   id: string;
@@ -55,7 +56,7 @@ interface CourseDetailsPageProps {
     modules: Module[];
     reviews?: Review[];
   };
-  enrollmentStatus: 'not_enrolled' | 'enrolled' | 'completed';
+  enrollmentStatus: 'not_enrolled' | 'enrolled' | 'completed' | 'payment_pending';
   enrollmentProgress: number;
   isFavorite: boolean;
 }
@@ -70,21 +71,35 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
     if (course.price > 0) {
       setShowEnrollment(true);
     } else {
-      enrollCourse();
+      enrollCourse(course.id);
     }
   };
 
-  const enrollCourse = async (paymentMethod?: string) => {
+  const enrollCourse = async (courseId: string, paymentMethod?: string, phone?: string) => {
     try {
-      const response = await fetch(`/api/courses/${course.id}/enroll`, {
+      const response = await fetch(`/api/courses/${courseId}/enroll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentMethod }),
+        body: JSON.stringify({ paymentMethod, phone }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Enrollment failed');
 
-      setToast({ message: 'Successfully enrolled! You can start learning now.', type: 'success' });
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return;
+      }
+
+      if (data.transaction) {
+        if (data.transaction.status === 'COMPLETED') {
+          setToast({ message: 'Payment successful! You are now enrolled.', type: 'success' });
+        } else if (data.transaction.status === 'PENDING') {
+          setToast({ message: 'Payment initiated. You will be enrolled once payment is confirmed.', type: 'success' });
+        }
+      } else {
+        setToast({ message: 'Successfully enrolled! You can start learning now.', type: 'success' });
+      }
+
       setShowEnrollment(false);
       router.refresh();
     } catch (error: any) {
@@ -101,16 +116,39 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
   };
 
   const handleToggleFavorite = async () => {
-    // Here you would add an API call to update the user's wishlist
     setIsFavorite(!isFavorite);
     setToast({
       message: !isFavorite ? 'Added to your wishlist!' : 'Removed from your wishlist.',
       type: 'success',
     });
-    // Example API call:
-    // await fetch(`/api/student/wishlist`, { method: 'POST', body: JSON.stringify({ courseId: course.id }) });
     router.refresh();
   };
+
+  if (enrollmentStatus === 'payment_pending') {
+    return (
+      <div className="min-h-screen bg-grey-light">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-navy mb-3">Payment Pending</h2>
+            <p className="text-grey-dark mb-2">
+              You have a pending payment for this course. Please complete your payment to access the course content.
+            </p>
+            <p className="text-sm text-grey-medium mb-6">
+              Once payment is confirmed, you will be able to start learning immediately.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button variant="primary" onClick={() => router.push(`/student/courses/${course.id}/learn`)}>
+                Try Accessing Course
+              </Button>
+              <Button variant="outline" onClick={() => router.back()}>
+                Back to Courses
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

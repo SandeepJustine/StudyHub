@@ -16,6 +16,9 @@ import {
   Activity,
   AlertTriangle,
   RefreshCw,
+  CheckCircle,
+  Clock,
+  Search,
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -23,9 +26,15 @@ export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('30d');
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [verifyResults, setVerifyResults] = useState<Record<string, boolean>>({});
+  const [paymentsError, setPaymentsError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMetrics();
+    fetchPendingPayments();
   }, [timeframe]);
 
   const fetchMetrics = async () => {
@@ -38,6 +47,41 @@ export default function AdminDashboardPage() {
       console.error('Failed to fetch metrics:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingPayments = async () => {
+    setPaymentsLoading(true);
+    setPaymentsError(null);
+    try {
+      const response = await fetch('/api/admin/payments');
+      if (!response.ok) throw new Error('Failed to fetch pending payments');
+      const data = await response.json();
+      setPendingPayments(data.data || []);
+    } catch (err: any) {
+      setPaymentsError(err.message);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  };
+
+  const handleVerifyPayment = async (transactionId: string, reference: string) => {
+    setVerifyingId(transactionId);
+    try {
+      const response = await fetch('/api/admin/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId, reference }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setVerifyResults(prev => ({ ...prev, [transactionId]: data.data.verified }));
+        fetchPendingPayments();
+      }
+    } catch (err: any) {
+      console.error('Verification failed:', err);
+    } finally {
+      setVerifyingId(null);
     }
   };
 
@@ -147,6 +191,68 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Payments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock size={20} className="text-yellow-600" />
+            Pending Payments
+            {pendingPayments.length > 0 && (
+              <Badge variant="warning">{pendingPayments.length}</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {paymentsLoading ? (
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : paymentsError ? (
+            <div className="flex items-center justify-between py-4">
+              <p className="text-sm text-grey-dark">Failed to load pending payments</p>
+              <Button variant="ghost" size="sm" onClick={fetchPendingPayments}>Retry</Button>
+            </div>
+          ) : pendingPayments.length === 0 ? (
+            <div className="text-center py-6">
+              <CheckCircle size={32} className="mx-auto text-green mb-2" />
+              <p className="text-sm text-grey-medium">No pending payments</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingPayments.map((payment: any) => (
+                <div key={payment.id} className="flex items-center justify-between p-3 bg-grey-light/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                    <div>
+                      <p className="text-sm font-medium text-navy">
+                        {payment.user?.fullName || 'Unknown'}
+                      </p>
+                      <p className="text-xs text-grey-medium">
+                        {payment.course?.title || 'N/A'} • MWK {payment.amount?.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-grey-medium font-mono">{payment.reference}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="warning" size="sm">{payment.status}</Badge>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleVerifyPayment(payment.id, payment.reference)}
+                      disabled={verifyingId === payment.id}
+                    >
+                      {verifyingId === payment.id ? 'Verifying...' : 'Verify'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Revenue Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -30,6 +30,13 @@ export function CourseActions({
   const [progress, setProgress] = useState(enrollmentProgress);
 
   const handleEnroll = async () => {
+    // For paid courses, redirect to the course details page
+    // where the student can select a payment method
+    if (price > 0) {
+      router.push(`/student/courses/${courseId}`);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch(`/api/courses/${courseId}/enroll`, {

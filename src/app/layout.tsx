@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import '@/styles/globals.css';
+import { GoogleTranslate } from '@/components/ui/google-translate';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -23,6 +24,12 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       <body className="font-poppins">
         {children}
+        {/*<GoogleTranslate
+          pageLanguage="en"
+          includedLanguages="en,ny,fr,de,es,it,pt,ru,zh-CN,ja,ko,ar,tg"
+          layout="simple"
+        />
+        */}
       </body>
     </html>
   );

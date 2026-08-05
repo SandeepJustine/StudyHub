@@ -1,7 +1,9 @@
 import prisma from '@/lib/utils/prisma';
-import { AppError, NotFoundError, ValidationError } from '@/lib/utils/errors';
+import { AppError, NotFoundError, ValidationError, PaymentError } from '@/lib/utils/errors';
 import { CourseStatus as ContentStatus, ContentType, QuestionType } from '@/types/course';
 import { featureGating } from '@/lib/billing/feature-gating';
+import { PaymentService } from '@/lib/payments/payment-service';
+import { PaymentMethod } from '@/types/subscription';
 
 export class CourseService {
   /**
@@ -556,15 +558,16 @@ export class CourseService {
 
   /**
    * Enroll student in course
+   * Processes payment first; only creates enrollment if payment succeeds.
    */
-  async enrollStudent(studentId: string, courseId: string, paymentMethod?: string) {
+  async enrollStudent(studentId: string, courseId: string, paymentMethod?: string, phone?: string) {
     // Check if course exists and is approved
     const course = await this.getCourseById(courseId);
     if (course.status !== 'APPROVED') {
       throw new AppError('Course is not available for enrollment', 'COURSE_UNAVAILABLE', 400);
     }
 
-    // Check if already enrolled
+// Check if already enrolled
     const existing = await prisma.enrollment.findUnique({
       where: {
         studentId_courseId: { studentId, courseId },
@@ -576,12 +579,96 @@ export class CourseService {
     }
 
     // Process payment if course is paid
-    if (course.price > 0 && paymentMethod) {
-      // Payment processing would be handled by PaymentService
-      // For now, create enrollment directly
+    let transaction = null;
+    let redirectUrl = null;
+    if (course.price > 0) {
+      if (!paymentMethod) {
+        throw new AppError(
+          'Payment method is required for paid courses',
+          'PAYMENT_REQUIRED',
+          400
+        );
+      }
+
+      // Look up the student's user ID for the payment
+      const student = await prisma.student.findUnique({
+        where: { id: studentId },
+        select: { userId: true },
+      });
+
+      if (!student) {
+        throw new AppError('Student profile not found', 'NOT_FOUND', 404);
+      }
+
+      // Check for pending payment
+      const pendingPayment = await prisma.transaction.findFirst({
+        where: {
+          userId: student.userId,
+          courseId,
+          status: 'PENDING',
+        },
+      });
+
+      if (pendingPayment) {
+        throw new AppError(
+          'You already have a pending payment for this course. Please complete your payment first.',
+          'PENDING_PAYMENT',
+          400
+        );
+      }
+
+      // Resolve phone for mobile money payments
+      const resolvedPhone = phone || (await prisma.user.findUnique({
+        where: { id: student.userId },
+        select: { phone: true },
+      }))?.phone;
+
+      // Validate phone for mobile money methods
+      if (['AIRTEL_MONEY', 'TNM_MPAMBA'].includes(paymentMethod) && !resolvedPhone) {
+        throw new ValidationError(
+          'Phone number is required for mobile money payments',
+          'PHONE_REQUIRED'
+        );
+      }
+
+      const paymentService = new PaymentService();
+      const paymentResult = await paymentService.processPayment({
+        userId: student.userId,
+        amount: course.price,
+        method: paymentMethod as PaymentMethod,
+        metadata: {
+          type: 'course_enrollment',
+          courseId,
+          description: `Enrollment in ${course.title}`,
+          ...(resolvedPhone && { phone: resolvedPhone }),
+        },
+      });
+
+      if (!paymentResult.success) {
+        throw new PaymentError(
+          paymentResult.message || 'Payment failed. Enrollment not created.',
+          { providerResponse: paymentResult }
+        );
+      }
+
+      // Retrieve the transaction record
+      transaction = await prisma.transaction.findUnique({
+        where: { reference: paymentResult.reference },
+      });
+
+      // If payment requires a redirect (e.g., card payment via PayChangu),
+      // return the redirect URL so the client can redirect the user
+      if (paymentResult.redirectUrl) {
+        redirectUrl = paymentResult.redirectUrl;
+      }
+
+      // For paid courses, return transaction info without creating enrollment.
+      // Enrollment will be created when payment is confirmed via webhook,
+      // background verification, or manual verification.
+      return { transaction, redirectUrl };
     }
 
-    // Create enrollment
+    // Free course with no payment needed
     const totalModules = course.modules.length;
     const enrollment = await prisma.enrollment.create({
       data: {
@@ -604,7 +691,7 @@ export class CourseService {
       data: { studentsCount: { increment: 1 } },
     });
 
-    return enrollment;
+    return { enrollment, transaction: null, redirectUrl: null };
   }
 
   /**

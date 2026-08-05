@@ -5,9 +5,10 @@ import { examEngine } from '@/lib/exams/exam-engine';
 
 export async function POST(
   req: Request,
-  { params }: { params: { attemptId: string } }
+  { params }: { params: Promise<{ attemptId: string }> }
 ) {
   try {
+    const { attemptId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -20,7 +21,7 @@ export async function POST(
       return NextResponse.json({ error: 'Student profile not found' }, { status: 400 });
     }
 
-    const result = await examEngine.submitExam(params.attemptId, studentId, answers);
+    const result = await examEngine.submitExam(attemptId, studentId, answers);
 
     return NextResponse.json({
       success: true,

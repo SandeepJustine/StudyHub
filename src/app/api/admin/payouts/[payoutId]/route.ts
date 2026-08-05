@@ -17,9 +17,10 @@ const auditLogger = new AuditLogger();
  */
 export async function GET(
   req: Request,
-  { params }: { params: { payoutId: string } }
+  { params }: { params: Promise<{ payoutId: string }> }
 ) {
   try {
+    const { payoutId } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'PLATFORM_ADMIN') {
@@ -27,7 +28,7 @@ export async function GET(
     }
 
     const payout = await prisma.payout.findUnique({
-      where: { id: params.payoutId },
+      where: { id: payoutId },
       include: {
         instructor: {
           include: {
@@ -101,7 +102,7 @@ export async function GET(
     const auditTrail = await prisma.auditLog.findMany({
       where: {
         entity: 'PAYOUT',
-        entityId: params.payoutId,
+        entityId: payoutId,
       },
       include: {
         admin: {
@@ -146,9 +147,10 @@ export async function GET(
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { payoutId: string } }
+  { params }: { params: Promise<{ payoutId: string }> }
 ) {
   try {
+    const { payoutId } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'PLATFORM_ADMIN') {
@@ -159,7 +161,7 @@ export async function PATCH(
     const { status, notes, reference, paymentMethod } = body;
 
     const payout = await prisma.payout.findUnique({
-      where: { id: params.payoutId },
+      where: { id: payoutId },
     });
 
     if (!payout) {
@@ -186,7 +188,7 @@ export async function PATCH(
 
     // Update payout
     const updatedPayout = await prisma.payout.update({
-      where: { id: params.payoutId },
+      where: { id: payoutId },
       data: {
         ...(status && { status }),
         ...(notes && {
@@ -208,7 +210,7 @@ export async function PATCH(
       adminId: session.user.id,
       action: 'UPDATE_PAYOUT',
       entity: 'PAYOUT',
-      entityId: params.payoutId,
+      entityId: payoutId,
       changes: { from: payout.status, to: status || payout.status, notes },
     });
 

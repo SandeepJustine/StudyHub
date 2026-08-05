@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/logo';
@@ -8,8 +8,12 @@ import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Recaptcha, RecaptchaHandle, isRecaptchaClientEnabled } from '@/components/ui/recaptcha';
 import { Mail, Lock, User, Phone, GraduationCap, AlertCircle, Building2, Briefcase } from 'lucide-react';
 import { getSession } from 'next-auth/react';
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+const USE_RECAPTCHA = isRecaptchaClientEnabled();
 
 const ROLES = [
   { value: 'STUDENT', label: 'Student', icon: <GraduationCap size={24} />, description: 'Learn and prepare for exams' },
@@ -24,6 +28,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<RecaptchaHandle>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -55,6 +61,30 @@ export default function RegisterPage() {
       return;
     }
 
+    if (USE_RECAPTCHA) {
+      if (!recaptchaToken) {
+        setError('Please complete the reCAPTCHA');
+        setIsLoading(false);
+        return;
+      }
+
+      const verifyRes = await fetch('/api/auth/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: recaptchaToken }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok || !verifyData.success) {
+        setError(verifyData.error || 'reCAPTCHA verification failed');
+        if (recaptchaRef.current) recaptchaRef.current.reset();
+        setRecaptchaToken(null);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       const payload: any = {
         email: formData.email,
@@ -62,6 +92,7 @@ export default function RegisterPage() {
         fullName: formData.fullName,
         phone: formData.phone,
         role: selectedRole,
+        recaptchaToken: USE_RECAPTCHA ? recaptchaToken : undefined,
       };
 
       if (selectedRole === 'SCHOOL_ADMIN') {
@@ -124,6 +155,8 @@ export default function RegisterPage() {
       }
     } catch (err: any) {
       setError(err.message);
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -300,25 +333,38 @@ export default function RegisterPage() {
                   disabled={isLoading}
                 />
 
-                <label className="flex items-start gap-2 text-sm text-grey-dark">
-                  <input
-                    type="checkbox"
-                    checked={formData.acceptTerms}
-                    onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
-                    className="mt-1 rounded border-grey-light"
-                  />
-                  <span>
-                    I agree to the{' '}
-                    <Link href="/terms" className="text-red hover:text-red-700">Terms of Service</Link>
-                    {' '}and{' '}
-                    <Link href="/privacy" className="text-red hover:text-red-700">Privacy Policy</Link>
-                  </span>
-                </label>
+                 <label className="flex items-start gap-2 text-sm text-grey-dark">
+                   <input
+                     type="checkbox"
+                     checked={formData.acceptTerms}
+                     onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
+                     className="mt-1 rounded border-grey-light"
+                   />
+                   <span>
+                     I agree to the{' '}
+                     <Link href="/terms" className="text-red hover:text-red-700">Terms of Service</Link>
+                     {' '}and{' '}
+                     <Link href="/privacy" className="text-red hover:text-red-700">Privacy Policy</Link>
+                   </span>
+                 </label>
 
-                <Button type="submit" variant="primary" size="lg" fullWidth loading={isLoading}>
-                  Create Account
-                </Button>
-              </form>
+                 {/* reCAPTCHA */}
+                 {USE_RECAPTCHA && RECAPTCHA_SITE_KEY && (
+                   <div className="flex justify-center py-2">
+                     <Recaptcha
+                       ref={recaptchaRef}
+                       siteKey={RECAPTCHA_SITE_KEY}
+                       onVerify={setRecaptchaToken}
+                       onExpired={() => setRecaptchaToken(null)}
+                       theme="light"
+                     />
+                   </div>
+                 )}
+
+                 <Button type="submit" variant="primary" size="lg" fullWidth loading={isLoading}>
+                   Create Account
+                 </Button>
+               </form>
             )}
           </CardContent>
 

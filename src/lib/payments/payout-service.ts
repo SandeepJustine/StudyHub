@@ -186,11 +186,15 @@ export class PayoutService {
 
     // Initiate payout via PayChangu
     if (paymentMethod === 'AIRTEL_MONEY' || paymentMethod === 'TNM_MPAMBA') {
-      const operatorRefId = accountDetails?.operatorRefId || '';
+      let operatorRefId = accountDetails?.operatorRefId || '';
       const mobile = accountDetails?.phone || payout.instructor?.user?.phone || '';
-      
-      if (!mobile || !operatorRefId) {
-        throw new AppError('Mobile money payout requires phone number and operator', 'MISSING_DETAILS', 400);
+
+      if (!operatorRefId) {
+        operatorRefId = await payChangu.resolveOperatorRefId(paymentMethod);
+      }
+
+      if (!mobile) {
+        throw new AppError('Mobile money payout requires a phone number', 'MISSING_DETAILS', 400);
       }
 
       payoutResult = await payChangu.initiateMobileMoneyPayout({

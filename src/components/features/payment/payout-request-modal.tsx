@@ -1,12 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Smartphone, Building2, AlertCircle, Check } from 'lucide-react';
+import { Smartphone, Building2, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+import Image from 'next/image';
+
+interface PayChanguOperator {
+  id: number;
+  name: string;
+  ref_id: string;
+  short_code: string;
+  providerMethod: string;
+  supports_withdrawals: boolean;
+  country: string;
+  currency: string;
+}
 
 interface PayoutRequestModalProps {
   isOpen: boolean;
@@ -30,12 +42,46 @@ export function PayoutRequestModal({
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('AIRTEL_MONEY');
   const [phone, setPhone] = useState('');
-  const [operatorRefId, setOperatorRefId] = useState('');
+  const [selectedOperator, setSelectedOperator] = useState('');
   const [bankUuid, setBankUuid] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [operators, setOperators] = useState<PayChanguOperator[]>([]);
+  const [operatorsLoading, setOperatorsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchOperators();
+    }
+  }, [isOpen]);
+
+  const fetchOperators = async () => {
+    setOperatorsLoading(true);
+    try {
+      const res = await fetch('/api/payments/methods');
+      if (!res.ok) throw new Error('Failed to fetch operators');
+      const result = await res.json();
+      if (result.success && result.data) {
+        const ops = result.data.operators || result.data.hardcodedOperators || [];
+        setOperators(ops);
+      }
+    } catch {
+      setOperators([]);
+    } finally {
+      setOperatorsLoading(false);
+    }
+  };
+
+  const handleMethodChange = (m: string) => {
+    setMethod(m);
+    setSelectedOperator('');
+    const match = operators.find((op) => op.providerMethod === m);
+    if (match) {
+      setSelectedOperator(match.ref_id);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +99,7 @@ export function PayoutRequestModal({
 
       const accountDetails =
         method === 'AIRTEL_MONEY' || method === 'TNM_MPAMBA'
-          ? { phone, operatorRefId }
+          ? { phone, operatorRefId: selectedOperator }
           : { bankUuid, bankAccountName, bankAccountNumber };
 
       await onSubmit({
@@ -62,10 +108,9 @@ export function PayoutRequestModal({
         accountDetails,
       });
 
-      // Reset form
       setAmount('');
       setPhone('');
-      setOperatorRefId('');
+      setSelectedOperator('');
       setBankUuid('');
       setBankAccountName('');
       setBankAccountNumber('');
@@ -81,13 +126,13 @@ export function PayoutRequestModal({
     {
       id: 'AIRTEL_MONEY',
       name: 'Airtel Money',
-      icon: <Smartphone size={20} />,
+      icon: <Image src="/images/payments/airtel.webp" alt="Airtel" width={28} height={28} className="object-contain" />,
       description: 'Payout to Airtel Money wallet',
     },
     {
       id: 'TNM_MPAMBA',
       name: 'TNM Mpamba',
-      icon: <Smartphone size={20} />,
+      icon: <Image src="/images/payments/tnm.webp" alt="TNM" width={28} height={28} className="object-contain" />,
       description: 'Payout to TNM Mpamba wallet',
     },
     {
@@ -97,6 +142,10 @@ export function PayoutRequestModal({
       description: 'Direct bank transfer',
     },
   ];
+
+  const mobileOperators = operators.filter(
+    (op) => op.providerMethod === 'AIRTEL_MONEY' || op.providerMethod === 'TNM_MPAMBA'
+  );
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Request Payout" size="md">
@@ -131,7 +180,7 @@ export function PayoutRequestModal({
               <button
                 key={m.id}
                 type="button"
-                onClick={() => setMethod(m.id)}
+                onClick={() => handleMethodChange(m.id)}
                 className={`w-full p-3 rounded-lg border-2 text-left transition-all flex items-center gap-3 ${
                   method === m.id
                     ? 'border-navy bg-navy/5'
@@ -152,22 +201,48 @@ export function PayoutRequestModal({
         {method === 'AIRTEL_MONEY' || method === 'TNM_MPAMBA' ? (
           <>
             <Input
-              label="Phone Number"
-              placeholder="+265 888 000 000"
+              label={method === 'AIRTEL_MONEY' ? 'Airtel Phone Number' : 'TNM Phone Number'}
+              placeholder={method === 'AIRTEL_MONEY' ? '+265 999 000 000' : '+265 888 000 000'}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
               disabled={loading}
+              helperText={method === 'AIRTEL_MONEY' ? 'Your Airtel Money registered phone number' : 'Your TNM Mpamba registered phone number'}
             />
-            <Input
-              label="Mobile Money Operator Ref ID"
-              placeholder="e.g., 20be6c20-adeb-4b5b-a7ba-0769820df4fb"
-              value={operatorRefId}
-              onChange={(e) => setOperatorRefId(e.target.value)}
-              required
-              disabled={loading}
-              helperText="Get this from your mobile money operator"
-            />
+            <div>
+              <label className="block text-sm font-medium text-grey-dark mb-2">Mobile Money Operator</label>
+              {operatorsLoading ? (
+                <div className="flex items-center gap-2 p-3 text-grey-medium text-sm">
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading operators...
+                </div>
+              ) : mobileOperators.length > 0 ? (
+                <select
+                  className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy focus:ring-2 focus:ring-navy/20"
+                  value={selectedOperator}
+                  onChange={(e) => setSelectedOperator(e.target.value)}
+                  required
+                  disabled={loading}
+                >
+                  <option value="">Select an operator</option>
+                  {mobileOperators.map((op) => (
+                    <option key={op.ref_id} value={op.ref_id}>
+                      {op.name} ({op.short_code.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  label="Mobile Money Operator Ref ID"
+                  placeholder="e.g., 20be6c20-adeb-4b5b-a7ba-0769820df4fb"
+                  value={selectedOperator}
+                  onChange={(e) => setSelectedOperator(e.target.value)}
+                  required
+                  disabled={loading}
+                  helperText="Enter your mobile money operator reference ID"
+                />
+              )}
+            </div>
           </>
         ) : (
           <>

@@ -1,16 +1,35 @@
 import { NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth/auth-service';
+import { verifyRecaptcha, isRecaptchaEnabled } from '@/lib/captcha';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, fullName, role, phone, locale, institution, corporate } = body;
+    const { email, password, fullName, role, phone, locale, institution, corporate, recaptchaToken } = body;
 
     if (!email || !password || !fullName || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    if (isRecaptchaEnabled()) {
+      if (!recaptchaToken) {
+        return NextResponse.json(
+          { error: 'reCAPTCHA verification is required' },
+          { status: 403 }
+        );
+      }
+
+      try {
+        await verifyRecaptcha(recaptchaToken);
+      } catch (captchaError: any) {
+        return NextResponse.json(
+          { error: captchaError.message || 'reCAPTCHA verification failed' },
+          { status: captchaError.statusCode || 403 }
+        );
+      }
     }
 
     const authService = new AuthService();

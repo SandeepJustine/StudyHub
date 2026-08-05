@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import {
@@ -17,6 +18,7 @@ import { PRICING_TIERS, getTiersForRole } from '@/lib/billing/pricing-tiers';
 
 interface DashboardData {
   institution: {
+    id: string;
     name: string;
     tier: string;
     studentCount: number;
@@ -59,31 +61,33 @@ export default function SchoolAdminDashboardPage() {
   const [selectedUpgradeTier, setSelectedUpgradeTier] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [phone, setPhone] = useState('');
   const [subscribing, setSubscribing] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch('/api/institutions/analytics');
-        if (!res.ok) {
-          const result = await res.json().catch(() => ({ error: 'Failed to load dashboard' }));
-          throw new Error(result.error || `Server error ${res.status}`);
-        }
-        const result = await res.json();
-        if (result.success) {
-          setData(result.data);
-        } else {
-          setToast({ message: result.error || 'Failed to load dashboard', type: 'error' });
-        }
-      } catch (error: any) {
-        setToast({ message: error.message || 'Failed to load dashboard', type: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+const fetchData = async () => {
+     setLoading(true);
+     try {
+       const res = await fetch('/api/institutions/analytics');
+       if (!res.ok) {
+         const result = await res.json().catch(() => ({ error: 'Failed to load dashboard' }));
+         throw new Error(result.error || `Server error ${res.status}`);
+       }
+       const result = await res.json();
+       if (result.success) {
+         setData(result.data);
+       } else {
+         setToast({ message: result.error || 'Failed to load dashboard', type: 'error' });
+       }
+     } catch (error: any) {
+       setToast({ message: error.message || 'Failed to load dashboard', type: 'error' });
+     } finally {
+       setLoading(false);
+     }
+   };
+
+   useEffect(() => {
+     fetchData();
+   }, []);
 
   const handleUpgrade = async () => {
     if (!selectedUpgradeTier || !paymentMethod) {
@@ -99,7 +103,8 @@ export default function SchoolAdminDashboardPage() {
           tier: selectedUpgradeTier,
           cycle: billingCycle,
           paymentMethod,
-          institutionId: data?.institution.name,
+          institutionId: data?.institution.id,
+          phone,
         }),
       });
       if (!res.ok) {
@@ -112,6 +117,7 @@ export default function SchoolAdminDashboardPage() {
         setShowUpgradeModal(false);
         setSelectedUpgradeTier(null);
         setPaymentMethod('');
+        setPhone('');
         fetchData();
       } else {
         setToast({ message: result.error || 'Failed to subscribe', type: 'error' });
@@ -367,7 +373,7 @@ export default function SchoolAdminDashboardPage() {
       </Card>
 
       {/* Upgrade Modal */}
-      <Modal isOpen={showUpgradeModal} onClose={() => { setShowUpgradeModal(false); setSelectedUpgradeTier(null); setPaymentMethod(''); }} title="Upgrade Subscription" size="xl">
+      <Modal isOpen={showUpgradeModal} onClose={() => { setShowUpgradeModal(false); setSelectedUpgradeTier(null); setPaymentMethod(''); setPhone(''); }} title="Upgrade Subscription" size="xl">
         <div className="space-y-6">
           {!selectedUpgradeTier ? (
             <>
@@ -427,24 +433,37 @@ export default function SchoolAdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Payment Methods */}
-              <div>
-                <h4 className="text-sm font-medium text-grey-dark mb-3">Select Payment Method</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {paymentMethods.map(method => (
-                    <button
-                      key={method.id}
-                      onClick={() => setPaymentMethod(method.id)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${paymentMethod === method.id ? 'border-navy bg-navy/5' : 'border-grey-light hover:border-navy/50'}`}
-                    >
-                      <span className={paymentMethod === method.id ? 'text-navy' : 'text-grey-medium'}>{method.icon}</span>
-                      <span className="text-sm font-medium text-grey-dark">{method.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+{/* Payment Methods */}
+               <div>
+                 <h4 className="text-sm font-medium text-grey-dark mb-3">Select Payment Method</h4>
+                 <div className="grid grid-cols-2 gap-3">
+                   {paymentMethods.map(method => (
+                     <button
+                       key={method.id}
+                       onClick={() => setPaymentMethod(method.id)}
+                       className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${paymentMethod === method.id ? 'border-navy bg-navy/5' : 'border-grey-light hover:border-navy/50'}`}
+                     >
+                       <span className={paymentMethod === method.id ? 'text-navy' : 'text-grey-medium'}>{method.icon}</span>
+                       <span className="text-sm font-medium text-grey-dark">{method.name}</span>
+                     </button>
+                   ))}
+                 </div>
+               </div>
 
-              {/* Total */}
+               {/* Phone Number for Mobile Money */}
+               {(paymentMethod === 'AIRTEL_MONEY' || paymentMethod === 'TNM_MPAMBA') && (
+                 <Input
+                   label={paymentMethod === 'AIRTEL_MONEY' ? 'Airtel Phone Number' : 'TNM Phone Number'}
+                   placeholder={paymentMethod === 'AIRTEL_MONEY' ? '+265 999 000 000' : '+265 888 000 000'}
+                   value={phone}
+                   onChange={(e) => setPhone(e.target.value)}
+                   required
+                   disabled={subscribing}
+                   helperText={paymentMethod === 'AIRTEL_MONEY' ? 'Your Airtel Money registered phone number' : 'Your TNM Mpamba registered phone number'}
+                 />
+               )}
+
+               {/* Total */}
               <div className="bg-grey-light/50 rounded-lg p-4 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-grey-medium">Total Amount</p>

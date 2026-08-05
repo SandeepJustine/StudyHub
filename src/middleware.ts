@@ -70,6 +70,8 @@ export default withAuth(
           pathname.startsWith('/pricing') ||
           pathname.startsWith('/privacy') ||
           pathname.startsWith('/terms') ||
+          pathname.startsWith('/courses') ||
+          pathname.startsWith('/trainings') ||
           pathname.startsWith('/auth/login') ||
           pathname.startsWith('/auth/register') ||
           pathname.startsWith('/auth/error') ||
@@ -77,6 +79,7 @@ export default withAuth(
           pathname.startsWith('/auth/reset-password') ||
           pathname.startsWith('/auth/verify-email') ||
           pathname.startsWith('/api/auth') ||
+          pathname.startsWith('/api/public') ||
           pathname.startsWith('/api/webhooks');
 
         return isPublic || !!token;

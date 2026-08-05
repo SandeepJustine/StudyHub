@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Toast } from '@/components/ui/toast';
-import { Plus, Trash2, GripVertical, Upload, Link as LinkIcon, FileText, Video, Music, Presentation, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Upload, Link as LinkIcon, FileText, Video, Music, Presentation, ArrowRight, ArrowLeft, Check, X, BookOpen } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 
 const CONTENT_TYPES = [
@@ -29,6 +29,9 @@ export default function NewCoursePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<string>('');
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   
   const [courseData, setCourseData] = useState({
     title: '',
@@ -62,6 +65,55 @@ export default function NewCoursePage() {
     setModules(modules.filter(m => m.id !== id));
   };
 
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setToast({ message: 'Please select an image file', type: 'error' });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setToast({ message: 'Image must be under 10MB', type: 'error' });
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    setThumbnailPreview(URL.createObjectURL(file));
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'IMAGE');
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      setThumbnail(data.data.url);
+      setToast({ message: 'Thumbnail uploaded successfully', type: 'success' });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Upload failed', type: 'error' });
+      setThumbnail('');
+      setThumbnailPreview('');
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
+
+  const removeThumbnail = () => {
+    setThumbnail('');
+    setThumbnailPreview('');
+  };
+
   const handleCreateCourse = async () => {
     // Validate
     if (!courseData.title.trim()) {
@@ -93,8 +145,9 @@ export default function NewCoursePage() {
           subject: courseData.subject,
           examBoard: courseData.examBoard || undefined,
           grade: courseData.grade || undefined,
-          price: courseData.price,
-          tags: courseData.tags,
+           price: courseData.price,
+           tags: courseData.tags,
+           thumbnail: thumbnail || undefined,
           modules: modules.map((m, i) => ({
             title: m.title,
             description: m.description,
@@ -162,11 +215,51 @@ export default function NewCoursePage() {
           <CardHeader><CardTitle>Course Details</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Input label="Course Title *" placeholder="e.g., MSCE Mathematics Complete Course" value={courseData.title} onChange={(e) => setCourseData({ ...courseData, title: e.target.value })} />
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-grey-dark">Description</label>
-              <textarea className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy min-h-[120px] text-sm" placeholder="Describe your course..." value={courseData.description} onChange={(e) => setCourseData({ ...courseData, description: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
+             <div className="space-y-1">
+               <label className="block text-sm font-medium text-grey-dark">Description</label>
+               <textarea className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy min-h-[120px] text-sm" placeholder="Describe your course..." value={courseData.description} onChange={(e) => setCourseData({ ...courseData, description: e.target.value })} />
+             </div>
+
+             {/* Thumbnail Upload */}
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-grey-dark">Course Thumbnail</label>
+               {thumbnailPreview ? (
+                 <div className="relative inline-block">
+                   <img src={thumbnailPreview} alt="Thumbnail preview" className="w-32 h-24 object-cover rounded-lg border-2 border-grey-light" />
+                   <button
+                     type="button"
+                     onClick={removeThumbnail}
+                     className="absolute -top-2 -right-2 w-5 h-5 bg-red text-white rounded-full flex items-center justify-center hover:bg-red-dark"
+                   >
+                     <X size={12} />
+                   </button>
+                 </div>
+               ) : (
+                 <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-grey-light rounded-lg cursor-pointer hover:border-navy hover:bg-navy/5 transition-colors">
+                   <input
+                     type="file"
+                     accept="image/*"
+                     onChange={handleThumbnailUpload}
+                     className="hidden"
+                     disabled={isUploadingThumbnail}
+                   />
+                   {isUploadingThumbnail ? (
+                     <div className="text-center">
+                       <Upload size={20} className="mx-auto text-navy animate-bounce mb-1" />
+                       <p className="text-xs text-grey-dark">Uploading...</p>
+                     </div>
+                   ) : (
+                     <div className="text-center">
+                       <Upload size={20} className="mx-auto text-grey-medium mb-1" />
+                       <p className="text-xs text-grey-dark">Click to upload thumbnail</p>
+                       <p className="text-xs text-grey-medium mt-0.5">JPG, PNG, WEBP (max 10MB)</p>
+                     </div>
+                   )}
+                 </label>
+               )}
+             </div>
+
+             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-grey-dark">Subject *</label>
                 <select className="w-full px-4 py-3 border-2 border-grey-light rounded-lg text-sm" value={courseData.subject} onChange={(e) => setCourseData({ ...courseData, subject: e.target.value })}>
@@ -264,14 +357,19 @@ export default function NewCoursePage() {
         <Card className="border-0 shadow-sm">
           <CardHeader><CardTitle>Review & Publish</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-grey-light/50 rounded-lg p-4">
-              <h3 className="font-semibold text-navy text-lg">{courseData.title || 'Untitled Course'}</h3>
-              {courseData.description && <p className="text-sm text-grey-dark mt-1">{courseData.description}</p>}
-              <div className="flex gap-2 mt-2">
-                {courseData.subject && <Badge variant="info">{courseData.subject}</Badge>}
-                {courseData.examBoard && <Badge variant="neutral">{courseData.examBoard}</Badge>}
-                {courseData.grade && <Badge variant="neutral">{courseData.grade}</Badge>}
-                <Badge variant="success">{courseData.price > 0 ? formatCurrency(courseData.price) : 'Free'}</Badge>
+            <div className="bg-grey-light/50 rounded-lg p-4 flex gap-4">
+              {thumbnail && (
+                <img src={thumbnail} alt="Course thumbnail" className="w-24 h-16 object-cover rounded-lg flex-shrink-0" />
+              )}
+              <div>
+                <h3 className="font-semibold text-navy text-lg">{courseData.title || 'Untitled Course'}</h3>
+                {courseData.description && <p className="text-sm text-grey-dark mt-1">{courseData.description}</p>}
+                <div className="flex gap-2 mt-2">
+                  {courseData.subject && <Badge variant="info">{courseData.subject}</Badge>}
+                  {courseData.examBoard && <Badge variant="neutral">{courseData.examBoard}</Badge>}
+                  {courseData.grade && <Badge variant="neutral">{courseData.grade}</Badge>}
+                  <Badge variant="success">{courseData.price > 0 ? formatCurrency(courseData.price) : 'Free'}</Badge>
+                </div>
               </div>
             </div>
             <div>
@@ -299,6 +397,3 @@ export default function NewCoursePage() {
     </div>
   );
 }
-
-// Missing BookOpen import
-import { BookOpen } from 'lucide-react';

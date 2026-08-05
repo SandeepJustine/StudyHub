@@ -7,16 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard, Smartphone, Building2 } from 'lucide-react';
 import { PRICING_TIERS } from '@/lib/billing/pricing-tiers';
 import { formatCurrency } from '@/utils/formatters';
+import { Input } from '@/components/ui/input';
 
 interface SubscriptionFormProps {
   currentTier?: string;
-  onSubscribe: (tier: string, cycle: 'MONTHLY' | 'ANNUAL', paymentMethod: string) => void;
+  onSubscribe: (tier: string, cycle: 'MONTHLY' | 'ANNUAL', paymentMethod: string, phone?: string) => void;
 }
 
 export function SubscriptionForm({ currentTier, onSubscribe }: SubscriptionFormProps) {
   const [selectedTier, setSelectedTier] = useState<string>('');
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const studentTiers = Object.entries(PRICING_TIERS)
@@ -32,7 +34,7 @@ export function SubscriptionForm({ currentTier, onSubscribe }: SubscriptionFormP
   const handleSubmit = async () => {
     if (!selectedTier || !paymentMethod) return;
     setIsLoading(true);
-    await onSubscribe(selectedTier, billingCycle, paymentMethod);
+    await onSubscribe(selectedTier, billingCycle, paymentMethod, phone || undefined);
     setIsLoading(false);
   };
 
@@ -150,24 +152,37 @@ export function SubscriptionForm({ currentTier, onSubscribe }: SubscriptionFormP
         </div>
       )}
 
-      {/* Submit */}
-      {selectedTier && paymentMethod && (
-        <div className="text-center">
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleSubmit}
-            loading={isLoading}
-          >
-            Subscribe Now - {formatCurrency(
-              studentTiers.find(([t]) => t === selectedTier)?.[1]?.monthlyPrice || 0
-            )}
-          </Button>
-          <p className="text-xs text-grey-medium mt-2">
-            Cancel anytime. No long-term commitment.
-          </p>
-        </div>
-      )}
+{/* Phone Number for Mobile Money */}
+          {paymentMethod === 'AIRTEL_MONEY' || paymentMethod === 'TNM_MPAMBA' ? (
+            <Input
+              label={paymentMethod === 'AIRTEL_MONEY' ? 'Airtel Phone Number' : 'TNM Phone Number'}
+              placeholder={paymentMethod === 'AIRTEL_MONEY' ? '+265 999 000 000' : '+265 888 000 000'}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              disabled={isLoading}
+              helperText={paymentMethod === 'AIRTEL_MONEY' ? 'Your Airtel Money registered phone number' : 'Your TNM Mpamba registered phone number'}
+            />
+          ) : null}
+
+          {/* Submit */}
+          {selectedTier && paymentMethod && (
+            <div className="text-center">
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleSubmit}
+                loading={isLoading}
+              >
+                Subscribe Now - {formatCurrency(
+                  studentTiers.find(([t]) => t === selectedTier)?.[1]?.monthlyPrice || 0
+                )}
+              </Button>
+              <p className="text-xs text-grey-medium mt-2">
+                Cancel anytime. No long-term commitment.
+              </p>
+            </div>
+          )}
     </div>
   );
 }

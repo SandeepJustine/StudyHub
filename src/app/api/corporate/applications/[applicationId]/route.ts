@@ -5,14 +5,14 @@ import { RecruitmentService } from '@/lib/corporate/recruitment-service';
 
 const recruitmentService = new RecruitmentService();
 
-export async function PUT(req: Request, { params }: { params: { applicationId: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ applicationId: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== 'CORPORATE_CLIENT') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { applicationId } = params;
+    const { applicationId } = await params;
     const body = await req.json();
     const { status, notes } = body;
 

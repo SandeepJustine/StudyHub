@@ -29,6 +29,7 @@ export interface PaymentResult {
   redirectUrl?: string;
   message?: string;
   providerReference?: string;
+  metadata?: any;
 }
 
 export interface PaymentVerification {

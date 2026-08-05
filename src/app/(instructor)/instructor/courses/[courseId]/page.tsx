@@ -5,11 +5,12 @@ import prisma from '@/lib/utils/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen, Clock, Users, Star, Edit, Plus, Layout } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Users, Star, Edit, Plus, Layout, FlaskConical } from 'lucide-react';
 import { formatCurrency, formatDuration, formatDate } from '@/utils/formatters';
 import { instructorService } from '@/lib/instructor/instructor-service';
 import { SubmitReviewButton } from '@/components/courses/submit-review-button';
 import Link from 'next/link';
+import { ExperimentAssignment } from '@/components/features/experiment/experiment-assignment';
 
 export const dynamic = 'force-dynamic';
 
@@ -168,6 +169,9 @@ export default async function InstructorCourseDetailPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Virtual Lab Experiments */}
+      <ExperimentAssignment courseId={course.id} instructorId={instructor.id} />
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
