@@ -11,6 +11,7 @@ import { instructorService } from '@/lib/instructor/instructor-service';
 import { SubmitReviewButton } from '@/components/courses/submit-review-button';
 import Link from 'next/link';
 import { ExperimentAssignment } from '@/components/features/experiment/experiment-assignment';
+import { ModuleList } from './module-list';
 
 export const dynamic = 'force-dynamic';
 
@@ -175,44 +176,7 @@ export default async function InstructorCourseDetailPage({
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-navy">
-              Modules ({course.modules.length})
-            </h2>
-            <Link href={`/instructor/courses/${course.id}/builder`}>
-              <Button variant="outline" size="sm">
-                <Plus size={14} className="mr-1" /> Add Module
-              </Button>
-            </Link>
-          </div>
-          {course.modules.length > 0 ? (
-            <div className="space-y-3">
-              {course.modules.map((m, i) => (
-                <div key={m.id} className="flex items-center gap-3 p-3 bg-grey-light/50 rounded-lg">
-                  <span className="text-sm font-medium text-navy w-6">{i + 1}.</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-navy">{m.title}</p>
-                    {m.description && (
-                      <p className="text-xs text-grey-medium">{m.description}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge size="sm">{m.contentType}</Badge>
-                    {m.isPreview && <Badge variant="success" size="sm">Preview</Badge>}
-                    {m.quiz && <Badge variant="info" size="sm">{m.quiz.questionsCount} Q</Badge>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <BookOpen size={32} className="mx-auto text-grey-medium mb-3" />
-              <p className="text-sm text-grey-medium mb-4">No modules added yet.</p>
-              <Link href={`/instructor/courses/${course.id}/builder`}>
-                <Button variant="primary">Add Your First Module</Button>
-              </Link>
-            </div>
-          )}
+          <ModuleList courseId={course.id} modules={course.modules as any} />
         </CardContent>
       </Card>
     </div>

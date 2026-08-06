@@ -92,7 +92,7 @@ export async function GET(
     }
 
     // Remove sensitive data
-    const { passwordHash, passwordResetToken, emailVerificationToken, ...safeUser } = user;
+    const { passwordHash, ...safeUser } = user;
 
     return NextResponse.json({
       success: true,

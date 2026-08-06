@@ -76,9 +76,8 @@ export async function GET(req: Request) {
       entity: log.entity,
       entityId: log.entityId,
       changes: typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes,
-      ipAddress: log.ipAddress || 'N/A',
-      userAgent: log.userAgent || 'N/A',
-      timestamp: log.timestamp,
+ipAddress: log.ipAddress || 'N/A',
+       timestamp: log.timestamp,
     }));
 
     // Get summary stats

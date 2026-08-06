@@ -172,7 +172,7 @@ export async function POST(req: Request) {
         ...metadata,
         name: session.user.name,
         email: session.user.email,
-        phone: session.user.phone,
+        phone: (session.user as any).phone,
         savePaymentMethod,
       },
     });

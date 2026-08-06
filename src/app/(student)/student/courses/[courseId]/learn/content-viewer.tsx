@@ -28,7 +28,7 @@ interface ModuleInfo {
   id: string;
   title: string;
   contentType: string;
-  duration?: number;
+  duration?: number | null;
   order: number;
 }
 
@@ -42,19 +42,19 @@ interface CurrentModuleInfo {
   id: string;
   title: string;
   contentType: string;
-  contentUrl?: string;
+  contentUrl?: string | null;
   contentData?: any;
-  duration?: number;
-  thumbnailUrl?: string;
-  embedCode?: string;
+  duration?: number | null;
+  thumbnailUrl?: string | null;
+  embedCode?: string | null;
   order: number;
   quiz?: {
     id: string;
     title: string;
-    timeLimit?: number;
-    passingScore?: number;
+    timeLimit?: number | null;
+    passingScore?: number | null;
     questions?: any[];
-  };
+  } | null;
 }
 
 interface ModuleProgressInfo {
@@ -65,7 +65,7 @@ interface ModuleProgressInfo {
 
 interface ContentViewerProps {
   course: CourseInfo;
-  currentModule: CurrentModuleInfo;
+  currentModule?: CurrentModuleInfo;
   moduleProgress: ModuleProgressInfo | null;
   moduleContent: any;
   enrollmentId: string;
@@ -143,6 +143,7 @@ export default function ContentViewer({
   };
 
   const handlePrevious = () => {
+    if (!currentModule) return;
     const currentIndex = course.modules.findIndex((m) => m.id === currentModule.id);
     if (currentIndex > 0) {
       handleNavigateModule(course.modules[currentIndex - 1].id);
@@ -150,6 +151,7 @@ export default function ContentViewer({
   };
 
   const handleNext = () => {
+    if (!currentModule) return;
     const currentIndex = course.modules.findIndex((m) => m.id === currentModule.id);
     if (currentIndex < course.modules.length - 1) {
       handleNavigateModule(course.modules[currentIndex + 1].id);
@@ -160,6 +162,7 @@ export default function ContentViewer({
   // Derived state
   // ------------------------------------------------------------------
 
+  if (!currentModule) return null;
   const currentIndex = course.modules.findIndex((m) => m.id === currentModule.id);
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < course.modules.length - 1;
@@ -209,9 +212,6 @@ export default function ContentViewer({
           <div className="w-full">
             <AudioPlayer
               url={moduleContent.url}
-              duration={moduleContent.duration}
-              thumbnail={moduleContent.thumbnail}
-              onComplete={handleComplete}
             />
             <div className="mt-4">
               <button
@@ -255,7 +255,6 @@ export default function ContentViewer({
           <div className="w-full">
             <PDFViewer
               url={moduleContent.url}
-              downloadUrl={moduleContent.downloadUrl}
             />
             <div className="mt-4">
               <button

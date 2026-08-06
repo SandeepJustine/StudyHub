@@ -301,6 +301,11 @@ model Institution {
   accentColor   String?
   maxStudents   Int      @default(200)
   currentStudents Int    @default(0)
+  address       String?
+  contactPhone  String?
+  contactEmail  String?
+  website       String?
+  isActive      Boolean  @default(true)
   settings      Json?
   createdAt     DateTime @default(now())
 
@@ -361,6 +366,7 @@ model Subscription {
   startDate     DateTime
   endDate       DateTime
   autoRenew     Boolean  @default(true)
+  cancelledAt DateTime?
   createdAt     DateTime @default(now())
 
   transactions   Transaction[]
@@ -877,6 +883,7 @@ model SupportTicket {
   assignedTo    String?
   resolution    String?
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   resolvedAt    DateTime?
 
   responses     SupportResponse[]

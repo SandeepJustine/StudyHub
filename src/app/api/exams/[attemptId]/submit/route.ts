@@ -15,7 +15,7 @@ export async function POST(
     }
 
     const { answers } = await req.json();
-    const studentId = session.user.studentId;
+    const studentId = (session.user as any).studentId;
 
     if (!studentId) {
       return NextResponse.json({ error: 'Student profile not found' }, { status: 400 });

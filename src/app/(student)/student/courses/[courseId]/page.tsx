@@ -16,7 +16,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   const student = await prisma.student.findUnique({ 
     where: { userId: session.user.id }, 
-    select: { id: true, wishlist: true } 
+    select: { id: true, userId: true, wishlist: true } 
   });
   if (!student) {
     return (

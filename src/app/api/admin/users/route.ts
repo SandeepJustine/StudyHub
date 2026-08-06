@@ -179,11 +179,11 @@ export async function PUT(req: Request) {
         });
 
         // Create role-specific profile if needed
-        if (data.role === 'STUDENT' && !user.student) {
+        if (data.role === 'STUDENT' && !(user as any).student) {
           await prisma.student.create({
             data: { userId, subjects: [] },
           });
-        } else if (data.role === 'INSTRUCTOR' && !user.instructor) {
+        } else if (data.role === 'INSTRUCTOR' && !(user as any).instructor) {
           await prisma.instructor.create({
             data: { userId, expertise: [] },
           });

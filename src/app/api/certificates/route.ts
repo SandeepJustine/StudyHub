@@ -54,13 +54,6 @@ export async function GET(req: Request) {
       prisma.certificate.findMany({
         where,
         include: {
-          enrollment: {
-            select: {
-              course: {
-                select: { title: true, subject: true },
-              },
-            },
-          },
           examAttempt: {
             select: {
               quiz: { select: { title: true } },
@@ -184,7 +177,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       data: certificate,
-      price: priceMap[type],
+      price: priceMap[type as CertificateType],
     }, { status: 201 });
 
   } catch (error: any) {

@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     // Update an existing module's content, or add a new module to the course.
     if (moduleId) {
-      const updated = await courseService.addModule(courseId, session.instructorId ?? '', {
+      const updated = await courseService.addModule(courseId, (session.user as any).instructorId ?? '', {
         title,
         description,
         contentType: contentType as ContentType,
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ module: updated });
     }
 
-    const module_ = await courseService.addModule(courseId, session.instructorId ?? '', {
+    const module_ = await courseService.addModule(courseId, (session.user as any).instructorId ?? '', {
       title,
       description,
       contentType: contentType as ContentType,
