@@ -23,6 +23,7 @@ export class FeatureGatingService {
         userId,
         status: 'active',
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!subscription) {
@@ -34,6 +35,24 @@ export class FeatureGatingService {
 
     const tierConfig = PRICING_TIERS[subscription.tier];
     const hasFeatureAccess = tierConfig?.features.includes(feature) || false;
+
+    // Special handling for institution-based past paper upload access
+    if (feature === 'past_paper:upload' && !hasFeatureAccess) {
+      const schoolAdmin = await prisma.schoolAdmin.findFirst({
+        where: { userId },
+        include: { institution: true },
+      });
+      if (schoolAdmin?.institution) {
+        const institutionTier = schoolAdmin.institution.tier;
+        const institutionConfig = PRICING_TIERS[institutionTier];
+        if (institutionConfig?.features.includes('past_paper:upload')) {
+          return {
+            feature,
+            hasAccess: true,
+          };
+        }
+      }
+    }
 
     // Check limits if applicable
     let limit: number | undefined;
@@ -128,6 +147,7 @@ export class FeatureGatingService {
         userId,
         status: 'active',
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!subscription) return [];
@@ -149,6 +169,7 @@ export class FeatureGatingService {
         userId,
         status: 'active',
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     const currentTier = subscription?.tier || 'FREE';

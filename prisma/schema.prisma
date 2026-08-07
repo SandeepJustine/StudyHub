@@ -66,6 +66,66 @@ enum CertificateType {
   VERIFIED
 }
 
+enum CertificateDelivery {
+  DIGITAL
+  PRINTED
+  BOTH
+}
+
+enum CertificatePaymentStatus {
+  PENDING
+  PAID
+  FREE
+}
+
+model CertificateTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  isDefault     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  designConfig  Json?    // layout, colors, fonts, positions
+  createdBy     String   // userId
+  createdByRole String   // PLATFORM_ADMIN, INSTRUCTOR, SCHOOL_ADMIN
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  certificates  Certificate[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CertificateSignature {
+  id          String   @id @default(cuid())
+  name        String
+  title       String
+  imageUrl    String   @db.Text
+  type        String   // ADMIN, INSTRUCTOR, INSTITUTION
+  relatedId   String   // userId or institutionId
+  instructorId String?
+  instructor   Instructor? @relation(fields: [instructorId], references: [id])
+  institutionId String?
+  institution Institution? @relation(fields: [institutionId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CertificateBranding {
+  id            String   @id @default(cuid())
+  institutionId String   @unique
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  primaryColor  String?  @default("#1a1a2e")
+  secondaryColor String? @default("#16213e")
+  accentColor   String?  @default("#e94560")
+  fontFamily    String?  @default("serif")
+  logoUrl       String?  @db.Text
+  sealUrl       String?  @db.Text
+  customTemplate Json?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 enum ContentStatus {
   DRAFT
   PENDING_REVIEW
@@ -269,6 +329,7 @@ model Instructor {
   coursesCount  Int      @default(0)
   studentsCount Int      @default(0)
   rating        Float    @default(0)
+  certificateSignatures CertificateSignature[]
 }
 
 model CorporateClient {
@@ -313,6 +374,9 @@ model Institution {
   admins        SchoolAdmin[]
   subscriptions Subscription[]
   branding      InstitutionBranding?
+  certificateBranding CertificateBranding?
+  certificateTemplates CertificateTemplate[]
+  certificateSignatures CertificateSignature[]
 }
 
 model InstitutionBranding {
@@ -499,7 +563,37 @@ model Course {
   liveClasses   LiveClass[]
   transactions  Transaction[]
   experiments   Experiment[]
-  virtualLabs   VirtualLab[]
+  virtualLabs       VirtualLab[]
+  pastPapers        PastPaper[]
+}
+
+model PastPaper {
+  id              String        @id @default(cuid())
+  title           String
+  subject         String
+  examBoard       String
+  grade           String?
+  year            Int
+  paperNumber     Int           @default(1)
+  duration        Int           @default(180) // minutes
+  fileUrl         String        @db.Text
+  fileSize        Int?          // bytes
+  contentType     String        @default("application/pdf") // application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  markingSchemeUrl String?      @db.Text
+  courseId        String?
+  course          Course?       @relation(fields: [courseId], references: [id])
+  uploadedBy      String        // userId
+  status          ContentStatus @default(PENDING_REVIEW)
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([subject])
+  @@index([examBoard])
+  @@index([year])
+  @@index([courseId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model CourseReview {
@@ -610,10 +704,11 @@ model Enrollment {
   startedAt       DateTime @default(now())
   lastAccessedAt  DateTime?
   completedAt     DateTime?
-  certificateId   String?
+  certificateId   String? @unique
   enrolledAt      DateTime @default(now())
 
   moduleProgress ModuleProgress[]
+  certificate Certificate? @relation(fields: [certificateId], references: [id])
 
   @@unique([studentId, courseId])
 }
@@ -664,16 +759,35 @@ model ExamAttempt {
 }
 
 model Certificate {
-  id            String   @id @default(cuid())
-  studentId     String
-  student       Student  @relation(fields: [studentId], references: [id])
-  examAttemptId String   @unique
-  examAttempt   ExamAttempt @relation(fields: [examAttemptId], references: [id])
-  type          CertificateType
-  verificationId String  @unique // UUID for QR code
-  issuedAt      DateTime @default(now())
-  expiresAt     DateTime?
-  metadata      Json?    // Issuer, exam details for audit trail
+  id              String   @id @default(cuid())
+  certificateNumber String @unique // CERT-2024-0001
+  studentId       String
+  student         Student @relation(fields: [studentId], references: [id])
+  enrollment      Enrollment? @relation
+  examAttemptId   String?  @unique
+  examAttempt     ExamAttempt? @relation(fields: [examAttemptId], references: [id])
+  templateId      String
+  template        CertificateTemplate @relation(fields: [templateId], references: [id])
+  type            CertificateType
+  delivery        CertificateDelivery @default(DIGITAL)
+  title           String
+  description     String?
+  verificationId  String @unique
+  issuedAt        DateTime @default(now())
+  expiresAt       DateTime?
+  paymentStatus   CertificatePaymentStatus @default(FREE)
+  transactionId   String?
+  amount          Int @default(0)
+  issuedBy        String? // userId who issued it
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([verificationId])
+  @@index([certificateNumber])
+  @@index([templateId])
+  @@index([issuedAt])
 }
 
 // ---------------------------------------------------------------------------

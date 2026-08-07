@@ -44,6 +44,9 @@ export default function AdminSubscriptionsPage() {
   const [editingPlan, setEditingPlan] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [showChangeTierModal, setShowChangeTierModal] = useState(false);
+  const [changeTierForm, setChangeTierForm] = useState({ newTier: '', newCycle: 'MONTHLY', autoRenew: true });
+  const [submitting, setSubmitting] = useState(false);
 
   // Pricing plans state
   const [pricingPlans, setPricingPlans] = useState<any[]>([]);
@@ -130,6 +133,53 @@ export default function AdminSubscriptionsPage() {
     } catch (err: any) {
       setToast({ message: err.message || 'Action failed', type: 'error' });
     }
+  };
+
+  const handleChangeTier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSub || !changeTierForm.newTier) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/admin/subscriptions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId: selectedSub.id,
+          action: 'change_tier',
+          newTier: changeTierForm.newTier,
+          newCycle: changeTierForm.newCycle,
+          autoRenew: changeTierForm.autoRenew,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to change tier');
+      }
+
+      setToast({ message: 'Subscription tier changed successfully', type: 'success' });
+      setShowChangeTierModal(false);
+      setShowDetailModal(false);
+      setChangeTierForm({ newTier: '', newCycle: 'MONTHLY', autoRenew: true });
+      fetchSubscriptions();
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to change tier', type: 'error' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getAvailableTiers = () => {
+    if (!selectedSub) return [];
+    const role = selectedSub.userRole;
+    const tierMap: Record<string, string[]> = {
+      STUDENT: ['STUDENT_BASIC', 'STUDENT_PREMIUM', 'STUDENT_ANNUAL', 'ICAM', 'PROFESSIONAL_BOARD'],
+      SCHOOL_ADMIN: ['INSTITUTION_BRONZE', 'INSTITUTION_SILVER', 'INSTITUTION_GOLD'],
+      INSTRUCTOR: ['INSTRUCTOR_FREE', 'INSTRUCTOR_PRO'],
+    };
+    return tierMap[role] || [];
   };
 
   const handleSavePlan = () => {
@@ -408,6 +458,7 @@ export default function AdminSubscriptionsPage() {
               <div className="flex gap-3 border-t border-grey-light pt-4">
                 <Button variant="danger" size="sm" onClick={() => { setConfirmAction({ action: 'cancel', label: 'Cancel Subscription' }); setShowConfirmModal(true); }}><XCircle size={14} className="mr-1" /> Cancel</Button>
                 <Button variant="navy" size="sm" onClick={() => { setConfirmAction({ action: 'pause', label: 'Pause Subscription' }); setShowConfirmModal(true); }}><Pause size={14} className="mr-1" /> Pause</Button>
+                <Button variant="primary" size="sm" onClick={() => setShowChangeTierModal(true)}><Settings size={14} className="mr-1" /> Change Tier</Button>
               </div>
             )}
             {selectedSub.status === 'cancelled' && (
@@ -428,6 +479,57 @@ export default function AdminSubscriptionsPage() {
             <Button variant={confirmAction.action === 'cancel' ? 'danger' : 'primary'} onClick={() => handleSubscriptionAction(confirmAction.action)}>{confirmAction.label}</Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Change Tier Modal */}
+      <Modal isOpen={showChangeTierModal} onClose={() => { setShowChangeTierModal(false); setChangeTierForm({ newTier: '', newCycle: 'MONTHLY', autoRenew: true }); }} title="Change Subscription Tier" size="md">
+        <form onSubmit={handleChangeTier} className="space-y-4">
+          {selectedSub && (
+            <div className="bg-grey-light/50 rounded-lg p-3">
+              <p className="text-sm font-medium text-navy">Current: {selectedSub.tier?.replace(/_/g, ' ')}</p>
+              <p className="text-xs text-grey-medium">{selectedSub.userName} • {selectedSub.userEmail}</p>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">New Tier</label>
+            <select
+              value={changeTierForm.newTier}
+              onChange={(e) => setChangeTierForm({ ...changeTierForm, newTier: e.target.value })}
+              className="w-full px-3 py-2 border border-grey-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+              required
+            >
+              <option value="">Select a new tier</option>
+              {getAvailableTiers().map((tier) => (
+                <option key={tier} value={tier}>{tier.replace(/_/g, ' ')}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Billing Cycle</label>
+            <select
+              value={changeTierForm.newCycle}
+              onChange={(e) => setChangeTierForm({ ...changeTierForm, newCycle: e.target.value })}
+              className="w-full px-3 py-2 border border-grey-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20"
+            >
+              <option value="MONTHLY">Monthly</option>
+              <option value="ANNUAL">Annual</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="autoRenew"
+              checked={changeTierForm.autoRenew}
+              onChange={(e) => setChangeTierForm({ ...changeTierForm, autoRenew: e.target.checked })}
+              className="rounded"
+            />
+            <label htmlFor="autoRenew" className="text-sm text-grey-dark">Auto-renew subscription</label>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button type="button" variant="outline" onClick={() => { setShowChangeTierModal(false); setChangeTierForm({ newTier: '', newCycle: 'MONTHLY', autoRenew: true }); }}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={submitting} disabled={!changeTierForm.newTier}>Change Tier</Button>
+          </div>
+        </form>
       </Modal>
 
       {/* Add/Edit Plan Modal */}

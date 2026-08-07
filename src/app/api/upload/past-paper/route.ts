@@ -2,7 +2,27 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
-import { AppError } from '@/lib/utils/errors';
+import { featureGating } from '@/lib/billing/feature-gating';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+
+const ALLOWED_TYPES: Record<string, { extensions: string[]; maxSize: number; mimeTypes: string[]; folder: string }> = {
+  PDF: {
+    extensions: ['.pdf'],
+    maxSize: 50 * 1024 * 1024,
+    mimeTypes: ['application/pdf'],
+    folder: 'past-papers',
+  },
+  DOC: {
+    extensions: ['.doc', '.docx'],
+    maxSize: 20 * 1024 * 1024,
+    mimeTypes: [
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    folder: 'past-papers',
+  },
+};
 
 export async function POST(req: Request) {
   try {
@@ -11,71 +31,94 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const instructor = await prisma.instructor.findUnique({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
+    // Check upload permission
+    let hasUploadAccess = false;
+    if (session.user.role === 'PLATFORM_ADMIN') {
+      hasUploadAccess = true;
+    } else if (session.user.role === 'INSTRUCTOR') {
+      const access = await featureGating.checkAccess(session.user.id, 'past_paper:upload');
+      hasUploadAccess = access.hasAccess;
+    } else if (session.user.role === 'SCHOOL_ADMIN') {
+      const access = await featureGating.checkAccess(session.user.id, 'past_paper:upload');
+      hasUploadAccess = access.hasAccess;
+    }
 
-    if (!instructor) {
-      return NextResponse.json({ error: 'Instructor profile not found' }, { status: 404 });
+    if (!hasUploadAccess) {
+      return NextResponse.json({ error: 'Upgrade to Pro or Institution tier to upload past papers' }, { status: 403 });
     }
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const examBoard = formData.get('examBoard') as string | null;
-    const year = formData.get('year') as string | null;
-    const subject = formData.get('subject') as string | null;
-    const paperNumber = formData.get('paperNumber') as string | null;
-    const duration = formData.get('duration') as string | null;
+    const fileType = formData.get('type') as string || 'PDF';
 
-    if (!file || !examBoard || !year || !subject) {
-      return NextResponse.json({ error: 'File, examBoard, year, and subject are required' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'File is required' }, { status: 400 });
     }
 
-    if (file.type !== 'application/pdf') {
-      return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 });
+    const config = ALLOWED_TYPES[fileType.toUpperCase()];
+    if (!config) {
+      return NextResponse.json(
+        { error: `Invalid file type. Allowed: ${Object.keys(ALLOWED_TYPES).join(', ')}` },
+        { status: 400 }
+      );
     }
 
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File size must be less than 50MB' }, { status: 400 });
+    // Validate file size
+    if (file.size > config.maxSize) {
+      return NextResponse.json(
+        { error: `File too large. Maximum size: ${config.maxSize / (1024 * 1024)}MB` },
+        { status: 400 }
+      );
     }
 
+    // Validate file extension
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!config.extensions.includes(ext)) {
+      return NextResponse.json(
+        { error: `Invalid file extension. Allowed: ${config.extensions.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type
+    if (file.type && !config.mimeTypes.includes(file.type)) {
+      return NextResponse.json(
+        { error: `Invalid MIME type: ${file.type}` },
+        { status: 400 }
+      );
+    }
+
+    // Generate unique filename
     const timestamp = Date.now();
-    const filename = `${timestamp}-${file.name.replace(/[^a-z0-9.-]/gi, '-')}`;
-    const folder = 'past-papers';
-    
-    // Mock upload - replace with actual storage logic
-    const pdfUrl = `${process.env.NEXT_PUBLIC_CDN_URL || 'http://localhost:3000'}/uploads/${folder}/${filename}`;
+    const sanitizedName = file.name
+      .toLowerCase()
+      .replace(/[^a-z0-9.-]/g, '-')
+      .replace(/-+/g, '-');
+    const filename = `${timestamp}-${sanitizedName}`;
 
-    // Create ContentItem record
-    const contentItem = await prisma.contentItem.create({
-      data: {
-        title: `${subject} Past Paper ${year} - ${examBoard}`,
-        type: 'PAST_PAPER',
-        subject,
-        examBoard,
-        grade: formData.get('grade') || undefined,
-        version: 1,
-        status: 'APPROVED',
-        uploadedBy: instructor.userId,
-        fileUrl: pdfUrl,
-        metadata: {
-          year: parseInt(year),
-          paperNumber: paperNumber ? parseInt(paperNumber) : 1,
-          duration: duration ? parseInt(duration) : 180,
-          filename: file.name,
-          size: file.size,
-          contentType: file.type,
-        },
-      },
-    });
+    // Create upload directory
+    const uploadDir = join(process.cwd(), 'public', 'uploads', config.folder);
+    await mkdir(uploadDir, { recursive: true });
+
+    // Write file
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const filePath = join(uploadDir, filename);
+    await writeFile(filePath, buffer);
+
+    // Generate URLs
+    const baseUrl = process.env.NEXT_PUBLIC_URL || `http://localhost:3000`;
+    const fileUrl = `${baseUrl}/uploads/${config.folder}/${filename}`;
 
     return NextResponse.json({
       success: true,
-      data: contentItem,
-    }, { status: 201 });
-
+      data: {
+        url: fileUrl,
+        filename,
+        size: file.size,
+        mimeType: file.type,
+        contentType: file.type,
+      },
+    });
   } catch (error: any) {
     console.error('Past paper upload error:', error);
     return NextResponse.json(
@@ -98,15 +141,14 @@ export async function GET(req: Request) {
     const year = searchParams.get('year');
 
     const where: any = {
-      type: 'PAST_PAPER',
       status: 'APPROVED',
     };
 
     if (subject) where.subject = subject;
     if (examBoard) where.examBoard = examBoard;
-    if (year) where.metadata = { path: ['year'], equals: parseInt(year) };
+    if (year) where.year = parseInt(year);
 
-    const pastPapers = await prisma.contentItem.findMany({
+    const pastPapers = await prisma.pastPaper.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       select: {
@@ -115,8 +157,9 @@ export async function GET(req: Request) {
         subject: true,
         examBoard: true,
         grade: true,
+        year: true,
         fileUrl: true,
-        metadata: true,
+        contentType: true,
         createdAt: true,
       },
     });

@@ -13,6 +13,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'community:post',
     'job:apply',
     'event:register',
+    'past_paper:view',
   ],
   SCHOOL_ADMIN: [
     'institution:manage',
@@ -23,6 +24,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'report:view',
     'branding:manage',
     'community:moderate',
+    'past_paper:upload',
+    'past_paper:view',
   ],
   INSTRUCTOR: [
     'course:create',
@@ -34,6 +37,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'quiz:grade',
     'analytics:view',
     'live:class:create',
+    'past_paper:upload',
   ],
   CORPORATE_CLIENT: [
     'job:post',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,54 +13,122 @@ import {
 import { formatRelativeTime } from '@/utils/formatters';
 import Link from 'next/link';
 
-// Mock thread data
-const MOCK_THREAD = {
-  id: '1',
-  title: 'Tips for MSCE Mathematics Paper 1',
-  content: 'I wanted to share some strategies that helped me score well on the MSCE Math Paper 1. First, always start with the questions you\'re most confident about. Don\'t spend too much time on one problem - mark it and come back later.\n\nFor multiple choice, eliminate obviously wrong answers first. This increases your chances significantly. For the structured questions, show ALL your working - you can get partial credit even if the final answer is wrong.\n\nPractice past papers under timed conditions. This helps you manage your time better during the actual exam. I recommend doing at least 5 past papers before the exam.\n\nWhat strategies have worked for you? Share below! 👇',
-  subject: 'Mathematics',
-  tags: ['MSCE', 'Mathematics', 'Exam Tips', 'Study Strategy'],
-  viewsCount: 156,
-  postsCount: 4,
-  isPinned: true,
-  isLocked: false,
-  createdAt: new Date(Date.now() - 3600000),
-  author: { fullName: 'John Phiri', role: 'STUDENT' },
-  forum: { id: '1', name: 'MSCE Mathematics', slug: 'msce-math' },
-  posts: [
-    { id: 'p1', content: 'Great tips! I also find that drawing diagrams for geometry problems helps a lot.', createdAt: new Date(Date.now() - 1800000), likes: 5, isDeleted: false, author: { fullName: 'Mary Banda', role: 'STUDENT' } },
-    { id: 'p2', content: 'I agree with the past papers strategy. I did 10 past papers and my score improved by 20%!', createdAt: new Date(Date.now() - 900000), likes: 3, isDeleted: false, author: { fullName: 'Peter Kamanga', role: 'STUDENT' } },
-    { id: 'p3', content: 'For algebra questions, always check your answer by plugging it back into the original equation. Saved me many times!', createdAt: new Date(Date.now() - 360000), likes: 8, isDeleted: false, author: { fullName: 'Dr. Sarah Mwenda', role: 'INSTRUCTOR' } },
-    { id: 'p4', content: 'Does anyone have recommendations for good math past paper books?', createdAt: new Date(Date.now() - 120000), likes: 1, isDeleted: false, author: { fullName: 'Grace Mwale', role: 'STUDENT' } },
-  ],
-};
+interface Post {
+  id: string;
+  content: string;
+  likes: number;
+  isDeleted: boolean;
+  createdAt: string;
+  author: {
+    fullName: string;
+    role: string;
+  };
+}
+
+interface Thread {
+  id: string;
+  title: string;
+  content: string;
+  subject: string;
+  tags: string[];
+  viewsCount: number;
+  postsCount: number;
+  isPinned: boolean;
+  isLocked: boolean;
+  createdAt: string;
+  author: {
+    fullName: string;
+    role: string;
+  };
+  forum: {
+    id: string;
+    name: string;
+  };
+  posts: Post[];
+}
 
 export default function ThreadPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [thread, setThread] = useState<Thread | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (status === 'loading') {
-    return <div className="p-6 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>;
-  }
-  if (status === 'unauthenticated') { router.push('/auth/login'); return null; }
+  useEffect(() => {
+    async function fetchThread() {
+      if (!params.threadId) return;
+      
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/community/threads/${params.threadId}`);
+        if (!res.ok) {
+          throw new Error('Failed to fetch thread');
+        }
+        const result = await res.json();
+        if (result.success) {
+          setThread(result.data);
+        } else {
+          throw new Error(result.error || 'Failed to fetch thread');
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const thread = MOCK_THREAD;
+    fetchThread();
+  }, [params.threadId]);
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!replyContent.trim()) return;
+    if (!replyContent.trim() || !thread) return;
     setIsSubmitting(true);
     try {
-      await new Promise(r => setTimeout(r, 500));
+      const res = await fetch('/api/community/replies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threadId: thread.id,
+          content: replyContent,
+        }),
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to post reply');
+      }
+
+      const result = await res.json();
+      
+      // Add the new post to the thread
+      const newPost: Post = {
+        id: result.data.id,
+        content: replyContent,
+        likes: 0,
+        isDeleted: false,
+        createdAt: new Date().toISOString(),
+        author: {
+          fullName: session?.user?.name || 'You',
+          role: session?.user?.role || 'STUDENT',
+        },
+      };
+
+      setThread(prev => prev ? {
+        ...prev,
+        posts: [...prev.posts, newPost],
+        postsCount: prev.postsCount + 1,
+      } : null);
+
       setToast({ message: 'Reply posted!', type: 'success' });
       setReplyContent('');
-    } catch {
-      setToast({ message: 'Failed to post reply', type: 'error' });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to post reply', type: 'error' });
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setToast(null), 3000);
@@ -70,6 +138,35 @@ export default function ThreadPage() {
   const toggleLike = (postId: string) => {
     setLikedPosts(prev => prev.includes(postId) ? prev.filter(p => p !== postId) : [...prev, postId]);
   };
+
+  if (status === 'loading') {
+    return <div className="p-6 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>;
+  }
+  if (status === 'unauthenticated') {
+    router.push('/auth/login');
+    return null;
+  }
+
+  if (loading) {
+    return <div className="p-6 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>;
+  }
+
+  if (error || !thread) {
+    return (
+      <div className="p-6 max-w-4xl">
+        <Link href="/student/community" className="text-grey-medium hover:text-navy flex items-center gap-1 text-sm mb-4">
+          <ArrowLeft size={16} /> Back to Community
+        </Link>
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-8 text-center">
+            <MessageSquare size={48} className="mx-auto text-grey-medium mb-4" />
+            <h2 className="text-xl font-bold text-navy mb-2">Thread Not Found</h2>
+            <p className="text-grey-dark">{error || 'This discussion could not be loaded.'}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">

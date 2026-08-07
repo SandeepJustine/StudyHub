@@ -205,7 +205,7 @@ export default async function InstructorCommunityPage({
           <div className="space-y-3">
             {data?.threads && data.threads.length > 0 ? (
               data.threads.map((thread: any) => (
-                <Link key={thread.id} href={`/student/community/thread/${thread.id}`}>
+                <Link key={thread.id} href={`/instructor/community/thread/${thread.id}`}>
                   <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
@@ -250,7 +250,7 @@ export default async function InstructorCommunityPage({
           <div className="space-y-2">
             {data?.posts && data.posts.length > 0 ? (
               data.posts.map((post: any) => (
-                <Link key={post.id} href={`/student/community/thread/${post.thread?.id}`}>
+                <Link key={post.id} href={`/instructor/community/thread/${post.thread?.id}`}>
                   <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
                     <CardContent className="p-3">
                       <div className="flex items-start gap-3">

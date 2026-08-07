@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
+import { PRICING_TIERS } from '@/lib/billing/pricing-tiers';
 
 /**
  * GET /api/admin/subscriptions
@@ -74,7 +75,6 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    // Calculate MRR from active subscriptions
     const activeSubs = await prisma.subscription.findMany({
       where: { status: 'active' },
       select: { amount: true, cycle: true },
@@ -138,7 +138,7 @@ export async function GET(req: Request) {
 
 /**
  * PUT /api/admin/subscriptions
- * Update subscription status or details
+ * Update subscription status, tier, or details
  */
 export async function PUT(req: Request) {
   try {
@@ -149,7 +149,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { subscriptionId, action, reason } = body;
+    const { subscriptionId, action, reason, newTier, newCycle, newAmount, autoRenew } = body;
 
     if (!subscriptionId || !action) {
       return NextResponse.json(
@@ -160,6 +160,7 @@ export async function PUT(req: Request) {
 
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
+      include: { user: { select: { role: true } } },
     });
 
     if (!subscription) {
@@ -167,6 +168,7 @@ export async function PUT(req: Request) {
     }
 
     let updatedSubscription;
+    const changes: Record<string, any> = { from: {}, to: {}, reason };
 
     switch (action) {
       case 'cancel':
@@ -178,6 +180,8 @@ export async function PUT(req: Request) {
             autoRenew: false,
           },
         });
+        changes.from.status = subscription.status;
+        changes.to.status = 'cancelled';
         break;
 
       case 'reactivate':
@@ -189,6 +193,8 @@ export async function PUT(req: Request) {
             autoRenew: true,
           },
         });
+        changes.from.status = subscription.status;
+        changes.to.status = 'active';
         break;
 
       case 'pause':
@@ -196,6 +202,57 @@ export async function PUT(req: Request) {
           where: { id: subscriptionId },
           data: { status: 'paused' },
         });
+        changes.from.status = subscription.status;
+        changes.to.status = 'paused';
+        break;
+
+      case 'change_tier':
+        if (!newTier) {
+          return NextResponse.json(
+            { error: 'newTier is required for change_tier action' },
+            { status: 400 }
+          );
+        }
+
+        if (!PRICING_TIERS[newTier]) {
+          return NextResponse.json(
+            { error: `Invalid tier: ${newTier}` },
+            { status: 400 }
+          );
+        }
+
+        const validTiers = getTiersForRole(subscription.user.role);
+        if (!validTiers.includes(newTier)) {
+          return NextResponse.json(
+            { error: `Tier ${newTier} is not valid for user role ${subscription.user.role}` },
+            { status: 400 }
+          );
+        }
+
+        const updateData: any = { tier: newTier };
+        
+        if (newCycle) updateData.cycle = newCycle;
+        if (newAmount !== undefined) updateData.amount = newAmount;
+        if (autoRenew !== undefined) updateData.autoRenew = autoRenew;
+
+        const tierConfig = PRICING_TIERS[newTier];
+        if (tierConfig) {
+          if (newCycle === 'ANNUAL' && tierConfig.annualPrice) {
+            updateData.amount = newAmount || tierConfig.annualPrice;
+          } else if (newCycle === 'MONTHLY' && tierConfig.monthlyPrice) {
+            updateData.amount = newAmount || tierConfig.monthlyPrice;
+          }
+        }
+
+        updatedSubscription = await prisma.subscription.update({
+          where: { id: subscriptionId },
+          data: updateData,
+        });
+
+        changes.from.tier = subscription.tier;
+        changes.to.tier = newTier;
+        changes.from.amount = subscription.amount;
+        changes.to.amount = updatedSubscription.amount;
         break;
 
       default:
@@ -211,7 +268,7 @@ export async function PUT(req: Request) {
         action: `SUBSCRIPTION_${action.toUpperCase()}`,
         entity: 'SUBSCRIPTION',
         entityId: subscriptionId,
-        changes: { from: subscription.status, to: updatedSubscription.status, reason },
+        changes: changes,
         timestamp: new Date(),
       },
     });
@@ -229,4 +286,14 @@ export async function PUT(req: Request) {
       { status: 500 }
     );
   }
+}
+
+function getTiersForRole(role: string): string[] {
+  const tierMap: Record<string, string[]> = {
+    STUDENT: ['STUDENT_BASIC', 'STUDENT_PREMIUM', 'STUDENT_ANNUAL', 'ICAM', 'PROFESSIONAL_BOARD'],
+    SCHOOL_ADMIN: ['INSTITUTION_BRONZE', 'INSTITUTION_SILVER', 'INSTITUTION_GOLD'],
+    INSTRUCTOR: ['INSTRUCTOR_FREE', 'INSTRUCTOR_PRO'],
+  };
+
+  return tierMap[role] || [];
 }

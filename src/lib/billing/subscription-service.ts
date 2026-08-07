@@ -232,6 +232,12 @@ export class SubscriptionService {
       if (subscription.institutionId && newTier.startsWith('INSTITUTION_')) {
         await this.updateInstitutionTier(subscription.institutionId, newTier);
       }
+    } else {
+      // Payment was initiated but not yet verified — do not upgrade yet
+      throw new PaymentError(
+        'Payment is being processed. Your subscription will be upgraded once payment is confirmed.',
+        { pendingUpgrade: true, subscriptionId, newTier, newCycle, transactionId: transaction?.id }
+      );
     }
 
     return subscription;

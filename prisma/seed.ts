@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole, SubscriptionTier, BillingCycle } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { DEFAULT_CERTIFICATE_TEMPLATE } from '../src/lib/certificates/default-template';
 
 const prisma = new PrismaClient();
 
@@ -293,6 +294,35 @@ async function main() {
   }
 
   console.log('  ✅ Subscriptions checked/created\n');
+
+  // ============================================
+  // CERTIFICATE TEMPLATES
+  // ============================================
+
+  console.log('Creating certificate templates...');
+
+  const existingDefaultTemplate = await prisma.certificateTemplate.findFirst({
+    where: { isDefault: true },
+  });
+
+  if (!existingDefaultTemplate) {
+    await prisma.certificateTemplate.create({
+      data: {
+        name: DEFAULT_CERTIFICATE_TEMPLATE.name,
+        description: DEFAULT_CERTIFICATE_TEMPLATE.description,
+        designConfig: DEFAULT_CERTIFICATE_TEMPLATE.designConfig,
+        createdBy: admin.id,
+        createdByRole: 'PLATFORM_ADMIN',
+        isDefault: true,
+        isActive: true,
+      },
+    });
+    console.log('  ✅ Default certificate template created');
+  } else {
+    console.log('  ℹ️  Default template already exists');
+  }
+
+  console.log('  ✅ Certificate templates checked/created\n');
 
   // ============================================
   // SUMMARY

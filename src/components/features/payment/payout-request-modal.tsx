@@ -232,15 +232,9 @@ export function PayoutRequestModal({
                   ))}
                 </select>
               ) : (
-                <Input
-                  label="Mobile Money Operator Ref ID"
-                  placeholder="e.g., 20be6c20-adeb-4b5b-a7ba-0769820df4fb"
-                  value={selectedOperator}
-                  onChange={(e) => setSelectedOperator(e.target.value)}
-                  required
-                  disabled={loading}
-                  helperText="Enter your mobile money operator reference ID"
-                />
+                <div className="p-3 text-grey-medium text-sm border-2 border-dashed rounded-lg">
+                  No mobile money operators available.
+                </div>
               )}
             </div>
           </>

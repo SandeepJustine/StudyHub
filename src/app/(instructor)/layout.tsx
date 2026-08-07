@@ -2,16 +2,19 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/layouts/dashboard/shell';
-import { LayoutDashboard, BookOpen, DollarSign, BarChart3, MessageSquare, Settings, Video, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, BookOpen, DollarSign, BarChart3, MessageSquare, Settings, Video, FlaskConical, Award, FileText } from 'lucide-react';
 
 const instructorMenuItems = [
   { label: 'Dashboard', href: '/instructor/dashboard', icon: <LayoutDashboard size={20} /> },
   { label: 'My Courses', href: '/instructor/courses', icon: <BookOpen size={20} /> },
+  { label: 'Past Papers', href: '/instructor/past-papers', icon: <FileText size={20} /> },
   { label: 'Live Classes', href: '/instructor/live-classes', icon: <Video size={20} /> },
   { label: 'Virtual Lab', href: '/instructor/virtual-lab', icon: <FlaskConical size={20} /> },
   { label: 'Earnings', href: '/instructor/earnings', icon: <DollarSign size={20} /> },
   { label: 'Analytics', href: '/instructor/analytics', icon: <BarChart3 size={20} /> },
   { label: 'Community', href: '/instructor/community', icon: <MessageSquare size={20} /> },
+  { label: 'Certificates', href: '/instructor/certificates', icon: <Award size={20} /> },
+  { label: 'Templates', href: '/instructor/certificates/templates', icon: <FileText size={20} /> },
   { label: 'Settings', href: '/instructor/settings', icon: <Settings size={20} /> },
 ];
 

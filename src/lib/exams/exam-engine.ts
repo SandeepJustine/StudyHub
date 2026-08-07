@@ -272,6 +272,7 @@ export class ExamEngine {
   ) {
     const attempt = await prisma.examAttempt.findUnique({
       where: { id: attemptId },
+      include: { certificate: true },
     });
 
     if (!attempt) throw new NotFoundError('Exam attempt');
@@ -327,10 +328,10 @@ export class ExamEngine {
 
     // Generate certificate if now passed
     let certificate = null;
-    if (passed && !attempt.certificateId) {
+    if (passed && !attempt.certificate) {
       certificate = await this.generateExamCertificate(
         attempt.studentId,
-        attemptId
+        examAttemptId
       );
     }
 
@@ -342,27 +343,31 @@ export class ExamEngine {
    */
   private async generateExamCertificate(studentId: string, examAttemptId: string) {
     const verificationId = this.generateVerificationId();
+    const certificateNumber = `CERT-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+
+    const defaultTemplate = await prisma.certificateTemplate.findFirst({
+      where: { isDefault: true, isActive: true },
+    });
 
     const certificate = await prisma.certificate.create({
       data: {
+        certificateNumber,
         studentId,
         examAttemptId,
+        templateId: defaultTemplate?.id || 'default',
         type: 'DIGITAL',
+        delivery: 'DIGITAL',
         title: 'Certificate of Achievement',
         description: 'Successfully completed the examination',
         verificationId,
         issuedAt: new Date(),
+        paymentStatus: 'FREE',
+        amount: 0,
         metadata: {
           issuer: 'StudyHub Malawi',
           generatedAt: new Date().toISOString(),
         },
       },
-    });
-
-    // Update exam attempt with certificate reference
-    await prisma.examAttempt.update({
-      where: { id: examAttemptId },
-      data: { certificateId: certificate.id },
     });
 
     return certificate;

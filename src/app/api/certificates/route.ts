@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
 import { certificateService } from '@/lib/certificates/certificate-service';
-import { verificationService } from '@/lib/certificates/verification-service';
+import { certificatePDFService } from '@/lib/certificates/certificate-pdf-service';
 import { CertificateType } from '@prisma/client';
+import { featureGating } from '@/lib/billing/feature-gating';
 
 /**
  * GET /api/certificates
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
     // Certificate verification by ID (public)
     const verifyId = searchParams.get('verify');
     if (verifyId) {
-      const result = await verificationService.verifyById(verifyId);
+      const result = await certificateService.verifyCertificate(verifyId);
       return NextResponse.json({
         success: true,
         data: result,
@@ -61,6 +62,9 @@ export async function GET(req: Request) {
               passed: true,
             },
           },
+          template: {
+            select: { id: true, name: true },
+          },
         },
         orderBy: { issuedAt: 'desc' },
         skip: (params.page - 1) * params.limit,
@@ -91,7 +95,7 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/certificates
- * Generate a new certificate
+ * Generate a new certificate, request payment, or instructor issue
  */
 export async function POST(req: Request) {
   try {
@@ -101,24 +105,67 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { type, enrollmentId, examAttemptId, title, description } = body;
+    const { action, type, enrollmentId, examAttemptId, templateId, title, description, delivery, certificateId, paymentMethod, phone } = body;
 
-    if (!type || !title) {
-      return NextResponse.json(
-        { error: 'Certificate type and title are required' },
-        { status: 400 }
-      );
+    // Instructor issuing a certificate
+    if (action === 'issue') {
+      if (!enrollmentId || !templateId || !title) {
+        return NextResponse.json(
+          { error: 'Enrollment ID, template ID, and title are required' },
+          { status: 400 }
+        );
+      }
+
+      const instructor = await prisma.instructor.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!instructor) {
+        return NextResponse.json({ error: 'Instructor profile not found' }, { status: 404 });
+      }
+
+      const hasAccess = await featureGating.checkAccess(session.user.id, 'certificate:issue');
+      if (!hasAccess.hasAccess) {
+        return NextResponse.json(
+          { error: 'Instructor Pro subscription required to issue certificates' },
+          { status: 403 }
+        );
+      }
+
+      const enrollment = await prisma.enrollment.findFirst({
+        where: { id: enrollmentId },
+        include: {
+          course: { select: { instructorId: true, title: true } },
+          student: { include: { user: { select: { fullName: true, email: true } } } },
+        },
+      });
+
+      if (!enrollment) {
+        return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 });
+      }
+
+      if (enrollment.course.instructorId !== instructor.id) {
+        return NextResponse.json({ error: 'You can only issue certificates for your own courses' }, { status: 403 });
+      }
+
+      const certificate = await certificateService.generateCertificate({
+        studentId: enrollment.studentId,
+        enrollmentId: enrollment.id,
+        templateId,
+        type: (type as CertificateType) || 'DIGITAL',
+        delivery: (delivery as any) || 'DIGITAL',
+        title,
+        description,
+        issuedBy: instructor.id,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: certificate,
+      }, { status: 201 });
     }
 
-    // Validate certificate type
-    if (!Object.values(CertificateType).includes(type)) {
-      return NextResponse.json(
-        { error: 'Invalid certificate type' },
-        { status: 400 }
-      );
-    }
-
-    // Get student ID
+    // Student actions
     const student = await prisma.student.findFirst({
       where: { userId: session.user.id },
     });
@@ -130,15 +177,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // Calculate price
-    const priceMap: Record<CertificateType, number> = {
-      DIGITAL: 2000,
-      PRINTED: 5000,
-      VERIFIED: 10000,
-    };
+    // Request payment for existing certificate
+    if (action === 'request' && certificateId) {
+      const result = await certificateService.requestCertificate(student.id, {
+        certificateId,
+        paymentMethod,
+        phone,
+      });
 
-    // For paid certificates, verify enrollment/exam
-    if (type !== 'DIGITAL') {
+      return NextResponse.json({
+        success: true,
+        data: result.certificate,
+        paymentRequired: result.paymentRequired,
+      });
+    }
+
+    // Generate new certificate
+    if (!type || !templateId || !title) {
+      return NextResponse.json(
+        { error: 'Certificate type, template ID, and title are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!Object.values(CertificateType).includes(type)) {
+      return NextResponse.json(
+        { error: 'Invalid certificate type' },
+        { status: 400 }
+      );
+    }
+
+    // Verify enrollment/exam ownership for paid certificates
+    if (delivery !== 'DIGITAL') {
       if (enrollmentId) {
         const enrollment = await prisma.enrollment.findFirst({
           where: { id: enrollmentId, studentId: student.id },
@@ -169,7 +239,9 @@ export async function POST(req: Request) {
       studentId: student.id,
       enrollmentId,
       examAttemptId,
-      type,
+      templateId,
+      type: type as CertificateType,
+      delivery: delivery || 'DIGITAL',
       title,
       description,
     });
@@ -177,7 +249,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       data: certificate,
-      price: priceMap[type as CertificateType],
     }, { status: 201 });
 
   } catch (error: any) {

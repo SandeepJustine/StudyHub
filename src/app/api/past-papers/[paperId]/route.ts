@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
+import { featureGating } from '@/lib/billing/feature-gating';
 
 /**
  * GET /api/past-papers/[paperId]
- * Get past paper details with download URL
+ * Get past paper details with download permission flag
  */
 export async function GET(
   req: Request,
@@ -19,15 +20,32 @@ export async function GET(
 
     const { paperId } = await params;
 
-    const paper = await prisma.contentItem.findUnique({
+    const paper = await prisma.pastPaper.findUnique({
       where: { id: paperId },
+      include: {
+        course: {
+          select: { id: true, title: true, subject: true },
+        },
+      },
     });
 
-    if (!paper || paper.type !== 'PAST_PAPER') {
+    if (!paper) {
       return NextResponse.json({ error: 'Past paper not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: paper });
+    let canDownload = false;
+    if (session.user.role === 'STUDENT') {
+      const access = await featureGating.checkAccess(session.user.id, 'past_paper:download');
+      canDownload = access.hasAccess;
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...paper,
+        canDownload,
+      },
+    });
 
   } catch (error) {
     console.error('Past paper detail error:', error);

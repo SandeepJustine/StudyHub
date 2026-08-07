@@ -29,7 +29,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     features: [
       'Access to limited courses',
       'Basic quizzes and exercises',
-      'Past papers access',
+      'past_paper:view',
       'Community forum access',
       'Progress tracking',
     ],
@@ -52,7 +52,8 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Mock examinations',
       'Digital certificates',
       'Priority support',
-      'Downloadable content',
+      'past_paper:view',
+      'past_paper:download',
       'Advanced analytics',
     ],
     limits: {
@@ -73,6 +74,8 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Early access to new features',
       'Exclusive webinars',
       'Priority certificate processing',
+      'past_paper:view',
+      'past_paper:download',
     ],
     limits: {
       courses: -1,
@@ -93,6 +96,8 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Industry case studies',
       'Career guidance',
       'Networking events',
+      'past_paper:view',
+      'past_paper:download',
     ],
     limits: {
       courses: -1,
@@ -111,6 +116,8 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Professional certifications',
       'Industry partnerships',
       'Job placement assistance',
+      'past_paper:view',
+      'past_paper:download',
     ],
     limits: {
       courses: -1,
@@ -131,6 +138,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Student progress reports',
       'Teacher accounts',
       'Content library access',
+      'past_paper:upload',
       'Email support',
     ],
     limits: {
@@ -153,6 +161,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Bulk enrollment',
       'Advanced analytics',
       'Priority support',
+      'past_paper:upload',
     ],
     limits: {
       students: 500,
@@ -176,6 +185,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Custom integrations',
       'Dedicated support',
       'SLA guarantee',
+      'past_paper:upload',
     ],
     limits: {
       students: -1, // unlimited
@@ -193,10 +203,10 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     monthlyPrice: 0,
     annualPrice: null,
     features: [
-      'course:create',        // Changed from 'Create and sell courses'
-      'analytics:basic',      // Changed from 'Basic analytics'
-      'student:manage',       // Changed from 'Student management'
-      'community:access',     // Changed from 'Community access'
+      'course:create',
+      'analytics:basic',
+      'student:manage',
+      'community:access',
     ],
     limits: {
       courses: 5,
@@ -206,7 +216,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     platformFee: 0.30,
   },
 
-INSTRUCTOR_PRO: {
+  INSTRUCTOR_PRO: {
     name: 'Instructor Pro',
     description: 'Maximize your teaching potential',
     monthlyPrice: 25000,
@@ -219,6 +229,10 @@ INSTRUCTOR_PRO: {
       'coupons:custom',
       'support:dedicated',
       'experiment:manage',
+      'past_paper:upload',
+      'certificate:create',
+      'certificate:issue',
+      'certificate:sign',
     ],
     limits: {
       courses: -1, // unlimited

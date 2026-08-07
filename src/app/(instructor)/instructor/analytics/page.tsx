@@ -41,6 +41,12 @@ export default function InstructorAnalyticsPage() {
       .then((json) => {
         if (json.success && json.data) {
           setData(json.data);
+          // Dates are serialized as strings over the network, convert them back to Date objects
+          const transformedData = {
+            ...json.data,
+            range: { from: new Date(json.data.range.from), to: new Date(json.data.range.to) },
+          };
+          setData(transformedData);
         } else {
           setError(json.error || 'Failed to load analytics');
         }

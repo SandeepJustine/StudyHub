@@ -13,6 +13,8 @@ import {
   Megaphone,
   HelpCircle,
   Settings,
+  Award,
+  FileText,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -20,6 +22,8 @@ const adminMenuItems = [
   { label: 'Users', href: '/admin/users', icon: <Users size={20} />, badge: 'New' },
   { label: 'Institutions', href: '/admin/institutions', icon: <Building2 size={20} /> },
   { label: 'Courses', href: '/admin/courses', icon: <GraduationCap size={20} /> },
+  { label: 'Certificates', href: '/admin/certificates', icon: <Award size={20} /> },
+  { label: 'Templates', href: '/admin/certificates/templates', icon: <FileText size={20} /> },
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: <CreditCard size={20} /> },
   { label: 'Analytics', href: '/admin/analytics', icon: <BarChart3 size={20} /> },
   { label: 'Payouts', href: '/admin/payouts', icon: <CreditCard size={20} /> },

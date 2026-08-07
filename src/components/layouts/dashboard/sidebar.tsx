@@ -58,14 +58,14 @@ export function Sidebar({ role, menuItems }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-full bg-navy text-white z-50 transition-all duration-300',
+          'fixed left-0 top-0 h-screen bg-navy text-white z-50 transition-all duration-300 flex flex-col',
           'lg:translate-x-0',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full',
           isCollapsed ? 'w-20' : 'w-64'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-navy-light">
+        <div className="flex items-center justify-between p-4 border-b border-navy-light flex-shrink-0">
           {!isCollapsed && (
             <Logo variant="white" size="sm" />
           )}
@@ -78,7 +78,7 @@ export function Sidebar({ role, menuItems }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1 overflow-y-auto flex-1">
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {menuItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             
@@ -112,7 +112,7 @@ export function Sidebar({ role, menuItems }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-navy-light space-y-2">
+        <div className="p-4 border-t border-navy-light space-y-2 flex-shrink-0">
           <Link
             href="/contact"
             className={cn(

@@ -107,18 +107,25 @@ const fetchData = async () => {
           phone,
         }),
       });
+
+      const result = await res.json();
+
       if (!res.ok) {
-        const result = await res.json().catch(() => ({ error: 'Failed to subscribe' }));
         throw new Error(result.error || `Server error ${res.status}`);
       }
-      const result = await res.json();
-      if (result.success) {
-        setToast({ message: `Successfully subscribed to ${PRICING_TIERS[selectedUpgradeTier]?.name || selectedUpgradeTier}!`, type: 'success' });
-        setShowUpgradeModal(false);
-        setSelectedUpgradeTier(null);
-        setPaymentMethod('');
-        setPhone('');
-        fetchData();
+
+      if (result.success && result.data) {
+        const sub = result.data;
+        if (sub.status === 'active' && sub.tier === selectedUpgradeTier) {
+          setToast({ message: `Successfully subscribed to ${PRICING_TIERS[selectedUpgradeTier]?.name || selectedUpgradeTier}!`, type: 'success' });
+          setShowUpgradeModal(false);
+          setSelectedUpgradeTier(null);
+          setPaymentMethod('');
+          setPhone('');
+          fetchData();
+        } else {
+          setToast({ message: sub.status === 'pending' ? 'Payment is being processed. Please wait for confirmation.' : 'Subscription update is pending.', type: 'error' });
+        }
       } else {
         setToast({ message: result.error || 'Failed to subscribe', type: 'error' });
       }

@@ -1,44 +1,111 @@
-/**
- * Defines the types of certificates that can be issued.
- * Aligns with the Prisma model.
- */
 export type CertificateType = 'DIGITAL' | 'PRINTED' | 'VERIFIED';
+export type CertificateDelivery = 'DIGITAL' | 'PRINTED' | 'BOTH';
+export type CertificatePaymentStatus = 'PENDING' | 'PAID' | 'FREE';
 
-/**
- * Base interface for a certificate record in the database.
- * This aligns with the Prisma Certificate model.
- */
+export interface CertificateDesignConfig {
+  layout: 'landscape' | 'portrait';
+  borderStyle: 'single' | 'double' | 'decorative';
+  borderWidth: number;
+  borderColor: string;
+  innerBorderColor: string;
+  headerText: string;
+  subheaderText: string;
+  footerText: string;
+  showLogo: boolean;
+  showSeal: boolean;
+  showSignature: boolean;
+  signatureLines: number;
+  primaryFont: string;
+  secondaryFont: string;
+  titleFontSize: number;
+  subtitleFontSize: number;
+  recipientFontSize: number;
+  descriptionFontSize: number;
+  courseTitleFontSize: number;
+  spacing: {
+    headerMargin: number;
+    contentMargin: number;
+    footerMargin: number;
+  };
+}
+
+export interface CertificateTemplate {
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  designConfig?: CertificateDesignConfig | null;
+  createdBy: string;
+  createdByRole: string;
+  institutionId?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CertificateSignature {
+  id: string;
+  name: string;
+  title: string;
+  imageUrl: string;
+  type: string;
+  relatedId: string;
+  instructorId?: string | null;
+  institutionId?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CertificateBranding {
+  id: string;
+  institutionId: string;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
+  accentColor?: string | null;
+  fontFamily?: string | null;
+  logoUrl?: string | null;
+  sealUrl?: string | null;
+  customTemplate?: Record<string, any> | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Certificate {
   id: string;
+  certificateNumber: string;
   studentId: string;
-  enrollmentId?: string | null;
   examAttemptId?: string | null;
+  templateId: string;
   type: CertificateType;
+  delivery: CertificateDelivery;
   title: string;
   description?: string | null;
   verificationId: string;
   issuedAt: Date;
   expiresAt?: Date | null;
-  metadata: Record<string, any>; // JSON
+  paymentStatus: CertificatePaymentStatus;
+  transactionId?: string | null;
+  amount: number;
+  issuedBy?: string | null;
+  metadata?: Record<string, any> | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-/**
- * Data required to generate a new certificate.
- * Used as input for `certificateService.generateCertificate`.
- */
 export interface GenerateCertificateData {
   studentId: string;
   enrollmentId?: string;
   examAttemptId?: string;
+  templateId: string;
   type: CertificateType;
+  delivery: CertificateDelivery;
   title: string;
   description?: string;
+  issuedBy?: string;
 }
 
-/**
- * Represents a certificate as returned from the `getStudentCertificates` method,
- * including contextual information about the related course or exam.
- */
 export interface StudentCertificate extends Certificate {
   enrollment?: {
     course: {
@@ -48,15 +115,12 @@ export interface StudentCertificate extends Certificate {
   } | null;
   examAttempt?: {
     quiz: {
-      title:string;
+      title: string;
     };
   } | null;
+  template?: CertificateTemplate;
 }
 
-/**
- * The response structure for a successful internal certificate verification request.
- * This is the data structure returned by `certificateService.verifyCertificate`.
- */
 export interface VerifiedCertificateResponse {
   verified: true;
   certificate: {
@@ -74,18 +138,12 @@ export interface VerifiedCertificateResponse {
   };
 }
 
-/**
- * The data embedded within the QR code for a certificate.
- */
 export interface CertificateQRData {
   url: string;
   verificationId: string;
   timestamp: string;
 }
 
-/**
- * The structure for the public-facing verification result from `verificationService`.
- */
 export interface PublicVerificationResult {
   verified: true;
   certificate: {
