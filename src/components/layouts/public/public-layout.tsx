@@ -16,6 +16,12 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <Link href="/#features" className="text-slate-300 hover:text-white transition-colors">Features</Link>
             <Link href="/pricing" className="text-slate-300 hover:text-white transition-colors">Pricing</Link>
             <Link href="/about" className="text-slate-300 hover:text-white transition-colors">About</Link>
+            <Link href="/courses" className="text-slate-300 hover:text-white transition-colors">
+              Courses
+            </Link>
+            <Link href="/trainings" className="text-slate-300 hover:text-white transition-colors">
+              Trainings
+            </Link>
             <Link href="/contact" className="text-slate-300 hover:text-white transition-colors">Contact</Link>
           </div>
 
@@ -52,8 +58,8 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <div>
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-slate-300">
-                <li>+265 888 000 000</li>
-                <li>info@studyhub.mw</li>
+                <li>+265 997 011 620</li>
+                <li>info@studyhubmw.com</li>
                 <li>Lilongwe, Malawi</li>
               </ul>
             </div>
