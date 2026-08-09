@@ -159,10 +159,10 @@ export default function AboutPage() {
           </div>
           <div className="grid md:grid-cols-4 gap-6">
             {[
-              { name: 'Dr. Chisomo Banda', role: 'CEO & Founder', bio: 'Former educator with 15 years experience in Malawi\'s education sector' },
-              { name: 'Thandiwe Chirwa', role: 'CTO', bio: 'Software engineer passionate about edtech and digital transformation' },
-              { name: 'Peter Nyirenda', role: 'Head of Content', bio: 'Curriculum specialist with expertise in MSCE and professional exams' },
-              { name: 'Grace Mbewe', role: 'Head of Partnerships', bio: 'Building bridges between schools, corporates, and StudyHub' },
+              { name: 'Joseph Justine', role: 'CTO & Founder', bio: 'Software engineer passionate about edtech and digital transformation' },
+              { name: 'Paul Sambo', role: 'CMO', bio: 'Former educator with 15 years experience in Malawi\'s education sector' },
+              { name: 'Samuel Jamali', role: 'Head of Content', bio: 'Curriculum specialist with expertise in MSCE and professional exams' },
+              { name: 'George Musicha', role: 'Head of Partnerships', bio: 'Building bridges between schools, corporates, and StudyHub' },
             ].map((member, i) => (
               <Card key={i} padding="lg" className="text-center">
                 <div className="w-20 h-20 bg-navy/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -189,11 +189,11 @@ export default function AboutPage() {
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-8">
             <div className="flex items-center gap-3">
               <Phone size={20} />
-              <span>+265 888 000 000</span>
+              <span>+265 997 011 620</span>
             </div>
             <div className="flex items-center gap-3">
               <Mail size={20} />
-              <span>info@studyhub.mw</span>
+              <span>info@studyhubmw.com</span>
             </div>
             <div className="flex items-center gap-3">
               <MapPin size={20} />

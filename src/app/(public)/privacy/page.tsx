@@ -164,7 +164,7 @@ export default function PrivacyPage() {
                     </ul>
                     <p className="text-sm">
                       To exercise these rights, contact us at{' '}
-                      <span className="text-red font-medium">privacy@studyhub.mw</span>
+                      <span className="text-red font-medium">privacy@studyhubmw.com</span>
                     </p>
                   </div>
                 ),
@@ -192,8 +192,8 @@ export default function PrivacyPage() {
               please contact our Data Protection Officer:
             </p>
             <div className="space-y-2 text-grey-light">
-              <p><strong>Email:</strong> privacy@studyhub.mw</p>
-              <p><strong>Phone:</strong> +265 888 000 000</p>
+              <p><strong>Email:</strong> privacy@studyhubmw.com</p>
+              <p><strong>Phone:</strong> +265 997 011 620</p>
               <p><strong>Address:</strong> Area 12, Plot 45, Lilongwe, Malawi</p>
             </div>
           </Card>

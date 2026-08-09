@@ -148,7 +148,7 @@ export default function ContactPage() {
                     <Input
                       label="Phone (Optional)"
                       type="tel"
-                      placeholder="+265 888 000 000"
+                      placeholder="+265 997 011 620"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />

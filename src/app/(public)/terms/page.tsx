@@ -429,14 +429,14 @@ export default function TermsPage() {
                   <div className="p-4 bg-grey-light rounded-lg">
                     <Mail size={20} className="text-navy mb-2" />
                     <p className="text-sm font-medium text-navy">Email</p>
-                    <p className="text-sm text-grey-dark">legal@studyhub.mw</p>
-                    <p className="text-sm text-grey-dark">support@studyhub.mw</p>
+                    <p className="text-sm text-grey-dark">legal@studyhubmw.com</p>
+                    <p className="text-sm text-grey-dark">support@studyhubmw.com</p>
                   </div>
                   
                   <div className="p-4 bg-grey-light rounded-lg">
                     <Phone size={20} className="text-navy mb-2" />
                     <p className="text-sm font-medium text-navy">Phone</p>
-                    <p className="text-sm text-grey-dark">+265 888 000 000</p>
+                    <p className="text-sm text-grey-dark">+265 997 011 620</p>
                     <p className="text-xs text-grey-medium">Mon-Fri, 8:00 AM - 5:00 PM</p>
                   </div>
                   
