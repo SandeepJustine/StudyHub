@@ -1,8 +1,25 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const NavLinks = () => (
+    <>
+      <Link href="/#features" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+      <Link href="/about" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>About</Link>
+      <Link href="/pricing" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+      <Link href="/courses" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Courses</Link>
+      <Link href="/trainings" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Trainings</Link>
+      <Link href="/contact" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+    </>
+  );
+
   return (
     <div>
       {/* Navigation */}
@@ -11,42 +28,50 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/">
             <Logo variant="white" size="md" />
           </Link>
-          
+
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/#features" className="text-slate-300 hover:text-white transition-colors">
-              Features
+            <NavLinks />
+          </div>
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <Link href="/auth/login">
+              <Button variant="ghost" className="text-white hover:text-white hover:bg-navy-light">Log In</Button>
             </Link>
-            <Link href="/about" className="text-slate-300 hover:text-white transition-colors">
-              About
-            </Link>
-            
-            <Link href="/pricing" className="text-slate-300 hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link href="/courses" className="text-slate-300 hover:text-white transition-colors">
-              Courses
-            </Link>
-            <Link href="/trainings" className="text-slate-300 hover:text-white transition-colors">
-              Trainings
-            </Link>
-            <Link href="/contact" className="text-slate-300 hover:text-white transition-colors">
-              Contact
+            <Link href="/auth/register">
+              <Button variant="primary" size="sm">Get Started</Button>
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/auth/login">
-              <Button variant="ghost" className="text-white hover:text-white hover:bg-navy-light">
-                Log In
-              </Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button variant="primary" size="sm">
-                Get Started
-              </Button>
-            </Link>
-          </div>
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-white p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-navy border-t border-navy-light">
+            <div className="px-4 py-4 space-y-4">
+              <div className="flex flex-col space-y-3">
+                <NavLinks />
+              </div>
+              <div className="flex flex-col space-y-3 pt-4 border-t border-navy-light">
+                <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="text-white hover:text-white hover:bg-navy-light w-full justify-center">Log In</Button>
+                </Link>
+                <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="primary" size="sm" className="w-full justify-center">Get Started</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content */}
