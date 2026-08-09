@@ -1,0 +1,9 @@
+ALTER TABLE "User"
+ADD COLUMN IF NOT EXISTS "emailVerificationExpires" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "passwordResetToken" TEXT,
+ADD COLUMN IF NOT EXISTS "passwordResetExpires" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "resetToken" TEXT,
+ADD COLUMN IF NOT EXISTS "resetTokenExpiry" TIMESTAMP(3);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "User_resetToken_key"
+ON "User"("resetToken");
