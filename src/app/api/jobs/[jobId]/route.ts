@@ -22,7 +22,7 @@ export async function GET(
     const job = await prisma.recruitmentPosting.findUnique({
       where: { id: jobId },
       include: {
-        client: { select: { companyName: true, industry: true, companySize: true, website: true } },
+        client: { select: { companyName: true, industry: true } },
         _count: { select: { applications: true } },
       },
     });
@@ -39,8 +39,8 @@ export async function GET(
         select: { id: true },
       });
       if (student) {
-        const application = await prisma.jobApplication.findUnique({
-          where: { postingId_studentId: { postingId: jobId, studentId: student.id } },
+        const application = await prisma.jobApplication.findFirst({
+          where: { postingId: jobId, studentId: student.id },
         });
         hasApplied = !!application;
       }

@@ -33,15 +33,19 @@ function wrapText(text: string, maxWidth: number, fontSize: number): string[] {
 
 export class CertificatePDFService {
   generateHTML(certificate: any, template: any, branding: any): string {
-    const primaryColor = branding?.primaryColor || '#1a1a2e';
-    const secondaryColor = branding?.secondaryColor || '#16213e';
-    const accentColor = branding?.accentColor || '#e94560';
-    const fontFamily = branding?.fontFamily || 'serif';
-    const logoSvg = branding?.logoUrl
-      ? `<img src="${branding.logoUrl}" style="width: 120px; height: 120px; object-fit: contain;" />`
+    const designConfig = template?.designConfig || {};
+    const primaryColor = branding?.primaryColor || designConfig.borderColor || '#0D1B3D';
+    const accentColor = branding?.accentColor || designConfig.innerBorderColor || '#E63946';
+    const primaryFont = branding?.fontFamily || designConfig.primaryFont || 'Poppins, sans-serif';
+    const secondaryFont = designConfig.secondaryFont || 'Georgia, serif';
+    const logoSvg = designConfig.logoUrl
+      ? `<img src="${designConfig.logoUrl}" style="width: 120px; height: 120px; object-fit: contain;" />`
+      : '';
+    const watermarkSvg = designConfig.backgroundPattern
+      ? `<img src="${designConfig.backgroundPattern}" class="watermark" />`
       : '';
 
-    const designConfig = template?.designConfig || {};
+    const signatures = designConfig.signatures || [];
 
     return `
 <!DOCTYPE html>
@@ -51,113 +55,133 @@ export class CertificatePDFService {
   <title>Certificate - ${certificate.certificateNumber}</title>
   <style>
     @page { size: A4; margin: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Georgia&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: ${fontFamily}, Georgia, serif;
+      font-family: ${primaryFont};
       background: #f5f5f5;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 1rem;
     }
     .certificate {
       width: 297mm;
       height: 210mm;
       background: white;
-      border: 20px solid ${primaryColor};
-      border-radius: 10px;
+      border: 1px solid #ccc;
       position: relative;
-      padding: 40px;
+      padding: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       text-align: center;
       box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
-    .certificate::before {
+    .border-frame {
       content: '';
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
-      border: 2px solid ${accentColor};
-      border-radius: 5px;
+      top: 1rem; left: 1rem; right: 1rem; bottom: 1rem;
+      border: 8px solid ${primaryColor};
       pointer-events: none;
     }
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      top: 0.5rem; left: 0.5rem; right: 0.5rem; bottom: 0.5rem;
+      border: 2px solid ${accentColor};
+      pointer-events: none;
+    }
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.08;
+      pointer-events: none;
+      width: 400px;
+      height: 400px;
+      z-index: 0;
+    }
     .header {
+      position: relative; z-index: 1;
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 2rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .logo {
-      margin-bottom: 20px;
+      width: 100px;
+      height: 100px;
     }
     .title {
-      font-size: 48px;
-      font-weight: bold;
+      font-size: ${designConfig.titleFontSize || 36}px;
+      font-weight: 700;
       color: ${primaryColor};
       text-transform: uppercase;
       letter-spacing: 4px;
-      margin-bottom: 10px;
+      margin: 0;
     }
     .subtitle {
-      font-size: 18px;
-      color: ${secondaryColor};
+      font-size: ${designConfig.subtitleFontSize || 16}px;
+      color: #555;
       letter-spacing: 2px;
+      margin-top: 1.5rem;
     }
     .content {
-      margin: 40px 0;
+      position: relative; z-index: 1;
+      margin: 2rem 0;
       text-align: center;
+      flex-grow: 1;
     }
     .recipient {
-      font-size: 36px;
-      font-weight: bold;
-      color: ${primaryColor};
-      border-bottom: 2px solid ${accentColor};
+      font-family: ${secondaryFont};
+      font-size: ${designConfig.recipientFontSize || 48}px;
+      font-weight: 400;
+      color: ${accentColor};
+      border-bottom: 2px solid #eee;
       display: inline-block;
-      padding: 0 40px 10px;
-      margin: 20px 0;
+      padding: 0 2rem 0.5rem;
+      margin: 1rem 0;
     }
     .description {
-      font-size: 16px;
+      font-size: ${designConfig.descriptionFontSize || 18}px;
       color: #333;
       line-height: 1.6;
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
     }
     .course-title {
-      font-size: 24px;
-      font-weight: bold;
-      color: ${secondaryColor};
-      margin: 20px 0;
+      font-size: ${designConfig.courseTitleFontSize || 28}px;
+      font-weight: 600;
+      color: ${primaryColor};
+      margin: 1.5rem 0;
     }
     .footer {
+      position: relative; z-index: 1;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
       width: 100%;
       margin-top: auto;
-      padding-top: 40px;
+      padding-top: 2rem;
     }
     .signature {
       text-align: center;
-    }
-    .signature-image {
-      height: 80px;
-      object-fit: contain;
-      margin-bottom: 10px;
+      width: 250px;
     }
     .signature-line {
-      width: 200px;
-      border-top: 1px solid ${primaryColor};
-      margin-top: 10px;
-      padding-top: 5px;
+      border-top: 1px solid #999;
+      margin: 2rem 0 0.5rem;
+      padding-top: 0.5rem;
     }
     .signature-name {
       font-size: 14px;
-      font-weight: bold;
+      font-weight: 600;
       color: ${primaryColor};
     }
     .signature-title {
@@ -165,6 +189,7 @@ export class CertificatePDFService {
       color: #666;
     }
     .details {
+      position: relative; z-index: 1;
       text-align: center;
       font-size: 12px;
       color: #666;
@@ -172,49 +197,56 @@ export class CertificatePDFService {
     }
     .certificate-number {
       font-size: 14px;
-      color: ${accentColor};
-      font-weight: bold;
+      color: #333;
+      font-weight: 600;
       margin-bottom: 5px;
     }
     .verification {
       font-size: 11px;
       color: #999;
+      font-family: monospace;
     }
   </style>
 </head>
 <body>
   <div class="certificate">
+    <div class="border-frame"></div>
+    ${watermarkSvg}
+
     <div class="header">
-      ${logoSvg}
-      <h1 class="title">Certificate of Achievement</h1>
-      <p class="subtitle">This is to certify that</p>
+      <div class="logo">${logoSvg}</div>
+      <h1 class="title">${designConfig.headerText || 'Certificate of Achievement'}</h1>
+      <div class="logo"></div>
     </div>
 
     <div class="content">
+      <p class="subtitle">${designConfig.subheaderText || 'This is to certify that'}</p>
       <div class="recipient">${certificate.student?.user?.fullName || 'Student'}</div>
       <p class="description">${certificate.description || 'Has successfully completed the requirements for'}</p>
       <div class="course-title">${certificate.title}</div>
     </div>
 
     <div class="footer">
-      <div class="signature">
-        <div class="signature-line">
-          <div class="signature-name">Authorized Signatory</div>
-          <div class="signature-title">StudyHub Malawi</div>
+        ${signatures.map((sig: any) => `
+        <div class="signature">
+          ${sig.imageUrl ? `<img src="${sig.imageUrl}" class="signature-image" style="height: 80px; object-fit: contain; margin-bottom: 10px;" />` : ''}
+          ${sig.data && sig.type === 'drawn' ? `<img src="${sig.data}" class="signature-image" style="height: 80px; object-fit: contain; margin-bottom: 10px;" />` : ''}
+          <div class="signature-line"></div>
+          <div class="signature-name">${sig.name || 'Authorized Signatory'}</div>
+          <div class="signature-title">${sig.title || 'StudyHub Malawi'}</div>
         </div>
-      </div>
-      <div class="signature">
-        <div class="signature-line">
-          <div class="signature-name">Date</div>
-          <div class="signature-title">${new Date(certificate.issuedAt).toLocaleDateString()}</div>
+        `).join('')}
+        <div class="details">
+            <div class="certificate-number">Certificate No: ${certificate.certificateNumber}</div>
+            <div class="verification">${(designConfig.footerText || 'Verify at: {{verificationUrl}}').replace('{{verificationUrl}}', `${process.env.NEXT_PUBLIC_URL}/verify-certificate/${certificate.verificationId}`)}</div>
         </div>
-      </div>
+        <div class="signature">
+            <div class="signature-line"></div>
+            <div class="signature-name">Date Issued</div>
+            <div class="signature-title">${new Date(certificate.issuedAt).toLocaleDateString()}</div>
+        </div>
     </div>
 
-    <div class="details">
-      <div class="certificate-number">${certificate.certificateNumber}</div>
-      <div class="verification">Verify at: ${process.env.NEXT_PUBLIC_URL}/verify-certificate/${certificate.verificationId}</div>
-    </div>
   </div>
 </body>
 </html>
@@ -249,7 +281,7 @@ export class CertificatePDFService {
     const description = certificate.description || 'Has successfully completed the requirements for';
     const certificateNumber = certificate.certificateNumber;
     const issuedDate = new Date(certificate.issuedAt).toLocaleDateString();
-    const verificationUrl = `${process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/verify-certificate/${certificate.verificationId}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_URL || 'https://studyhubmw.com'}/verify-certificate/${certificate.verificationId}`;
 
     const layout = template?.designConfig?.layout || 'landscape';
     const isLandscape = layout === 'landscape';

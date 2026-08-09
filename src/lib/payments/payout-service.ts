@@ -178,7 +178,7 @@ export class PayoutService {
 
     // Determine payment method
     const paymentMethod = method || 
-      payout.instructor?.bankDetails?.preferredMethod || 
+      (payout.instructor?.bankDetails as any)?.preferredMethod || 
       'AIRTEL_MONEY';
 
     const chargeId = `PO-${payout.id}-${Date.now()}`.toUpperCase();

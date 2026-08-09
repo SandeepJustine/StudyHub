@@ -287,9 +287,9 @@ export function InstitutionDashboard({
             </div>
             <div className="p-4 bg-navy/5 rounded-lg">
               <p className="text-sm text-grey-medium mb-1">Student Capacity</p>
-              <p className="text-xl font-bold text-navy">{institution.stats.maxStudents}</p>
+              <p className="text-xl font-bold text-navy">{institution.stats.maxCapacity}</p>
               <p className="text-xs text-grey-medium">
-                {institution.stats.capacityUsed}/{institution.stats.maxStudents} used
+                {institution.stats.capacityUsed}/{institution.stats.maxCapacity} used
               </p>
             </div>
             <div className="p-4 bg-navy/5 rounded-lg">

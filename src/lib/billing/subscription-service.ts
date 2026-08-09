@@ -208,6 +208,7 @@ export class SubscriptionService {
     if (paymentVerified) {
       subscription = await prisma.subscription.update({
         where: { id: subscriptionId },
+        include: { user: true },
         data: {
           tier: newTier,
           cycle: newCycle,
@@ -276,7 +277,6 @@ export class SubscriptionService {
       type: 'SUBSCRIPTION_CANCELLED',
       title: 'Subscription Cancelled',
       message: `Your ${subscription.tier} subscription has been cancelled. You will have access until ${subscription.endDate.toLocaleDateString()}.`,
-      channel: ['EMAIL'],
       priority: 'normal',
     });
   }
@@ -426,7 +426,7 @@ export class SubscriptionService {
       where: { code: code.toUpperCase() },
     });
 
-    if (!promoCode || !promoCode.isActive) return null;
+    if (!promoCode || !promoCode.validUntil || new Date() > promoCode.validUntil) return null;
     
     // Check validity period
     const now = new Date();

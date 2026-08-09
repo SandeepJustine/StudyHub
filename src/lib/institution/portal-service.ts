@@ -1,4 +1,7 @@
 // src/lib/institution/portal-service.ts
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+import type { SubscriptionTier } from '@prisma/client';
 export class InstitutionPortalService {
   async getInstitutionDashboard(institutionId: string): Promise<InstitutionDashboard> {
     const institution = await prisma.institution.findUnique({
@@ -16,7 +19,7 @@ export class InstitutionPortalService {
     if (!institution) throw new Error('Institution not found');
 
     const activeSubscription = institution.subscriptions[0];
-    const tierFeatures = this.getTierFeatures(institution.tier);
+    const tierFeatures = this.getTierFeatures(institution.tier as string);
 
     // Aggregate student performance
     const studentPerformance = await this.getStudentPerformance(institutionId);
@@ -42,8 +45,8 @@ export class InstitutionPortalService {
     };
   }
 
-  private getTierFeatures(tier: SubscriptionTier): string[] {
-    const features = {
+  private getTierFeatures(tier: string): string[] {
+    const features: Record<string, string[]> = {
       INSTITUTION_BRONZE: ['basic_lms', 'student_reports', 'teacher_accounts'],
       INSTITUTION_SILVER: [
         ...this.getTierFeatures('INSTITUTION_BRONZE'),
@@ -127,9 +130,9 @@ export class InstitutionPortalService {
         }
 
         results.successful++;
-      } catch (error) {
+      } catch (error: unknown) {
         results.failed++;
-        results.errors.push(`Failed for ${studentData.email}: ${error.message}`);
+        results.errors.push(`Failed for ${studentData.email}: ${(error as Error).message}`);
       }
     }
 
@@ -169,6 +172,7 @@ export class InstitutionPortalService {
     const students = await prisma.student.findMany({
       where: { institutionId },
       include: {
+        user: { select: { fullName: true } },
         examAttempts: {
           include: { quiz: true },
           orderBy: { completedAt: 'desc' },
@@ -181,7 +185,7 @@ export class InstitutionPortalService {
 
     return students.map(student => ({
       studentId: student.id,
-      name: student.user.fullName,
+      name: student.user?.fullName || 'Unknown',
       averageScore: student.examAttempts.reduce((sum, a) => sum + a.score, 0) / 
                    (student.examAttempts.length || 1),
       coursesEnrolled: student.enrollments.length,

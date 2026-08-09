@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
 
+function normalizeUrl(url: string | null | undefined, req: Request): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const host = req.headers.get('host');
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 /**
  * GET /api/admin/sponsorships
  */
@@ -125,7 +134,7 @@ export async function POST(req: Request) {
         sponsor,
         type,
         targetUrl: targetUrl || '',
-        imageUrl: imageUrl || '',
+        imageUrl: normalizeUrl(imageUrl, req) || '',
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         price: parseInt(price) || 0,

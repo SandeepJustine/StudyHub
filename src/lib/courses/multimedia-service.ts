@@ -5,7 +5,16 @@ import {
   ContentType, 
   VideoProvider, 
   AudioProvider, 
-  EmbedProvider 
+  EmbedProvider,
+  VideoContent,
+  AudioContent,
+  TextContent,
+  PDFContent,
+  SlidesContent,
+  LinkContent,
+  QuizContent,
+  AssignmentContent,
+  PastPaperContent
 } from './content-types';
 
 export class MultimediaService {
@@ -274,7 +283,7 @@ export class MultimediaService {
       
       return {
         type: 'SLIDES',
-        provider: 'DIRECT',
+        provider: 'DIRECT' as any,
         url: uploadResult.url,
         downloadUrl: uploadResult.downloadUrl,
       };
@@ -336,7 +345,7 @@ export class MultimediaService {
   /**
    * Process embed content
    */
-  private async processEmbedContent(data: any): Promise<EmbedContent> {
+  private async processEmbedContent(data: any): Promise<any> {
     const { provider, embedCode, url } = data;
 
     // If URL provided, try to extract embed code

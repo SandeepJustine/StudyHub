@@ -23,24 +23,11 @@ export default function AdminUsersPage() {
         <CardTitle>User Management</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell><Badge variant="default">{user.role}</Badge></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <Table data={users} columns={[
+          { key: 'name', header: 'Name', accessor: (u) => u.name },
+          { key: 'email', header: 'Email', accessor: (u) => u.email },
+          { key: 'role', header: 'Role', accessor: (u) => <Badge variant="neutral">{u.role}</Badge> },
+        ]} />
       </CardContent>
     </Card>
   );

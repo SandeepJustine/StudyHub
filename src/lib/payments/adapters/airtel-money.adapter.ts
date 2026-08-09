@@ -86,7 +86,7 @@ export class AirtelMoneyAdapter implements PaymentProvider {
       logger.error('AirtelMoney payment initiation error', { 
         error: error.message,
         amount: request.amount 
-      });
+      } as any);
       
       return {
         success: false,
@@ -115,7 +115,7 @@ export class AirtelMoneyAdapter implements PaymentProvider {
       logger.error('AirtelMoney payment verification error', { 
         reference, 
         error: error.message 
-      });
+      } as any);
       
       return {
         verified: false,
@@ -159,7 +159,7 @@ export class AirtelMoneyAdapter implements PaymentProvider {
       logger.error('AirtelMoney refund error', { 
         transactionId, 
         error: error.message 
-      });
+      } as any);
       
       return {
         success: false,
@@ -193,7 +193,7 @@ export class AirtelMoneyAdapter implements PaymentProvider {
     } catch (error: any) {
       logger.error('AirtelMoney webhook processing error', { 
         error: error.message 
-      });
+      } as any);
       throw error; // Re-throw to let the caller handle it
     }
   }
@@ -211,7 +211,7 @@ export class AirtelMoneyAdapter implements PaymentProvider {
       logger.error('AirtelMoney get payment details error', { 
         chargeId, 
         error: error.message 
-      });
+      } as any);
       return null;
     }
   }
@@ -262,7 +262,7 @@ export class AirtelMoneyAdapter implements PaymentProvider {
       logger.error('AirtelMoney payout error', { 
         params, 
         error: error.message 
-      });
+      } as any);
       
       return {
         success: false,

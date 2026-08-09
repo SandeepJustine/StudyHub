@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Globe } from 'lucide-react';
 
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 interface GoogleTranslateProps {
   className?: string;
   pageLanguage?: string;
@@ -21,17 +27,17 @@ export function GoogleTranslate({
   const [scriptError, setScriptError] = useState<string | null>(null);
 
   const initTranslateElement = useCallback(() => {
-    if (!containerRef.current || !window.google?.translate?.TranslateElement) {
+    if (!containerRef.current || !(window as any).google?.translate?.TranslateElement) {
       return;
     }
 
     const layoutMap: Record<string, string> = {
-      simple: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
-      vertical: window.google.translate.TranslateElement.InlineLayout.VERTICAL,
-      horizontal: window.google.translate.TranslateElement.InlineLayout.HORIZONTAL,
+      simple: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
+      vertical: (window as any).google.translate.TranslateElement.InlineLayout.VERTICAL,
+      horizontal: (window as any).google.translate.TranslateElement.InlineLayout.HORIZONTAL,
     };
 
-    new window.google.translate.TranslateElement(
+    new (window as any).google.translate.TranslateElement(
       {
         pageLanguage,
         layout: layoutMap[layout],
@@ -71,7 +77,7 @@ export function GoogleTranslate({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (window.google?.translate) {
+    if ((window as any).google?.translate) {
       initTranslateElement();
       scriptLoadedRef.current = true;
       return;

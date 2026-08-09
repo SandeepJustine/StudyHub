@@ -36,7 +36,16 @@ export async function GET() {
       });
     }
 
-    const mappedOperators = paychangu.mapOperatorsToProviders(operators.data);
+    const mappedOperators = operators.data.map(op => ({
+      id: op.id,
+      name: op.name,
+      ref_id: op.ref_id,
+      short_code: op.short_code,
+      logo: op.logo,
+      supports_withdrawals: op.supports_withdrawals,
+      supported_country: op.supported_country,
+      providerMethod: op.short_code?.toUpperCase(),
+    }));
 
     return NextResponse.json({
       success: true,

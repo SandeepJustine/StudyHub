@@ -16,11 +16,6 @@ const nextConfig = {
       },
     ],
   },
-  i18n: {
-    locales: ['en', 'ny'],
-    defaultLocale: 'en',
-    localeDetection: true,
-  },
   headers: async () => [
     {
       source: '/:path*',

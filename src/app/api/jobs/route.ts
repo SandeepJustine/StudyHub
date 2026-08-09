@@ -115,8 +115,8 @@ export async function POST(req: Request) {
     }
 
     // Check if already applied
-    const existing = await prisma.jobApplication.findUnique({
-      where: { postingId_studentId: { postingId, studentId: student.id } },
+    const existing = await prisma.jobApplication.findFirst({
+      where: { postingId, studentId: student.id },
     });
 
     if (existing) {

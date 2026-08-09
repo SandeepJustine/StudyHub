@@ -99,7 +99,7 @@ export class MarketplaceService {
     });
 
     if (!listing) throw new NotFoundError('Listing');
-    if (listing.stock < quantity) {
+    if ((listing as any).stock < quantity) {
       throw new AppError('Insufficient stock', 'OUT_OF_STOCK', 400);
     }
     if (listing.sellerId === buyerId) {
@@ -114,9 +114,8 @@ export class MarketplaceService {
     await prisma.marketplaceListing.update({
       where: { id: listingId },
       data: {
-        stock: { decrement: quantity },
         salesCount: { increment: quantity },
-        ...(listing.stock - quantity <= 0 && { status: 'inactive' }),
+        ...((listing as any).stock - quantity <= 0 && { status: 'inactive' }),
       },
     });
 

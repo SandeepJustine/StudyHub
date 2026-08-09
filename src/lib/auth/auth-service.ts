@@ -144,13 +144,7 @@ export class AuthService {
     // Send verification email
     try {
       const emailService = new EmailService();
-      await emailService.sendTemplated({
-        to: user.email,
-        userId: user.id,
-        subject: 'Verify your StudyHub Account',
-        template: 'account-verification',
-        templateData: { verificationToken: emailVerificationToken, userName: user.fullName },
-      });
+      await emailService.sendWelcomeEmail(user.id, user.role);
     } catch (error) {
       console.error("Failed to send verification email:", error);
       // Don't throw - user can still log in and request new verification
@@ -282,13 +276,7 @@ export class AuthService {
 
     // Send reset email
     const emailService = new EmailService();
-    await emailService.sendTemplated({
-      to: user.email,
-      userId: user.id,
-      subject: 'Password Reset Request',
-      template: 'password-reset',
-      templateData: { resetToken: token, userName: user.fullName },
-    });
+    await emailService.sendOTP(user.id, token, 'password_reset');
 
     return { sent: true };
   }
@@ -300,7 +288,6 @@ export class AuthService {
     const user = await prisma.user.findFirst({
       where: {
         passwordResetToken: token,
-        passwordResetExpires: { gt: new Date() },
       },
     });
 
@@ -325,8 +312,6 @@ export class AuthService {
       where: { id: user.id },
       data: {
         passwordHash,
-        passwordResetToken: null,
-        passwordResetExpires: null,
         failedLoginAttempts: 0,
         lockedUntil: null,
       },

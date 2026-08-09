@@ -85,7 +85,7 @@ export class MpambaAdapter implements PaymentProvider {
       logger.error('Mpamba payment initiation error', { 
         error: error.message,
         amount: request.amount 
-      });
+      } as any);
       
       return {
         success: false,
@@ -114,7 +114,7 @@ export class MpambaAdapter implements PaymentProvider {
       logger.error('Mpamba payment verification error', { 
         reference, 
         error: error.message 
-      });
+      } as any);
       
       return {
         verified: false,
@@ -145,7 +145,7 @@ export class MpambaAdapter implements PaymentProvider {
       logger.error('Mpamba refund error', { 
         transactionId, 
         error: error.message 
-      });
+      } as any);
       
       return {
         success: false,
@@ -172,7 +172,7 @@ export class MpambaAdapter implements PaymentProvider {
     } catch (error: any) {
       logger.error('Mpamba webhook processing error', { 
         error: error.message 
-      });
+      } as any);
       throw error;
     }
   }
@@ -219,7 +219,7 @@ export class MpambaAdapter implements PaymentProvider {
         },
       };
     } catch (error: any) {
-      logger.error('Mpamba payout error', { params, error: error.message });
+      logger.error('Mpamba payout error', { params, error: error.message } as any);
       
       return {
         success: false,

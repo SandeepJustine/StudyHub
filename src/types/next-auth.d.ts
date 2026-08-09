@@ -13,6 +13,7 @@ declare module "next-auth" {
       instructorId?: string;
       emailVerified?: Date;
       avatar?: string;
+      accessToken?: string;
     } & DefaultSession["user"];
   }
 
@@ -25,6 +26,7 @@ declare module "next-auth" {
     instructorId?: string;
     emailVerified?: Date;
     avatar?: string;
+    accessToken?: string;
   }
 }
 

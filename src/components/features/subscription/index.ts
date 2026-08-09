@@ -1,3 +1,4 @@
 export { PricingCards } from './pricing-cards';
-export { SubscriptionPlan } from './subscription-plan';
-export { SubscriptionForm } from './subscription-form';
+export { PricingSection } from './pricing-section';
+export { UpgradeBanner } from './upgrade-banner';
+export { PlanComparison } from './plan-comparison';

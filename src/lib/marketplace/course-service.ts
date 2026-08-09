@@ -1,4 +1,8 @@
 // src/lib/marketplace/course-service.ts
+import { Course, PaymentMethod } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { paymentService } from '@/lib/payments/payment-service';
+import { notificationService } from '@/lib/notifications/notification-service';
 export class CourseService {
   async createCourse(
     instructorId: string,
@@ -34,7 +38,7 @@ export class CourseService {
           create: courseData.modules.map((mod, index) => ({
             title: mod.title,
             order: index + 1,
-            contentType: mod.contentType,
+            contentType: mod.contentType as any,
             contentUrl: mod.contentUrl,
           })),
         },
@@ -54,8 +58,8 @@ export class CourseService {
     if (!course) throw new Error('Course not found');
 
     // Check if already enrolled
-    const existing = await prisma.enrollment.findUnique({
-      where: { studentId_courseId: { studentId, courseId } },
+    const existing = await prisma.enrollment.findFirst({
+      where: { studentId, courseId },
     });
 
     if (existing) throw new Error('Already enrolled in this course');
@@ -66,16 +70,20 @@ export class CourseService {
       include: { user: true },
     });
 
-    const transaction = await paymentService.processPayment(
-      student.userId,
-      course.price,
-      paymentMethod,
-      {
+    if (!student?.user) {
+      throw new Error('Student not found');
+    }
+
+    const transaction = await paymentService.processPayment({
+      userId: student.userId,
+      amount: course.price,
+      method: paymentMethod,
+      metadata: {
         courseId,
         instructorId: course.instructorId,
         type: 'course_purchase',
-      }
-    );
+      },
+    });
 
     // Calculate revenue share
     const revenueShare = course.instructor.revenueShare || 0.70;
@@ -84,7 +92,7 @@ export class CourseService {
 
     // Update transaction with revenue split
     await prisma.transaction.update({
-      where: { id: transaction.id },
+      where: { id: transaction.transactionId! },
       data: {
         instructorId: course.instructorId,
         revenueSplit: revenueShare,
@@ -134,7 +142,7 @@ export class CourseService {
     for (const transaction of transactions) {
       if (!transaction.instructorId) continue;
 
-      const actualAmount = Math.floor(transaction._sum.amount * 0.70); // After platform fee
+      const actualAmount = Math.floor((transaction._sum.amount || 0) * 0.70); // After platform fee
 
       await prisma.payout.create({
         data: {

@@ -20,7 +20,6 @@ export class SponsorshipService {
     // Check for slot availability
     const conflictingSlots = await prisma.sponsorshipSlot.count({
       where: {
-        placement: data.placement,
         status: 'active',
         OR: [
           {

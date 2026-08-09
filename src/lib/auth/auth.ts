@@ -43,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.fullName,
           role: user.role,
-          phone: user.phone,
+          phone: user.phone ?? undefined,
           locale: user.locale,
           institutionId: user.schoolAdmin?.institutionId,
         };

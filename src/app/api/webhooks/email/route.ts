@@ -1,5 +1,6 @@
 // src/app/api/webhooks/email/route.ts
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/utils/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -61,6 +62,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Email webhook error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || 'Unknown error' }, { status: 500 });
   }
 }

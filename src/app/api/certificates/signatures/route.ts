@@ -5,6 +5,15 @@ import prisma from '@/lib/utils/prisma';
 import { certificateSignatureService } from '@/lib/certificates/certificate-signature-service';
 import { featureGating } from '@/lib/billing/feature-gating';
 
+function normalizeUrl(url: string | null | undefined, req: Request): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const host = req.headers.get('host');
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -98,7 +107,7 @@ export async function POST(req: Request) {
     const signature = await certificateSignatureService.createSignature({
       name,
       title,
-      imageUrl,
+      imageUrl: normalizeUrl(imageUrl, req) || imageUrl,
       type,
       relatedId,
       instructorId: instructorId || undefined,

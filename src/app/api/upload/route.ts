@@ -9,6 +9,12 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+function getBaseUrl(req: Request): string {
+  const host = req.headers.get('host');
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  return `${protocol}://${host}`;
+}
+
 // Allowed file types and max sizes
 const ALLOWED_TYPES: Record<string, { extensions: string[]; maxSize: number; mimeTypes: string[] }> = {
   VIDEO: {
@@ -120,7 +126,7 @@ export async function POST(req: Request) {
     await writeFile(filePath, buffer);
 
     // Generate URLs
-    const baseUrl = process.env.NEXT_PUBLIC_URL || `http://localhost:3000`;
+    const baseUrl = getBaseUrl(req);
     const fileUrl = `${baseUrl}/uploads/${fileType.toLowerCase()}/${filename}`;
     const downloadUrl = `${fileUrl}?download=1`;
 
@@ -162,8 +168,8 @@ export async function GET(req: Request) {
     );
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_URL || `http://localhost:3000`;
-  const fileUrl = `${baseUrl}/uploads/${filename}`;
+    const baseUrl = getBaseUrl(req);
+    const fileUrl = `${baseUrl}/uploads/${filename}`;
 
   return NextResponse.json({
     success: true,

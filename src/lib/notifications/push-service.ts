@@ -34,11 +34,6 @@ export class PushNotificationService {
           notification: {
             title: payload.title,
             body: payload.body,
-            icon: payload.icon || '/icons/notification-icon.png',
-            badge: payload.badge || '/icons/badge.png',
-            tag: payload.tag,
-            requireInteraction: payload.requireInteraction || false,
-            actions: payload.actions,
             data: payload.data,
             vibrate: [200, 100, 200],
           },
@@ -71,10 +66,6 @@ export class PushNotificationService {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        // Store push subscription info
-        metadata: {
-          pushSubscription: subscription,
-        },
       },
     });
   }
@@ -138,11 +129,11 @@ export class PushNotificationService {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Web push failed:', error);
       
       // If subscription is invalid, remove it
-      if (error.statusCode === 410) {
+      if ((error as any).statusCode === 410) {
         // Subscription expired or invalid
       }
       

@@ -23,7 +23,6 @@ export class SupportService {
         priority: data.priority || 'normal',
         subject: data.subject,
         description: data.description,
-        attachments: data.attachments || [],
         status: 'open',
       },
       include: {

@@ -4,6 +4,15 @@ import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
 import { certificateBrandingService } from '@/lib/certificates/certificate-branding-service';
 
+function normalizeUrl(url: string | null | undefined, req: Request): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const host = req.headers.get('host');
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,8 +89,8 @@ export async function POST(req: Request) {
         secondaryColor,
         accentColor,
         fontFamily,
-        logoUrl,
-        sealUrl,
+        logoUrl: normalizeUrl(logoUrl, req),
+        sealUrl: normalizeUrl(sealUrl, req),
         customTemplate,
         isActive,
       }

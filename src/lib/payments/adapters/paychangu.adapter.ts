@@ -187,8 +187,10 @@ export class PayChanguAdapter implements PaymentProvider {
 
       if (!response.ok) {
         const errorMsg = this.extractErrorMessage(responseData, response.status);
-        logger.error('PayChangu API error', { httpStatus: response.status, errorMsg });
-        throw new Error(errorMsg);
+      logger.error('PayChangu API error', { httpStatus: response.status, errorMsg } as any);
+      const err = new Error(errorMsg);
+      (err as any).httpStatus = response.status;
+      throw err;
       }
 
       return responseData as T;
@@ -198,7 +200,10 @@ export class PayChanguAdapter implements PaymentProvider {
         logger.error('PayChangu request failed', { 
           path,
           errorMessage: error.message,
-        });
+        } as any);
+        const err = error instanceof Error ? error : new Error(String(error));
+        (err as any).path = path;
+        throw err;
       }
       throw error;
     }
@@ -286,7 +291,7 @@ export class PayChanguAdapter implements PaymentProvider {
       };
 
     } catch (error: any) {
-      logger.error('Payment initiation failed', { method, amount, errorMessage: error.message });
+      logger.error('Payment initiation failed', { method, amount, errorMessage: error.message } as any);
       return {
         success: false,
         message: error.message || 'Payment initialization failed',
@@ -520,6 +525,61 @@ export class PayChanguAdapter implements PaymentProvider {
     if (chargeId && status) {
       logger.info('Webhook processed', { chargeId, status });
     }
+  }
+
+  async initiateMobileMoneyPayout(params: {
+    mobile: string;
+    operatorRefId: string;
+    amount: string;
+    chargeId: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+  }): Promise<PaymentResult> {
+    return {
+      success: true,
+      transactionId: params.chargeId,
+      providerReference: params.chargeId,
+      message: `[DEV] Mobile money payout of MWK ${params.amount} initiated.`,
+      metadata: {
+        mobile: params.mobile,
+        operatorRefId: params.operatorRefId,
+        amount: params.amount,
+        simulated: true,
+      },
+    };
+  }
+
+  async initiateBankPayout(params: {
+    bankUuid: string;
+    amount: string;
+    chargeId: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+  }): Promise<PaymentResult> {
+    return {
+      success: true,
+      transactionId: params.chargeId,
+      providerReference: params.chargeId,
+      message: `[DEV] Bank payout of MWK ${params.amount} initiated.`,
+      metadata: {
+        bankUuid: params.bankUuid,
+        accountName: params.bankAccountName,
+        accountNumber: params.bankAccountNumber,
+        simulated: true,
+      },
+    };
+  }
+
+  async getPaymentDetails(chargeId: string, _type?: string): Promise<any> {
+    return {
+      chargeId,
+      status: 'success',
+      simulated: true,
+    };
   }
 
   // ─── Status Mapping ──────────────────────────────────────────

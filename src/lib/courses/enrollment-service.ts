@@ -96,10 +96,8 @@ export class EnrollmentService {
    * Get course statistics for instructor
    */
   async getEnrollmentStats(courseId: string) {
-    const stats = await prisma.enrollment.groupBy({
-      by: ['status'],
+    const totalCount = await prisma.enrollment.count({
       where: { courseId },
-      _count: true,
     });
 
     const completedCount = await prisma.enrollment.count({
@@ -107,10 +105,6 @@ export class EnrollmentService {
         courseId,
         completedAt: { not: null },
       },
-    });
-
-    const totalCount = await prisma.enrollment.count({
-      where: { courseId },
     });
 
     return {
@@ -209,7 +203,7 @@ export class EnrollmentService {
 
     // Get subjects of enrolled courses
     const subjects = [...new Set(enrollments.map(e => e.course.subject))];
-    const examBoards = [...new Set(enrollments.map(e => e.course.examBoard).filter(Boolean))];
+    const examBoards = [...new Set(enrollments.map(e => e.course.examBoard).filter(Boolean))] as string[];
 
     // Find related courses
     return prisma.course.findMany({

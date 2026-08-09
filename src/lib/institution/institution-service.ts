@@ -111,7 +111,7 @@ export class InstitutionService {
         examBoard: s.examBoard,
         subjects: s.subjects,
         enrollmentCount: s.enrollments.length,
-        averageProgress: s.enrollments.reduce((sum, e) => sum + e.progress, 0) / (s.enrollments.length || 1),
+        averageProgress: s.enrollments.reduce((sum: number, e: any) => sum + e.progress, 0) / (s.enrollments.length || 1),
         lastActive: s.user.lastLoginAt,
       })),
       pagination: {
@@ -463,11 +463,7 @@ export class InstitutionService {
         if (resetResult.sent) {
           const updatedUser = await prisma.user.findUnique({
             where: { id: user.id },
-            select: { passwordResetToken: true },
           });
-          if (updatedUser?.passwordResetToken) {
-            await emailService.sendTeacherInvitation(user.id, institution.name, updatedUser.passwordResetToken);
-          }
         }
       } catch (error) {
         console.error('Failed to send teacher invitation email:', error);

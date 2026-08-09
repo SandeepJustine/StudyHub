@@ -1,4 +1,5 @@
-import { PaymentMethod, PaymentStatus, PaymentTransaction } from '@/types/payment';
+import { PaymentMethod, PaymentStatus } from '@prisma/client';
+import type { PaymentTransaction } from '@/types/payment';
 import { AirtelMoneyAdapter } from '@/lib/payments/adapters/airtel-money.adapter';
 import { MpambaAdapter } from '@/lib/payments/adapters/tnm-mpamba.adapter';
 import { PayChanguAdapter } from '@/lib/payments/adapters/paychangu.adapter';
@@ -6,12 +7,11 @@ import { BankTransferAdapter } from '@/lib/payments/adapters/bank-transfer.adapt
 import { prisma } from '@/lib/prisma';
 
 export class PaymentService {
-  private static adapters = {
+  private static adapters: Record<string, any> = {
     [PaymentMethod.AIRTEL_MONEY]: new AirtelMoneyAdapter(),
     [PaymentMethod.TNM_MPAMBA]: new MpambaAdapter(),
     [PaymentMethod.PAYCHANGU]: new PayChanguAdapter(),
     [PaymentMethod.BANK_TRANSFER]: new BankTransferAdapter(),
-    [PaymentMethod.CREDIT_CARD]: new PayChanguAdapter(), // Using PayChangu for card payments
   };
 
   static async initiatePayment(
@@ -21,7 +21,7 @@ export class PaymentService {
     description: string,
     metadata?: Record<string, any>
   ): Promise<PaymentTransaction> {
-    const adapter = this.adapters[method];
+    const adapter = this.adapters[method as string];
     if (!adapter) {
       throw new Error(`Unsupported payment method: ${method}`);
     }
@@ -42,20 +42,18 @@ export class PaymentService {
       // Initiate payment with the adapter
       const paymentResult = await adapter.initiatePayment({
         amount,
-        userId,
-        transactionId: transaction.id,
-        description,
-        metadata: metadata || {},
+        method,
+        metadata: { ...metadata, userId },
       });
 
       // Update transaction with payment result
       await prisma.paymentTransaction.update({
         where: { id: transaction.id },
         data: {
-          externalTransactionId: paymentResult.transactionId,
-          status: paymentResult.status,
+          providerTransactionId: paymentResult.transactionId,
+          status: (paymentResult as any).status || PaymentStatus.PENDING,
           metadata: {
-            ...transaction.metadata,
+            ...(transaction.metadata as any),
             paymentResult: paymentResult.metadata,
           },
         },
@@ -63,13 +61,13 @@ export class PaymentService {
 
       return {
         ...transaction,
-        externalTransactionId: paymentResult.transactionId,
-        status: paymentResult.status,
+        providerTransactionId: paymentResult.transactionId,
+        status: (paymentResult as any).status || PaymentStatus.PENDING,
         metadata: {
-          ...transaction.metadata,
+          ...(transaction.metadata as any),
           paymentResult: paymentResult.metadata,
         },
-      };
+      } as any;
     } catch (error) {
       // Update transaction with error status
       await prisma.paymentTransaction.update({
@@ -77,7 +75,7 @@ export class PaymentService {
         data: {
           status: PaymentStatus.FAILED,
           metadata: {
-            ...transaction.metadata,
+            ...(transaction.metadata as any),
             error: error instanceof Error ? error.message : 'Unknown error',
           },
         },
@@ -96,7 +94,7 @@ export class PaymentService {
       throw new Error('Transaction not found');
     }
 
-    const adapter = this.adapters[transaction.method];
+    const adapter = this.adapters[transaction.method as string];
     if (!adapter) {
       throw new Error(`Unsupported payment method: ${transaction.method}`);
     }
@@ -104,27 +102,27 @@ export class PaymentService {
     try {
       // Verify payment with the adapter
       const verificationResult = await adapter.verifyPayment(
-        transaction.externalTransactionId || ''
+        transaction.providerTransactionId || ''
       );
 
       // Update transaction with verification result
       const updatedTransaction = await prisma.paymentTransaction.update({
         where: { id: transaction.id },
         data: {
-          status: verificationResult.status,
+          status: verificationResult.status as any,
           metadata: {
-            ...transaction.metadata,
+            ...(transaction.metadata as any),
             verificationResult: verificationResult.metadata,
           },
         },
       });
 
       // If payment is successful, trigger any necessary actions
-      if (verificationResult.status === PaymentStatus.COMPLETED) {
-        await this.handleSuccessfulPayment(updatedTransaction);
+      if ((verificationResult as any).status === PaymentStatus.COMPLETED) {
+        await this.handleSuccessfulPayment(updatedTransaction as any);
       }
 
-      return updatedTransaction;
+      return updatedTransaction as any;
     } catch (error) {
       throw error;
     }
@@ -146,6 +144,6 @@ export class PaymentService {
     return prisma.paymentTransaction.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-    });
+    }) as any;
   }
 }

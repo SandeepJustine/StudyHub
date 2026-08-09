@@ -9,6 +9,12 @@ import {
   useState,
 } from 'react';
 
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
+}
+
 interface RecaptchaProps {
   siteKey: string;
   onVerify: (token: string | null) => void;
@@ -33,7 +39,7 @@ function loadRecaptchaScript(): Promise<void> {
       return;
     }
 
-    if (window.grecaptcha) {
+    if ((window as any).grecaptcha) {
       resolve();
       return;
     }
@@ -93,11 +99,11 @@ export const Recaptcha = forwardRef<RecaptchaHandle, RecaptchaProps>(
 
       loadRecaptchaScript()
         .then(() => {
-          if (!containerRef.current || !window.grecaptcha) {
+          if (!containerRef.current || !(window as any).grecaptcha) {
             return;
           }
 
-          widgetIdRef.current = window.grecaptcha.render(
+          widgetIdRef.current = (window as any).grecaptcha.render(
             containerRef.current,
             {
               sitekey: siteKey,
@@ -113,8 +119,8 @@ export const Recaptcha = forwardRef<RecaptchaHandle, RecaptchaProps>(
         });
 
       return () => {
-        if (widgetIdRef.current !== null && window.grecaptcha) {
-          window.grecaptcha.reset(widgetIdRef.current);
+        if (widgetIdRef.current !== null && (window as any).grecaptcha) {
+          (window as any).grecaptcha.reset(widgetIdRef.current);
         }
         widgetIdRef.current = null;
       };

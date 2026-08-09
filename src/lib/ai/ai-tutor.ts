@@ -90,7 +90,7 @@ export class AITutorService {
       Grade the following student answer for the assignment:
       
       Assignment: ${assignment.title}
-      Description: ${assignment.description}
+      Description: ${(assignment as any).description || ''}
       Subject: ${assignment.module.course.subject}
       Max Score: ${assignment.maxScore}
       

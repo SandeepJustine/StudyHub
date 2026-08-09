@@ -2,7 +2,9 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
-import { compare } from 'bcrypt';
+import { compare, hash } from 'bcryptjs';
+import { EmailService } from '@/lib/email/email-service';
+import { UserRole } from '@/types/common';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -22,12 +24,11 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email }
         });
 
-        if (!user || !user.password) {
+        if (!user || !user.passwordHash) {
           return null;
         }
 
-        const isPasswordValid = await compare(credentials.password, user.password);
-
+        const isPasswordValid = await compare(credentials.password, user.passwordHash);
         if (!isPasswordValid) {
           return null;
         }
@@ -35,8 +36,9 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: user.fullName,
           role: user.role,
+          locale: 'en',
         };
       }
     })
@@ -57,8 +59,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role;
-        session.user.id = token.id;
+        session.user.role = token.role as UserRole;
+        session.user.id = token.id as string;
       }
       return session;
     }
@@ -71,9 +73,6 @@ export class AuthService {
     const user = await prisma.user.findFirst({
       where: {
         emailVerificationToken: token,
-        emailVerificationExpires: {
-          gt: new Date()
-        }
       }
     });
 
@@ -86,7 +85,6 @@ export class AuthService {
       data: {
         emailVerified: new Date(),
         emailVerificationToken: null,
-        emailVerificationExpires: null
       }
     });
 
@@ -115,7 +113,8 @@ export class AuthService {
     });
 
     // Send email with reset token
-    await EmailService.sendPasswordResetEmail(user.email, resetToken);
+    const emailService = new EmailService();
+    await emailService.sendOTP(user.id, resetToken, 'password_reset');
 
     return { success: true };
   }
@@ -140,7 +139,7 @@ export class AuthService {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null
       }

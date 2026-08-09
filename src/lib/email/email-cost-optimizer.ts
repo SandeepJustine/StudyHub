@@ -1,4 +1,5 @@
 // src/lib/email/email-cost-optimizer.ts
+import prisma from '@/lib/utils/prisma';
 
 export class EmailCostOptimizer {
   private dailyLimits = {

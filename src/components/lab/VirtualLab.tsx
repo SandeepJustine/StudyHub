@@ -344,7 +344,7 @@ const DraggableEquipment: React.FC<{ type: LabEquipment }> = ({ type }) => {
   }));
 
   return (
-    <div ref={drag} className={`p-1.5 bg-white border rounded cursor-move hover:shadow text-xs ${isDragging ? 'opacity-50' : ''}`}>
+    <div ref={drag as any} className={`p-1.5 bg-white border rounded cursor-move hover:shadow text-xs ${isDragging ? 'opacity-50' : ''}`}>
       🔬 {type.replace(/_/g, ' ')}
     </div>
   );
@@ -360,7 +360,7 @@ const DraggableChemical: React.FC<{ chemical: Chemical }> = ({ chemical }) => {
   const hazardous = (chemical.hazardSymbols?.length ?? 0) > 0;
 
   return (
-    <div ref={drag} className={`p-1.5 bg-white border rounded cursor-move hover:shadow text-xs ${isDragging ? 'opacity-50' : ''}`}>
+    <div ref={drag as any} className={`p-1.5 bg-white border rounded cursor-move hover:shadow text-xs ${isDragging ? 'opacity-50' : ''}`}>
       <span className="font-medium">{chemical.name}</span>
       <span className="text-grey-medium ml-1">{chemical.formula}</span>
       {hazardous && <span className="ml-1" title={chemical.safetyNotes}>⚠️</span>}

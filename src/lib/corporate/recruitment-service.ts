@@ -189,9 +189,10 @@ export class RecruitmentService {
     cvUrl?: string;
   }) {
     // Check if already applied
-    const existing = await prisma.jobApplication.findUnique({
+    const existing = await prisma.jobApplication.findFirst({
       where: {
-        postingId_studentId: { postingId, studentId },
+        postingId,
+        studentId,
       },
     });
 
@@ -243,8 +244,6 @@ export class RecruitmentService {
       where: { id: applicationId },
       data: {
         status: data.status,
-        notes: data.notes,
-        reviewedAt: new Date(),
       },
     });
   }
@@ -304,7 +303,6 @@ export class RecruitmentService {
         status: a.status,
         coverLetter: a.coverLetter,
         cvUrl: a.cvUrl,
-        notes: a.notes,
       })),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };

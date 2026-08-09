@@ -124,10 +124,10 @@ export class CertificateService {
       return { certificate: { ...certificate, paymentStatus: 'FREE' } as Certificate, paymentRequired: false };
     }
 
-    const userId = certificate.student?.user?.id || (await prisma.student.findUnique({
+    const userId = certificate.student?.userId || (await prisma.student.findUnique({
       where: { id: certificate.studentId },
       select: { userId: true },
-    }))?.userId;
+    }))?.userId || '';
 
     if (!userId) {
       throw new Error('Student user account not found for certificate payment');

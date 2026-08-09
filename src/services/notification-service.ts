@@ -13,11 +13,16 @@ import {
   WelcomeEmail,
   RenewalReminderEmail,
   CertificateIssuedEmail,
+  PasswordResetEmail,
+  AccountVerificationEmail,
+  JobApplicationEmail,
+  EventRegistrationEmail,
+  GenericNotificationEmail,
 } from '@/emails';
 
 export class NotificationService {
   private providers: Map<string, NotificationProvider> = new Map();
-  private retryQueue: Notification[] = [];
+  private retryQueue: any[] = [];
   private maxRetries = 3;
 
   constructor() {
@@ -35,21 +40,12 @@ export class NotificationService {
     metadata?: any;
     priority?: 'high' | 'normal' | 'low';
   }): Promise<void> {
-    // Determine optimal channels based on priority and type
     const channels = notification.channel 
       ? (Array.isArray(notification.channel) ? notification.channel : [notification.channel])
       : this.determineChannels(notification.type, notification.priority);
 
     const notificationRecord = await prisma.notification.create({
-      data: {
-        userId: notification.userId,
-        type: notification.type,
-        title: notification.title,
-        message: notification.message,
-        status: 'pending',
-        channels: channels,
-        metadata: notification.metadata,
-      },
+      data: { userId: notification.userId, type: notification.type, title: notification.title, message: notification.message, status: 'pending', channels, metadata: notification.metadata },
     });
 
     for (const channel of channels) {
@@ -75,8 +71,8 @@ export class NotificationService {
 
         const sent = await provider.send({
           userId: notification.userId,
-          email: user?.email,
-          phone: user?.phone,
+          email: user?.email ?? undefined,
+          phone: user?.phone ?? undefined,
           title: notification.title,
           message: notification.message,
           type: notification.type,
@@ -96,7 +92,11 @@ export class NotificationService {
 
         if (!sent) {
           this.retryQueue.push({
-            ...notification,
+            userId: notification.userId,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            metadata: notification.metadata,
             channel,
             retries: 0,
             notificationId: notificationRecord.id,
@@ -105,7 +105,11 @@ export class NotificationService {
       } catch (error) {
         console.error(`Failed to send ${channel} notification:`, error);
         this.retryQueue.push({
-          ...notification,
+          userId: notification.userId,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          metadata: notification.metadata,
           channel,
           retries: 0,
           notificationId: notificationRecord.id,
@@ -169,6 +173,7 @@ export class NotificationService {
       if ((notification.retries || 0) < this.maxRetries) {
         try {
           const provider = this.providers.get(notification.channel);
+          if (!provider) continue;
           const user = await prisma.user.findUnique({
             where: { id: notification.userId },
             select: { email: true, phone: true },
@@ -176,8 +181,8 @@ export class NotificationService {
 
           const sent = await provider.send({
             userId: notification.userId,
-            email: user?.email,
-            phone: user?.phone,
+            email: user?.email ?? undefined,
+            phone: user?.phone ?? undefined,
             title: notification.title,
             message: notification.message,
             type: notification.type,
@@ -309,7 +314,7 @@ class EmailProvider implements NotificationProvider {
     }
   }
 
-  private getEmailTemplate(type: NotificationType): React.ComponentType<any> {
+  private getEmailTemplate(type: NotificationType): any {
     const templateMap: Record<string, React.ComponentType<any>> = {
       PAYMENT_CONFIRMATION: PaymentConfirmationEmail,
       SUBSCRIPTION_RECEIPT: SubscriptionReceiptEmail,
@@ -359,12 +364,12 @@ class SMSProvider implements NotificationProvider {
         ? notification.message.substring(0, 157) + '...'
         : notification.message;
 
-      const response = await fetch(this.smsGateway, {
+      const response = await fetch(this.smsGateway as string, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'api-key': this.apiKey,
-        },
+          ...(this.apiKey ? { 'api-key': this.apiKey } : {}),
+        } as any,
         body: JSON.stringify({
           to: notification.phone,
           from: this.senderId,

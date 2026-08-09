@@ -75,7 +75,6 @@ export class ExamEngine {
         score: 0,
         passed: false,
         startedAt: new Date(),
-        attemptNumber: attemptsCount + 1,
       },
     });
 
@@ -132,9 +131,6 @@ export class ExamEngine {
         score: autoScore,
         passed: autoPassed,
         completedAt: new Date(),
-        timeSpent: Math.floor(
-          (new Date().getTime() - attempt.startedAt.getTime()) / 1000
-        ),
         answers: JSON.stringify({
           ...answers,
           _meta: {
@@ -306,7 +302,7 @@ export class ExamEngine {
     }
 
     const percentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
-    const passed = percentage >= (attempt as any).quiz?.passingScore || 60;
+    const passed = percentage >= (attempt as any).quiz?.passingScore;
 
     // Update attempt
     const updated = await prisma.examAttempt.update({
@@ -331,7 +327,7 @@ export class ExamEngine {
     if (passed && !attempt.certificate) {
       certificate = await this.generateExamCertificate(
         attempt.studentId,
-        examAttemptId
+        attemptId
       );
     }
 
@@ -430,40 +426,28 @@ export class ExamEngine {
   async getExamAnalytics(quizId: string) {
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
-      include: {
-        _count: {
-          select: {
-            examAttempts: true,
-          },
-        },
-        examAttempts: {
-          select: {
-            score: true,
-            passed: true,
-            timeSpent: true,
-          },
-        },
-      },
     });
 
     if (!quiz) throw new NotFoundError('Quiz');
 
-    const attempts = quiz.examAttempts;
+    const attempts = await prisma.examAttempt.findMany({
+      where: { quizId },
+      select: {
+        score: true,
+        passed: true,
+      },
+    });
     const averageScore = attempts.length > 0
-      ? attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length
+      ? attempts.reduce((sum: number, a: any) => sum + a.score, 0) / attempts.length
       : 0;
     const passRate = attempts.length > 0
-      ? (attempts.filter(a => a.passed).length / attempts.length) * 100
-      : 0;
-    const averageTime = attempts.length > 0
-      ? attempts.reduce((sum, a) => sum + (a.timeSpent || 0), 0) / attempts.length
+      ? (attempts.filter((a: any) => a.passed).length / attempts.length) * 100
       : 0;
 
     return {
-      totalAttempts: quiz._count.examAttempts,
+      totalAttempts: attempts.length,
       averageScore: Math.round(averageScore * 100) / 100,
       passRate: Math.round(passRate * 100) / 100,
-      averageTimeSpent: Math.round(averageTime),
       passingScore: quiz.passingScore,
     };
   }

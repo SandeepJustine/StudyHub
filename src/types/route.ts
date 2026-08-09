@@ -43,7 +43,13 @@ export async function POST(req: Request) {
 
     // Send welcome email without blocking the registration process
     try {
-      await notificationService.sendWelcome(user.id, user.role);
+      await notificationService.send({
+        userId: user.id,
+        type: 'WELCOME',
+        title: 'Welcome to StudyHub',
+        message: 'Thank you for joining StudyHub Malawi.',
+        priority: 'normal',
+      });
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError);
     }

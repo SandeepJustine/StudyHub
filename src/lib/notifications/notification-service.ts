@@ -7,7 +7,9 @@ type NotificationType =
   | 'INSTRUCTOR_PAYOUT' | 'WELCOME' | 'RENEWAL_REMINDER'
   | 'CERTIFICATE_ISSUED' | 'PASSWORD_RESET' | 'ACCOUNT_VERIFICATION'
   | 'JOB_APPLICATION' | 'EVENT_REGISTRATION' | 'RENEWAL_FAILED'
-  | 'PAYOUT_PROCESSED';
+  | 'PAYOUT_PROCESSED' | 'SUBSCRIPTION_CANCELLED' | 'REFUND_PROCESSED'
+  | 'SYSTEM_ALERT' | 'SUPPORT_TICKET' | 'SUPPORT_RESPONSE'
+  | 'EVENT_REMINDER';
 
 interface NotificationPreferences {
   emailEnabled: boolean; smsEnabled: boolean; pushEnabled: boolean;
@@ -47,7 +49,7 @@ export class NotificationService {
         if (!provider) continue;
         const user = await prisma.user.findUnique({ where: { id: notification.userId }, select: { email: true, phone: true, notificationPreferences: true, locale: true } });
         if (!this.isChannelEnabled(user, channel, notification.type)) continue;
-        const sent = await provider.send({ userId: notification.userId, email: user?.email, phone: user?.phone, title: notification.title, message: notification.message, type: notification.type, metadata: notification.metadata, locale: user?.locale || 'en' });
+        const sent = await provider.send({ userId: notification.userId, email: user?.email ?? undefined, phone: user?.phone ?? undefined, title: notification.title, message: notification.message, type: notification.type, metadata: notification.metadata, locale: user?.locale || 'en' });
         await prisma.notification.update({ where: { id: notificationRecord.id }, data: { status: sent ? 'sent' : 'failed', [`${channel.toLowerCase()}SentAt`]: sent ? new Date() : undefined, [`${channel.toLowerCase()}Status`]: sent ? 'delivered' : 'failed' } });
         if (!sent) this.retryQueue.push({ ...notification, channel, retries: 0, notificationId: notificationRecord.id });
       } catch (error) {
@@ -55,6 +57,43 @@ export class NotificationService {
       }
     }
     this.processRetryQueue();
+  }
+
+   async getUserNotifications(userId: string, params: any) {
+    const { page = 1, limit = 20, type, read } = params;
+    const where: any = { userId };
+    if (type) where.type = type;
+    if (read !== undefined) where.status = read ? 'read' : 'unread';
+
+    const [notifications, total] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.notification.count({ where }),
+    ]);
+
+    return {
+      notifications,
+      unreadCount: notifications.filter(n => n.status === 'unread').length,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async markAsRead(notificationId: string, userId: string) {
+    await prisma.notification.updateMany({
+      where: { id: notificationId, userId },
+      data: { status: 'read' },
+    });
+  }
+
+  async updatePreferences(userId: string, preferences: any) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { notificationPreferences: preferences },
+    });
   }
 
   private determineChannels(type: NotificationType, priority?: string): string[] {
@@ -87,7 +126,7 @@ export class NotificationService {
         try {
           const provider = this.providers.get(n.channel);
           const user = await prisma.user.findUnique({ where: { id: n.userId }, select: { email: true, phone: true } });
-          const sent = await provider!.send({ userId: n.userId, email: user?.email, phone: user?.phone, title: n.title, message: n.message, type: n.type, metadata: n.metadata });
+          const sent = await provider!.send({ userId: n.userId, email: user?.email ?? undefined, phone: user?.phone ?? undefined, title: n.title, message: n.message, type: n.type, metadata: n.metadata });
           if (!sent) { this.retryQueue.push({ ...n, retries: (n.retries || 0) + 1 }); }
           else if (n.notificationId) { await prisma.notification.update({ where: { id: n.notificationId }, data: { status: 'sent', [`${n.channel.toLowerCase()}SentAt`]: new Date(), [`${n.channel.toLowerCase()}Status`]: 'delivered' } }); }
         } catch { this.retryQueue.push({ ...n, retries: (n.retries || 0) + 1 }); }

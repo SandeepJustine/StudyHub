@@ -1,3 +1,2 @@
 export { SMSService } from './sms-service';
-export { SMSProvider } from './sms-provider';
-export { SMSTemplate } from './sms-template';
+export { SMS_PROVIDERS } from './sms-provider';

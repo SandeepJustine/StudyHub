@@ -47,9 +47,10 @@ export class EventService {
     }
 
     // Check if already registered
-    const existing = await prisma.eventRegistration.findUnique({
+    const existing = await prisma.eventRegistration.findFirst({
       where: {
-        eventId_userId: { eventId, userId },
+        eventId,
+        userId,
       },
     });
 
@@ -82,7 +83,6 @@ export class EventService {
         eventId,
         userId,
         transactionId: transaction?.id,
-        status: event.price > 0 ? 'registered' : 'registered',
       },
     });
 
@@ -135,7 +135,6 @@ export class EventService {
       where: { id: registrationId },
       data: {
         attended: true,
-        attendedAt: new Date(),
         status: 'attended',
       },
     });

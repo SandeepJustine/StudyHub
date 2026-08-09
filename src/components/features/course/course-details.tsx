@@ -229,7 +229,7 @@ export function CourseDetails({
               </Button>
             )}
             {enrollmentStatus === 'payment_pending' && (
-              <Button variant="warning" size="lg" disabled>
+              <Button variant="outline" size="lg" disabled>
                 Payment Pending
               </Button>
             )}

@@ -3,7 +3,7 @@
 
 import React, { useCallback, useRef } from 'react';
 import { useDrag, useDrop, DropTargetMonitor } from 'react-dnd';
-import { XYCoord } from 'react-dnd-html5-backend';
+import type { XYCoord } from 'react-dnd';
 
 // Item types
 export const ItemTypes = {
@@ -122,7 +122,7 @@ export const DraggableChemical: React.FC<DraggableChemicalProps> = ({ chemical }
 
   return (
     <div
-      ref={(node) => drag(node)}
+      ref={drag as any}
       className={`p-3 bg-white border-2 ${hazardClass} rounded-lg cursor-move hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="text-sm font-medium">{chemical.name}</div>
@@ -294,7 +294,7 @@ export const CircuitComponent: React.FC<{
 
   return (
     <div
-      ref={(node) => drag(node)}
+      ref={drag as any}
       className={`p-3 bg-white border rounded-lg cursor-move hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center gap-2">

@@ -49,13 +49,7 @@ export function ContentRenderer({
     case 'VIDEO':
       return (
         <VideoPlayer
-          url={content.url}
-          provider={content.provider}
-          embedCode={content.embedCode}
-          thumbnail={content.thumbnail}
-          duration={content.duration}
-          captions={content.captions}
-          downloadUrl={content.downloadUrl}
+          url={content.url || ''}
           onComplete={onComplete}
         />
       );
@@ -63,13 +57,8 @@ export function ContentRenderer({
     case 'AUDIO':
       return (
         <AudioPlayer
-          url={content.url}
-          provider={content.provider}
-          embedCode={content.embedCode}
+          url={content.url || ''}
           transcript={content.transcript}
-          downloadUrl={content.downloadUrl}
-          duration={content.duration}
-          onComplete={onComplete}
         />
       );
 
@@ -99,9 +88,6 @@ export function ContentRenderer({
       return (
         <PDFViewer
           url={content.url}
-          downloadUrl={content.downloadUrl}
-          embedUrl={content.embedUrl}
-          pageCount={content.pageCount}
         />
       );
 

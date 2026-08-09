@@ -73,7 +73,7 @@ app.prepare().then(() => {
   // Initialize Socket.IO (works with both HTTP and HTTPS)
   initializeSocketServer(server);
 
-  server.listen(port, () => {
+  server.listen(port, async () => {
     const protocol = server instanceof (await import('https')).Server ? 'https' : 'http';
     console.log(`\n🚀 Server ready on ${protocol}://${hostname}:${port}`);
     console.log(`📦 Environment: ${dev ? 'development' : 'production'}`);

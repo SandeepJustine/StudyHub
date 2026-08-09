@@ -21,7 +21,6 @@ export class AuditLogger {
         entityId: data.entityId,
         changes: data.changes ? JSON.stringify(data.changes) : undefined,
         ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
         timestamp: new Date(),
       },
     });

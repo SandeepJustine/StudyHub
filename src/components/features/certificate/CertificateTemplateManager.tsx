@@ -1,23 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { CertificateTemplate, CertificateDesignConfig } from '@/types/certificates';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
-import { Plus, Edit, Trash2, FileText, Check, X, Palette, Type, Layout, Upload } from 'lucide-react';
-import { CertificateTemplate, CertificateDesignConfig } from '@/types/certificates';
-import { CertificateTemplateManager } from '@/components/features/certificate/CertificateTemplateManager';
-import { TabContainer } from '@/components/shared/TabContainer';
+import { PlusCircle, Edit, Trash, Eye, Loader2, AlertTriangle, Palette, Layout, Plus, Trash2, Upload } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
-interface FormData {
-  name: string;
-  description: string;
-  isDefault: boolean;
-  isActive: boolean;
-  designConfig: CertificateDesignConfig;
+interface CertificateTemplateManagerProps {
+  userRole: 'SCHOOL_ADMIN' | 'INSTRUCTOR' | 'PLATFORM_ADMIN';
+  institutionId?: string;
 }
 
 const DEFAULT_DESIGN_CONFIG: CertificateDesignConfig = {
@@ -50,11 +46,22 @@ const DEFAULT_DESIGN_CONFIG: CertificateDesignConfig = {
   signatures: [],
 };
 
-export default function InstructorCertificateTemplates() {
+interface FormData {
+  name: string;
+  description: string;
+  isDefault: boolean;
+  isActive: boolean;
+  designConfig: CertificateDesignConfig;
+}
+
+export function CertificateTemplateManager({ userRole, institutionId }: CertificateTemplateManagerProps) {
+  const { data: session } = useSession();
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CertificateTemplate | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -67,47 +74,45 @@ export default function InstructorCertificateTemplates() {
 
   useEffect(() => {
     fetchTemplates();
-  }, []);
+  }, [session, userRole, institutionId]);
 
   const fetchTemplates = async () => {
+    if (!session) return;
+    setLoading(true);
+    setError(null);
+
     try {
-      const res = await fetch('/api/certificates/templates');
-      const result = await res.json();
-      if (result.success) {
-        setTemplates(result.data);
+      const queryParams = new URLSearchParams();
+      if (institutionId) {
+        queryParams.append('institutionId', institutionId);
       }
-    } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      if (userRole === 'INSTRUCTOR') {
+        queryParams.append('createdByRole', 'INSTRUCTOR');
+      }
+
+      const response = await fetch(`/api/certificates/templates?${queryParams.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates.');
+      }
+      const data = await response.json();
+      setTemplates(data.data);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const url = editingTemplate ? `/api/certificates/templates/${editingTemplate.id}` : '/api/certificates/templates';
-      const method = editingTemplate ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to save template');
-      }
-
-      setToast({ message: editingTemplate ? 'Template updated' : 'Template created', type: 'success' });
-      setShowModal(false);
-      setEditingTemplate(null);
-      setFormData({ name: '', description: '', isDefault: false, isActive: true, designConfig: DEFAULT_DESIGN_CONFIG });
-      fetchTemplates();
-    } catch (error: any) {
-      setToast({ message: error.message, type: 'error' });
-    }
+  const handleCreate = () => {
+    setEditingTemplate(null);
+    setFormData({
+      name: '',
+      description: '',
+      isDefault: false,
+      isActive: true,
+      designConfig: DEFAULT_DESIGN_CONFIG,
+    });
+    setShowModal(true);
   };
 
   const handleEdit = (template: CertificateTemplate) => {
@@ -123,46 +128,61 @@ export default function InstructorCertificateTemplates() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
+    if (!confirm('Are you sure you want to delete this template? This cannot be undone.')) {
+      return;
+    }
 
     try {
-      const res = await fetch(`/api/certificates/templates/${id}`, {
+      const response = await fetch(`/api/certificates/templates/${id}`, {
         method: 'DELETE',
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to delete template');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete template.');
       }
 
-      setToast({ message: 'Template deleted', type: 'success' });
-      fetchTemplates();
-    } catch (error: any) {
-      setToast({ message: error.message, type: 'error' });
+      setTemplates(templates.filter((t) => t.id !== id));
+      setToast({ message: 'Template deleted successfully', type: 'success' });
+    } catch (err: any) {
+      setError(err.message);
+      setToast({ message: err.message, type: 'error' });
     }
   };
 
-  const updateDesignConfig = (key: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      designConfig: {
-        ...prev.designConfig,
-        [key]: value,
-      },
-    }));
+  const handlePreview = (template: CertificateTemplate) => {
+    window.open(`/api/certificates/templates/${template.id}/preview`, '_blank');
   };
 
-  const updateSpacing = (key: string, value: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      designConfig: {
-        ...prev.designConfig,
-        spacing: {
-          ...prev.designConfig.spacing,
-          [key]: value,
-        },
-      },
-    }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const url = editingTemplate ? `/api/certificates/templates/${editingTemplate.id}` : '/api/certificates/templates';
+      const method = editingTemplate ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${editingTemplate ? 'update' : 'create'} template.`);
+      }
+
+      const data = await response.json();
+      setToast({ message: editingTemplate ? 'Template updated successfully' : 'Template created successfully', type: 'success' });
+      setShowModal(false);
+      fetchTemplates();
+    } catch (err: any) {
+      setError(err.message);
+      setToast({ message: err.message, type: 'error' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleFileUpload = async (file: File, type: 'logo' | 'background' | 'signature'): Promise<string> => {
@@ -192,91 +212,138 @@ export default function InstructorCertificateTemplates() {
     }
   };
 
+  const updateDesignConfig = (key: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      designConfig: {
+        ...prev.designConfig,
+        [key]: value,
+      },
+    }));
+  };
+
+  const canManageTemplates = userRole === 'PLATFORM_ADMIN' || userRole === 'SCHOOL_ADMIN' || userRole === 'INSTRUCTOR';
+
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy"></div>
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="animate-spin h-8 w-8 text-navy" />
+        <span className="ml-4 text-lg">Loading Templates...</span>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <Card padding="lg" className="bg-red-50 border-red-200">
+        <div className="flex items-center">
+          <AlertTriangle className="h-6 w-6 text-red-600 mr-4" />
+          <div>
+            <h3 className="font-bold text-red-800">Error</h3>
+            <p className="text-red-700">{error}</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-navy">Certificate Templates</h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-navy">Certificate Templates</h2>
+          <p className="text-grey-dark">Manage templates for your certificates.</p>
+        </div>
+        {canManageTemplates && (
+          <Button onClick={handleCreate} leftIcon={<PlusCircle size={18} />}>
+            Create Template
+          </Button>
+        )}
       </div>
 
-      <TabContainer
-        tabs={[
-          { key: 'quick', label: 'Quick Manager', icon: <FileText size={16} /> },
-          { key: 'advanced', label: 'Advanced Editor', icon: <Palette size={16} /> },
-        ]}
-        defaultTab="quick"
-      >
-        {(activeTab) => (
-          <>
-            {activeTab === 'quick' && (
-              <CertificateTemplateManager userRole="INSTRUCTOR" />
-            )}
-            {activeTab === 'advanced' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-navy">Advanced Template Editor</h2>
-                  <Button onClick={() => { setEditingTemplate(null); setFormData({ name: '', description: '', isDefault: false, isActive: true, designConfig: DEFAULT_DESIGN_CONFIG }); setShowModal(true); }}>
-                    <Plus size={16} className="mr-1" /> New Template
-                  </Button>
+      {templates.length === 0 ? (
+        <Card padding="lg" className="text-center">
+          <h3 className="text-lg font-medium">No Templates Found</h3>
+          <p className="text-grey-dark mt-2 mb-4">Get started by creating your first certificate template.</p>
+          {canManageTemplates && (
+            <Button onClick={handleCreate} variant="outline">
+              Create Your First Template
+            </Button>
+          )}
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {templates.map((template) => (
+            <Card key={template.id} padding="lg" className="flex flex-col">
+              <div className="flex-grow">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-bold text-navy pr-2">{template.name}</h3>
+                  <div className="flex gap-1">
+                    {template.isDefault && (
+                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        Default
+                      </span>
+                    )}
+                    {!template.isActive && (
+                      <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {templates.map((template) => (
-                    <Card key={template.id} className="border-0 shadow-sm">
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-semibold text-navy">{template.name}</h3>
-                            <p className="text-sm text-grey-medium">{template.description}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            {template.isDefault && <Badge variant="success" size="sm">Default</Badge>}
-                            {!template.isActive && <Badge variant="error" size="sm">Inactive</Badge>}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-grey-medium">By {template.createdByRole}</span>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="xs" onClick={() => handleEdit(template)}>
-                              <Edit size={14} />
-                            </Button>
-                            {!template.isDefault && (
-                              <Button variant="ghost" size="xs" onClick={() => handleDelete(template.id)}>
-                                <Trash2 size={14} />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <p className="text-sm text-grey-dark mt-2 h-10 overflow-hidden">
+                  {template.description || 'No description provided.'}
+                </p>
+                <div className="mt-3 flex items-center gap-2 text-xs text-grey-medium">
+                  <Palette size={12} />
+                  <span>{template.designConfig?.layout || 'landscape'}</span>
+                  <span>•</span>
+                  <span>{template.createdByRole}</span>
                 </div>
+              </div>
 
-                {templates.length === 0 && (
-                  <Card className="border-0 shadow-sm">
-                    <CardContent className="p-8 text-center">
-                      <FileText size={40} className="mx-auto text-grey-medium mb-3" />
-                      <h3 className="font-semibold text-navy">No Templates Yet</h3>
-                      <p className="text-sm text-grey-dark">Create your first certificate template to get started.</p>
-                    </CardContent>
-                  </Card>
+              <div className="mt-6 border-t border-grey-light pt-4 flex items-center justify-between space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handlePreview(template)}
+                  title="Preview"
+                >
+                  <Eye size={16} />
+                </Button>
+                <div className="flex-grow" />
+                {canManageTemplates && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(template)}
+                      title="Edit"
+                      disabled={template.isDefault}
+                    >
+                      <Edit size={16} />
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(template.id)}
+                      title="Delete"
+                      disabled={template.isDefault}
+                    >
+                      <Trash size={16} />
+                    </Button>
+                  </>
                 )}
               </div>
-            )}
-          </>
-        )}
-      </TabContainer>
+            </Card>
+          ))}
+        </div>
+      )}
 
+      {/* Create/Edit Modal */}
       <Modal
         isOpen={showModal}
-        onClose={() => { setShowModal(false); setEditingTemplate(null); }}
+        onClose={() => setShowModal(false)}
         title={editingTemplate ? 'Edit Template' : 'Create Template'}
         size="xl"
       >
@@ -510,7 +577,7 @@ export default function InstructorCertificateTemplates() {
 
           <div className="border-t border-grey-light pt-4">
             <h3 className="text-sm font-medium text-navy mb-3 flex items-center gap-2">
-              <Layout size={14} /> Design Configuration
+              <Palette size={14} /> Design Configuration
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -535,14 +602,6 @@ export default function InstructorCertificateTemplates() {
                   <option value="double">Double</option>
                   <option value="decorative">Decorative</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-navy mb-1">Border Width (px)</label>
-                <Input
-                  type="number"
-                  value={formData.designConfig.borderWidth || 20}
-                  onChange={(e) => updateDesignConfig('borderWidth', parseInt(e.target.value))}
-                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-navy mb-1">Border Color</label>
@@ -597,27 +656,21 @@ export default function InstructorCertificateTemplates() {
                   onChange={(e) => updateDesignConfig('titleFontSize', parseInt(e.target.value))}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-navy mb-1">Recipient Font Size (px)</label>
-                <Input
-                  type="number"
-                  value={formData.designConfig.recipientFontSize || 36}
-                  onChange={(e) => updateDesignConfig('recipientFontSize', parseInt(e.target.value))}
-                />
-              </div>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button type="button" variant="outline" fullWidth onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" fullWidth>Save Template</Button>
+            <Button type="button" variant="outline" fullWidth onClick={() => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" fullWidth loading={submitting}>
+              {editingTemplate ? 'Update' : 'Create'} Template
+            </Button>
           </div>
         </form>
       </Modal>
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

@@ -38,12 +38,6 @@ export async function GET(
             subject: true,
           },
         },
-        event: {
-          select: {
-            title: true,
-            date: true,
-          },
-        },
         invoice: true,
       },
     });
@@ -165,7 +159,7 @@ export async function PUT(
       );
     }
 
-    if (transaction.refundedAmount >= transaction.amount) {
+    if (transaction.refundedAmount && transaction.refundedAmount >= transaction.amount) {
       return NextResponse.json(
         { error: 'Transaction already fully refunded' },
         { status: 400 }
@@ -182,7 +176,7 @@ export async function PUT(
     }
 
     // Process refund
-    const refundAmount = amount || transaction.amount - transaction.refundedAmount;
+    const refundAmount = amount || (transaction.refundedAmount ? transaction.amount - transaction.refundedAmount : transaction.amount);
     const result = await paymentService.processRefund(
       transactionId,
       refundAmount,

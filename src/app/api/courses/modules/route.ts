@@ -10,6 +10,15 @@ import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
 import { AppError } from '@/lib/utils/errors';
 
+function normalizeUrl(url: string | null | undefined, req: Request): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const host = req.headers.get('host');
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -188,7 +197,7 @@ export async function PUT(req: Request) {
         ...(duration !== undefined && { duration }),
         ...(isPreview !== undefined && { isPreview }),
         ...(order !== undefined && { order }),
-        ...(thumbnailUrl !== undefined && { thumbnailUrl }),
+        ...(thumbnailUrl !== undefined && { thumbnailUrl: normalizeUrl(thumbnailUrl, req) }),
         ...(embedCode !== undefined && { embedCode }),
         updatedAt: new Date(),
       },

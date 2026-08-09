@@ -22,11 +22,10 @@ export class ContentManagementService {
         await prisma.contentItem.create({
           data: {
             ...item,
-            uploadedBy,
-            status: 'PENDING_REVIEW',
-            version: 1,
-            tags: item.tags || [],
-          },
+        uploadedBy,
+        status: 'PENDING_REVIEW',
+        version: 1,
+      },
         });
         results.successful++;
       } catch (error: any) {
@@ -55,7 +54,6 @@ export class ContentManagementService {
       where: { id: contentId },
       data: {
         status: decision.approved ? 'APPROVED' : 'REJECTED',
-        reviewedBy: reviewerId,
         metadata: {
           reviewFeedback: decision.feedback,
           reviewedAt: new Date().toISOString(),
@@ -85,9 +83,8 @@ export class ContentManagementService {
         ...data,
         version: content.version + 1,
         status: 'PENDING_REVIEW',
-        id: undefined, // Let Prisma generate new ID
-        originalId: contentId,
-      },
+        metadata: content.metadata as any,
+      } as any,
     });
 
     // Archive old version
@@ -155,10 +152,7 @@ export class ContentManagementService {
   async getContentVersions(originalId: string) {
     return prisma.contentItem.findMany({
       where: {
-        OR: [
-          { id: originalId },
-          { originalId },
-        ],
+        id: originalId,
       },
       orderBy: { version: 'desc' },
     });

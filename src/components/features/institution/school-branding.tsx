@@ -88,7 +88,7 @@ export function SchoolBranding({ branding, onSave, tier }: SchoolBrandingProps) 
                   <p className="text-sm text-grey-dark mb-1">Upload logo</p>
                   <p className="text-xs text-grey-medium mb-3">PNG or SVG, max 2MB</p>
                   <label className="cursor-pointer">
-                    <Button variant="outline" size="sm" as="span">Choose File</Button>
+                    <Button variant="outline" size="sm">Choose File</Button>
                     <input type="file" accept=".png,.svg" onChange={handleLogoUpload} className="hidden" />
                   </label>
                 </div>

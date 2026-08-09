@@ -150,7 +150,7 @@ export class BankTransferAdapter implements PaymentProvider {
       logger.error('BankTransfer payment initiation error', { 
         error: error.message,
         amount: request.amount 
-      });
+      } as any);
       
       return {
         success: false,
@@ -179,7 +179,7 @@ export class BankTransferAdapter implements PaymentProvider {
       logger.error('BankTransfer payment verification error', { 
         reference, 
         error: error.message 
-      });
+      } as any);
       
       return {
         verified: false,
@@ -214,7 +214,7 @@ export class BankTransferAdapter implements PaymentProvider {
       logger.error('BankTransfer refund error', { 
         transactionId, 
         error: error.message 
-      });
+      } as any);
       
       return {
         success: false,
@@ -258,7 +258,7 @@ export class BankTransferAdapter implements PaymentProvider {
     } catch (error: any) {
       logger.error('BankTransfer webhook processing error', { 
         error: error.message 
-      });
+      } as any);
       throw error;
     }
   }
@@ -276,7 +276,7 @@ export class BankTransferAdapter implements PaymentProvider {
       logger.error('BankTransfer get payment details error', { 
         chargeId, 
         error: error.message 
-      });
+      } as any);
       return null;
     }
   }
@@ -353,7 +353,7 @@ export class BankTransferAdapter implements PaymentProvider {
       logger.error('BankTransfer payout error', { 
         params, 
         error: error.message 
-      });
+      } as any);
       
       return {
         success: false,

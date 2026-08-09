@@ -107,7 +107,10 @@ model CertificateSignature {
   institution Institution? @relation(fields: [institutionId], references: [id])
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt     DateTime @updatedAt
+  tags          String[] @default([])
+  reviewedBy    String?
+  originalId    String?
 }
 
 model CertificateBranding {
@@ -205,6 +208,11 @@ model User {
   emailVerificationToken  String? @unique
   notificationPreferences Json?  // NotificationPreferences type
   lastLoginAt           DateTime?
+  passwordResetToken   String?
+  emailVerificationExpires DateTime?
+  resetToken           String? @unique
+  resetTokenExpiry     DateTime?
+  passwordResetExpires DateTime?
 
   // Email tracking
   emailBounced          Boolean   @default(false)
@@ -338,6 +346,7 @@ model CorporateClient {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName   String
   industry      String?
+  companySize   String?
   isVerified    Boolean  @default(false)  // ➕ ADD THIS
   logo          String?                   // ➕ ADD THIS (optional)
   contracts     CorporateContract[]
@@ -403,6 +412,8 @@ model Referral {
   rewardAmount Int      @default(0)
   status       String   @default("pending") // pending, completed, rewarded
   completedAt  DateTime?
+  refereeEmail String?
+  convertedAt  DateTime?
   createdAt    DateTime @default(now())
 
   @@index([referrerId])
@@ -754,6 +765,8 @@ model ExamAttempt {
   startedAt     DateTime
   completedAt   DateTime?
   answers       Json?    // Student's submitted answers
+  attemptNumber Int      @default(1)
+  timeSpent     Int      @default(0)
 
   certificate   Certificate?
 }
@@ -823,9 +836,12 @@ model JobApplication {
   studentId     String
   student       Student  @relation(fields: [studentId], references: [id])
   coverLetter   String?
+  notes         String?
   cvUrl         String?
   appliedAt     DateTime @default(now())
   status        String   @default("pending")
+
+  @@unique([postingId, studentId])
 }
 
 model CorporateContract {
@@ -873,7 +889,11 @@ model EventRegistration {
   transactionId String?
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
   attended      Boolean  @default(false)
+  status        String   @default("registered")
+  attendedAt    DateTime?
   registeredAt  DateTime @default(now())
+
+  @@unique([eventId, userId])
 }
 
 model LiveClass {
@@ -999,6 +1019,7 @@ model SupportTicket {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   resolvedAt    DateTime?
+  attachments   String[] @default([])
 
   responses     SupportResponse[]
 }
@@ -1031,6 +1052,9 @@ model PromoCode {
   validFrom     DateTime
   validUntil    DateTime
   applicableTiers SubscriptionTier[]
+  createdBy     String?
+  isActive      Boolean   @default(true)
+  minAmount     Int?
   createdAt     DateTime @default(now())
 }
 
@@ -1046,6 +1070,7 @@ model SponsorshipSlot {
   status        String   @default("active")
   impressions   Int      @default(0)
   clicks        Int      @default(0)
+  placement     String?
 }
 
 model MarketplaceListing {
@@ -1058,6 +1083,9 @@ model MarketplaceListing {
   category      String   // TEXTBOOKS, UNIFORMS, CALCULATORS
   commission    Float    @default(0.15) // 15% platform commission
   status        String   @default("active")
+  stock         Int       @default(1)
+  sold          Int       @default(0)
+  salesCount    Int       @default(0)
   createdAt     DateTime @default(now())
 }
 
@@ -1074,6 +1102,7 @@ model AuditLog {
   entityId      String
   changes       Json?
   ipAddress     String?
+  userAgent     String?
   timestamp     DateTime @default(now())
 }
 
@@ -1088,6 +1117,7 @@ model ParentLink {
   studentId     String
   student       Student  @relation(fields: [studentId], references: [id])
   status        String   @default("active")
+  relationship String?
   createdAt     DateTime @default(now())
 
   @@unique([parentId, studentId])
@@ -1109,6 +1139,9 @@ model ContentItem {
   uploadedBy    String
   fileUrl       String?
   metadata      Json?
+  tags          String[] @default([])
+  reviewedBy    String?
+  originalId    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

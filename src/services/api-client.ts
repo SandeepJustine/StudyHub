@@ -11,12 +11,14 @@ class APIClient {
     };
   }
 
-  private async getAuthHeaders(): Promise<HeadersInit> {
+  private async getAuthHeaders(): Promise<Record<string, string>> {
     const session = await getSession();
-    const headers = { ...this.defaultHeaders };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
 
-    if (session?.user?.accessToken) {
-      headers['Authorization'] = `Bearer ${session.user.accessToken}`;
+    if (session?.user && (session.user as any).accessToken) {
+      headers['Authorization'] = `Bearer ${(session.user as any).accessToken}`;
     }
 
     return headers;

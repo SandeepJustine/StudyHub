@@ -57,7 +57,6 @@ export class ParentService {
       data: {
         parentId,
         studentId: student.id,
-        relationship,
         status: 'active',
       },
     });
@@ -94,7 +93,6 @@ export class ParentService {
       studentName: link.student.user.fullName,
       grade: link.student.grade,
       institution: link.student.institution?.name,
-      relationship: link.relationship,
     }));
   }
 

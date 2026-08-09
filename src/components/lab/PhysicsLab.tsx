@@ -536,7 +536,7 @@ const PropertySlider: React.FC<{ label: string; unit: string; min: number; max: 
 const CircuitComponentSource: React.FC<{ type: PhysicsEquipment; icon: string; label: string }> = ({ type, icon, label }) => {
   const [{ isDragging }, drag] = useDrag(() => ({ type: ItemTypes.PHYSICS_COMPONENT, item: { type }, collect: (m) => ({ isDragging: m.isDragging() }) }));
   return (
-    <div ref={drag} className={`p-1.5 bg-white border rounded cursor-move hover:shadow text-xs ${isDragging ? 'opacity-50' : ''}`}>
+    <div ref={drag as any} className={`p-1.5 bg-white border rounded cursor-move hover:shadow text-xs ${isDragging ? 'opacity-50' : ''}`}>
       {icon} {label}
     </div>
   );

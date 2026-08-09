@@ -27,6 +27,15 @@ export interface CertificateDesignConfig {
     contentMargin: number;
     footerMargin: number;
   };
+  logoUrl?: string | null;
+  backgroundPattern?: string | null;
+  signatures?: Array<{
+    name: string;
+    title: string;
+    imageUrl?: string | null;
+    type?: 'uploaded' | 'typed' | 'drawn';
+    data?: string | null;
+  }>;
 }
 
 export interface CertificateTemplate {

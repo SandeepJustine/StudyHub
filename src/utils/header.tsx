@@ -28,7 +28,7 @@ export function AdminHeader() {
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
+          <Button variant="outline" size="sm" className="overflow-hidden rounded-full">
             <User className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>

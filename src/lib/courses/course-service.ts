@@ -568,9 +568,10 @@ export class CourseService {
     }
 
 // Check if already enrolled
-    const existing = await prisma.enrollment.findUnique({
+    const existing = await prisma.enrollment.findFirst({
       where: {
-        studentId_courseId: { studentId, courseId },
+        studentId,
+        courseId,
       },
     });
 
@@ -627,7 +628,7 @@ export class CourseService {
       if (['AIRTEL_MONEY', 'TNM_MPAMBA'].includes(paymentMethod) && !resolvedPhone) {
         throw new ValidationError(
           'Phone number is required for mobile money payments',
-          'PHONE_REQUIRED'
+          { phone: ['Phone number is required for mobile money payments'] }
         );
       }
 
