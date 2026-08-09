@@ -76,9 +76,7 @@ CREATE TABLE "CertificateTemplate" (
 "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 "updatedAt" TIMESTAMP(3) NOT NULL,
 
-```
 CONSTRAINT "CertificateTemplate_pkey" PRIMARY KEY ("id")
-```
 
 );
 
@@ -98,9 +96,7 @@ CREATE TABLE "CertificateSignature" (
 "reviewedBy" TEXT,
 "originalId" TEXT,
 
-```
 CONSTRAINT "CertificateSignature_pkey" PRIMARY KEY ("id")
-```
 
 );
 
@@ -118,9 +114,7 @@ CREATE TABLE "CertificateBranding" (
 "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 "updatedAt" TIMESTAMP(3) NOT NULL,
 
-```
 CONSTRAINT "CertificateBranding_pkey" PRIMARY KEY ("id")
-```
 
 );
 
