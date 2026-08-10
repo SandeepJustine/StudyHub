@@ -155,27 +155,28 @@ export const authOptions: NextAuthOptions = {
         token.instructorId = (user as any).instructorId ?? undefined;
         token.emailVerified = (user as any).emailVerified ?? undefined;
         token.avatar = (user as any).avatar ?? (user as any).image ?? undefined;
-      } else if (!token.userId) {
-        const cookieStore = await import("next/headers").then(m => m.cookies());
-        const impersonationToken = cookieStore.get("x-impersonation-token")?.value;
-        if (impersonationToken) {
-          const payload = verifyImpersonationJWT(impersonationToken);
-          if (payload) {
-            token.userId = payload.userId;
-            token.sub = payload.sub;
-            token.email = payload.email;
-            token.name = payload.name;
-            token.role = payload.role as UserRole;
-            token.phone = payload.phone;
-            token.locale = payload.locale || "en";
-            token.avatar = payload.avatar;
-            token.emailVerified = payload.emailVerified;
-            token.institutionId = payload.institutionId;
-            token.studentId = payload.studentId;
-            token.instructorId = payload.instructorId;
-          }
+      }
+
+      const cookieStore = await import("next/headers").then(m => m.cookies());
+      const impersonationToken = cookieStore.get("x-impersonation-token")?.value;
+      if (impersonationToken) {
+        const payload = verifyImpersonationJWT(impersonationToken);
+        if (payload) {
+          token.userId = payload.userId;
+          token.sub = payload.sub;
+          token.email = payload.email;
+          token.name = payload.name;
+          token.role = payload.role as UserRole;
+          token.phone = payload.phone;
+          token.locale = payload.locale || "en";
+          token.avatar = payload.avatar;
+          token.emailVerified = payload.emailVerified;
+          token.institutionId = payload.institutionId;
+          token.studentId = payload.studentId;
+          token.instructorId = payload.instructorId;
         }
       }
+
       return token;
     },
     async session({ session, token }) {
