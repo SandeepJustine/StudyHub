@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       changes: { targetEmail: targetUser.email, targetRole: targetUser.role },
     });
 
-    const dashboardPath = `/${targetUser.role.toLowerCase()}/dashboard`;
+    const dashboardPath = getDashboardPath(targetUser.role);
 
     return NextResponse.json({ 
       success: true, 
@@ -74,4 +74,17 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+function getDashboardPath(role: string): string {
+  const roleRoutes: Record<string, string> = {
+    STUDENT: '/student/dashboard',
+    INSTRUCTOR: '/instructor/dashboard',
+    SCHOOL_ADMIN: '/school-admin/dashboard',
+    CORPORATE_CLIENT: '/corporate/dashboard',
+    PLATFORM_ADMIN: '/admin/dashboard',
+    PARENT: '/parents/dashboard',
+  };
+
+  return roleRoutes[role] || '/';
 }
