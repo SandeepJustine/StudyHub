@@ -1077,16 +1077,23 @@ model PromoCode {
 model SponsorshipSlot {
   id            String   @id @default(cuid())
   sponsor       String
-  type          String   // BANNER, WEBINAR, PROMOTED_COURSE
+  type          String   // BANNER, WEBINAR, PROMOTED_COURSE, FEATURED_LISTING
   targetUrl     String?
   imageUrl      String?
+  image         String?
   startDate     DateTime
   endDate       DateTime
   price         Int
   status        String   @default("active")
   impressions   Int      @default(0)
   clicks        Int      @default(0)
-  placement     String?
+  placement     String?  // HERO, SIDEBAR, COURSE_LIST, COURSE_DETAIL, BETWEEN_SECTIONS
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, type, startDate, endDate])
+  @@index([placement])
 }
 
 model MarketplaceListing {

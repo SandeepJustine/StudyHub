@@ -1,6 +1,7 @@
 import { BookOpen } from 'lucide-react';
 import prisma from '@/lib/utils/prisma';
 import { PublicCoursesClient } from './courses-client';
+import { PublicSponsorships } from '@/components/features/sponsorship/public-sponsorships';
 
 export const metadata = {
   title: 'Courses | StudyHub',
@@ -82,6 +83,8 @@ export default async function PublicCoursesPage() {
             </p>
           </div>
         </div>
+
+        <PublicSponsorships placements={['FEATURED_LISTING', 'COURSE_LIST']} />
 
         <PublicCoursesClient courses={courses} />
       </div>

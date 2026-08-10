@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { HomeSlider } from '@/components/ui/slider';
 import { Check, Star, Users, BookOpen, GraduationCap, TrendingUp } from 'lucide-react';
 import { PricingCards } from '@/components/features/subscription/pricing-cards';
+import { PublicSponsorships } from '@/components/features/sponsorship/public-sponsorships';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -65,6 +66,13 @@ export default function LandingPage() {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Sponsorships - Between Sections */}
+      <section className="py-8 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <PublicSponsorships placements={['BETWEEN_SECTIONS']} />
         </div>
       </section>
 
