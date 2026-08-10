@@ -1,12 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Toast } from '@/components/ui/toast';
 import { PageHero } from '@/components/ui/page-hero';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, MessageSquare, HelpCircle, Building2 } from 'lucide-react';
+import { Recaptcha, RecaptchaHandle, isRecaptchaClientEnabled } from '@/components/ui/recaptcha';
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+const USE_RECAPTCHA = isRecaptchaClientEnabled();
+
+function generateMathChallenge() {
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  return { a, b, answer: a + b };
+}
 
 export default function ContactPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -19,13 +29,51 @@ export default function ContactPage() {
     subject: '',
     category: 'general',
     message: '',
+    company: '', // honeypot
   });
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<RecaptchaHandle>(null);
+  const [mathChallenge, setMathChallenge] = useState(generateMathChallenge());
+  const [mathAnswer, setMathAnswer] = useState('');
+  const [formStartTime] = useState(() => Date.now());
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const resetMathChallenge = useCallback(() => {
+    setMathChallenge(generateMathChallenge());
+    setMathAnswer('');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      const elapsed = Date.now() - formStartTime;
+      if (elapsed < 2000) {
+        throw new Error('Please take a moment to fill out the form properly.');
+      }
+
+      if (USE_RECAPTCHA && RECAPTCHA_SITE_KEY) {
+        setIsVerifying(true);
+        const verifyRes = await fetch('/api/auth/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: recaptchaToken }),
+        });
+
+        const verifyData = await verifyRes.json();
+        if (!verifyRes.ok || !verifyData.success) {
+          throw new Error(verifyData.error || 'reCAPTCHA verification failed');
+          return;
+        }
+      }
+
+      const userAnswer = parseInt(mathAnswer, 10);
+      if (isNaN(userAnswer) || userAnswer !== mathChallenge.answer) {
+        throw new Error('Incorrect answer. Please try again.');
+        return;
+      }
+
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,8 +88,12 @@ export default function ContactPage() {
       setIsSubmitted(true);
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to send message', type: 'error' });
+      resetMathChallenge();
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsLoading(false);
+      setIsVerifying(false);
     }
   };
 
@@ -64,7 +116,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
       <PageHero
           title="Contact Us"
           subtitle="Get in Touch"
@@ -79,7 +130,6 @@ export default function ContactPage() {
       <section className="py-16 bg-grey-light">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Contact Info Cards */}
             <div className="space-y-6">
               <Card padding="lg">
                 <div className="flex items-start gap-4">
@@ -135,7 +185,6 @@ export default function ContactPage() {
               </Card>
             </div>
 
-            {/* Contact Form */}
             <div className="lg:col-span-2">
               <Card padding="lg">
                 <h2 className="text-2xl font-bold text-navy mb-6">Send Us a Message</h2>
@@ -204,22 +253,60 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-grey-dark">Company (Optional)</label>
+                    <input
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy focus:ring-2 focus:ring-navy/20 opacity-0 h-0 overflow-hidden absolute"
+                      value={formData.company}
+                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    />
+                  </div>
+
+                  {USE_RECAPTCHA && RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center py-2">
+                      <Recaptcha
+                        ref={recaptchaRef}
+                        siteKey={RECAPTCHA_SITE_KEY}
+                        onVerify={setRecaptchaToken}
+                        onExpired={() => setRecaptchaToken(null)}
+                        theme="light"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-4 bg-grey-light/50 rounded-lg">
+                    <label className="block text-sm font-medium text-navy mb-2">
+                      Security Check: What is {mathChallenge.a} + {mathChallenge.b}?
+                    </label>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Your answer"
+                      value={mathAnswer}
+                      onChange={(e) => setMathAnswer(e.target.value)}
+                      required
+                      className="max-w-xs"
+                    />
+                  </div>
+
                   <Button
                     type="submit"
                     variant="primary"
                     size="lg"
                     fullWidth
-                    loading={isLoading}
+                    loading={isLoading || isVerifying}
                     leftIcon={<Send size={18} />}
                   >
-                    Send Message
+                    {isVerifying ? 'Verifying...' : 'Send Message'}
                   </Button>
                 </form>
               </Card>
             </div>
           </div>
 
-          {/* Quick Help */}
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-navy text-center mb-8">Frequently Asked Questions</h2>
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
