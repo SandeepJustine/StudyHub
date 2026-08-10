@@ -86,7 +86,6 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   const enrollment = await prisma.enrollment.findFirst({ where: { studentId: student.id, courseId } });
 
-  // Check for pending payment transaction
   const pendingTransaction = await prisma.transaction.findFirst({
     where: {
       courseId,
@@ -101,6 +100,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   } else if (pendingTransaction) {
     enrollmentStatus = 'payment_pending';
   }
+
+  const hasReviewed = courseData.reviews.some(r => r.studentId === student.id);
 
   const course = {
     id: courseData.id,
@@ -132,7 +133,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     },
     modules: courseData.modules.map(m => ({
       ...m,
-      contentType: m.contentType as any, // To satisfy the component prop type
+      contentType: m.contentType as any,
       duration: m.duration ?? 0,
     })),
     reviews: courseData.reviews.map(r => ({
@@ -154,6 +155,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
           enrollmentStatus={enrollmentStatus}
           enrollmentProgress={enrollment?.progress ?? 0}
           isFavorite={isFavorite}
+          hasReviewed={hasReviewed}
         />
       </div>
     </div>

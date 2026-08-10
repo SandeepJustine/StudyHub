@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/utils/prisma";
 import { UserRole } from "@/types/common";
 import { verifyRecaptcha, isRecaptchaEnabled } from "@/lib/captcha";
+import { verifyImpersonationJWT } from "@/lib/auth/impersonation";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -145,8 +146,6 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        // The 'user' object's shape differs by provider. We cast to 'any' to safely
-        // access properties that may not exist on the type from a social provider.
         token.userId = user.id;
         token.role = user.role as UserRole;
         token.phone = (user as any).phone ?? undefined;
@@ -156,6 +155,26 @@ export const authOptions: NextAuthOptions = {
         token.instructorId = (user as any).instructorId ?? undefined;
         token.emailVerified = (user as any).emailVerified ?? undefined;
         token.avatar = (user as any).avatar ?? (user as any).image ?? undefined;
+      } else if (!token.userId) {
+        const cookieStore = await import("next/headers").then(m => m.cookies());
+        const impersonationToken = cookieStore.get("x-impersonation-token")?.value;
+        if (impersonationToken) {
+          const payload = verifyImpersonationJWT(impersonationToken);
+          if (payload) {
+            token.userId = payload.userId;
+            token.sub = payload.sub;
+            token.email = payload.email;
+            token.name = payload.name;
+            token.role = payload.role as UserRole;
+            token.phone = payload.phone;
+            token.locale = payload.locale || "en";
+            token.avatar = payload.avatar;
+            token.emailVerified = payload.emailVerified;
+            token.institutionId = payload.institutionId;
+            token.studentId = payload.studentId;
+            token.instructorId = payload.instructorId;
+          }
+        }
       }
       return token;
     },
@@ -174,9 +193,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account, profile }) {
-      // Only allow verified emails for non-credentials providers
       if (account?.provider !== "credentials") {
-        // Additional checks for social login
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email! },
         });

@@ -23,6 +23,8 @@ interface Transaction {
   yourEarnings: number;
   platformFee: number;
   date: string;
+  status?: string;
+  studentName?: string;
 }
 
 interface Payout {
@@ -255,14 +257,30 @@ export default function InstructorEarningsPage() {
               {recentTransactions.map((t) => (
                 <div key={t.id} className="flex items-center justify-between p-3 bg-grey-light/50 rounded-lg">
                   <div>
-                    <h4 className="font-semibold text-navy">{t.courseTitle || 'Unknown Course'}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-navy">{t.courseTitle || 'Unknown Course'}</h4>
+                      {t.status && (
+                        <Badge variant={t.status === 'COMPLETED' ? 'success' : 'warning'} size="sm">
+                          {t.status}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-grey-medium">Transaction: {t.id.slice(0, 8)}</p>
+                    {t.studentName && (
+                      <p className="text-xs text-grey-medium">Student: {t.studentName}</p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-green">{formatCurrency(t.yourEarnings)}</p>
-                    <p className="text-xs text-grey-medium">
-                      Platform fee: {formatCurrency(t.platformFee || 0)}
-                    </p>
+                    {t.status === 'PENDING' ? (
+                      <p className="font-semibold text-yellow-600">Pending</p>
+                    ) : (
+                      <>
+                        <p className="font-semibold text-green">{formatCurrency(t.yourEarnings || 0)}</p>
+                        <p className="text-xs text-grey-medium">
+                          Platform fee: {formatCurrency(t.platformFee || 0)}
+                        </p>
+                      </>
+                    )}
                     <p className="text-xs text-grey-medium">{formatDate(t.date)}</p>
                   </div>
                 </div>

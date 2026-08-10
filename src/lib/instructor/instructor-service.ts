@@ -96,7 +96,7 @@ class InstructorService {
    * Builds a 12-month revenue series plus payout + transaction history.
    */
   async getEarningsSummary(instructorId: string) {
-    const [instructor, payouts, pending, paid, transactions] = await Promise.all([
+    const [instructor, payouts, pending, paid, transactions, pendingTransactions] = await Promise.all([
       prisma.instructor.findUnique({ where: { id: instructorId } }),
       prisma.payout.findMany({
         where: { instructorId },
@@ -115,6 +115,12 @@ class InstructorService {
         where: { instructorId, status: 'COMPLETED' },
         include: { course: { select: { title: true } } },
         orderBy: { completedAt: 'desc' },
+        take: 10,
+      }),
+      prisma.transaction.findMany({
+        where: { instructorId, status: 'PENDING' },
+        include: { course: { select: { title: true } }, user: { select: { fullName: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
         take: 10,
       }),
     ]);
@@ -160,14 +166,28 @@ class InstructorService {
         processedAt: p.processedAt,
         createdAt: p.createdAt,
       })),
-      recentTransactions: transactions.map((t) => ({
-        id: t.id,
-        amount: t.amount,
-        courseTitle: t.course?.title,
-        platformFee: t.platformFee,
-        yourEarnings: t.instructorPayout,
-        date: t.completedAt ?? t.createdAt,
-      })),
+      recentTransactions: [
+        ...transactions.map((t) => ({
+          id: t.id,
+          amount: t.amount,
+          courseTitle: t.course?.title,
+          platformFee: t.platformFee,
+          yourEarnings: t.instructorPayout,
+          date: t.completedAt ?? t.createdAt,
+          status: 'COMPLETED',
+          studentName: undefined,
+        })),
+        ...pendingTransactions.map((t) => ({
+          id: t.id,
+          amount: t.amount,
+          courseTitle: t.course?.title,
+          platformFee: t.platformFee,
+          yourEarnings: undefined,
+          date: t.createdAt,
+          status: 'PENDING',
+          studentName: t.user?.fullName || t.user?.email || undefined,
+        })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
       monthlyEarnings: months,
     };
   }

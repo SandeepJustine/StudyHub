@@ -302,6 +302,7 @@ model Student {
   certificates  Certificate[]
   jobApplications JobApplication[]
   courseReviews CourseReview[]
+  ratings       InstructorRating[]
   assignmentSubmissions AssignmentSubmission[]
   studentExperiments StudentExperiment[]
   studentBadges StudentBadge[]
@@ -338,6 +339,7 @@ model Instructor {
   studentsCount Int      @default(0)
   rating        Float    @default(0)
   certificateSignatures CertificateSignature[]
+  ratings       InstructorRating[]
 }
 
 model CorporateClient {
@@ -619,6 +621,20 @@ model CourseReview {
   createdAt     DateTime @default(now())
 
   @@unique([courseId, studentId])
+}
+
+model InstructorRating {
+  id            String   @id @default(cuid())
+  instructorId  String
+  instructor    Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id])
+  rating        Int      // 1-5
+  comment       String?
+  isAnonymous   Boolean @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([instructorId, studentId])
 }
 
 model CourseModule {

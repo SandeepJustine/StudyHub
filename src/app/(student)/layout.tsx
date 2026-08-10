@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/layouts/dashboard/shell';
-import { LayoutDashboard, BookOpen, GraduationCap, Calendar, MessageSquare, Award, Briefcase, Settings, Video, FileText, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Calendar, MessageSquare, Award, Briefcase, Settings, Video, FileText, FlaskConical, HelpCircle } from 'lucide-react';
 
 const studentMenuItems = [
   { label: 'Dashboard', href: '/student/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -14,6 +14,7 @@ const studentMenuItems = [
   { label: 'Community', href: '/student/community', icon: <MessageSquare size={20} /> },
   { label: 'Certificates', href: '/student/certificates', icon: <Award size={20} /> },
   { label: 'Jobs', href: '/student/jobs', icon: <Briefcase size={20} /> },
+  { label: 'Support', href: '/student/support', icon: <HelpCircle size={20} /> },
   { label: 'Settings', href: '/student/settings', icon: <Settings size={20} /> },
 ];
 

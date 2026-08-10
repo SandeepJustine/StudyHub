@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { DashboardShell } from '@/components/layouts/dashboard/shell';
 import {
   LayoutDashboard,
@@ -15,7 +16,9 @@ import {
   Settings,
   Award,
   FileText,
+  UserCheck,
 } from 'lucide-react';
+import ImpersonationBanner from '@/components/admin/impersonation-banner';
 
 const adminMenuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -40,14 +43,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/auth/login');
   }
 
+  const cookieStore = await cookies();
+  const impersonationToken = cookieStore.get('x-impersonation-token')?.value;
+  const adminToken = cookieStore.get('x-impersonation-admin')?.value;
+  const isImpersonating = !!impersonationToken && !!adminToken;
+
   return (
-    <DashboardShell
-      role="PLATFORM_ADMIN"
-      title="Admin Dashboard"
-      description="Platform management and analytics"
-      menuItems={adminMenuItems}
-    >
-      {children}
-    </DashboardShell>
+    <div className="min-h-screen">
+      {isImpersonating && <ImpersonationBanner />}
+      <DashboardShell
+        role="PLATFORM_ADMIN"
+        title="Admin Dashboard"
+        description="Platform management and analytics"
+        menuItems={adminMenuItems}
+      >
+        {children}
+      </DashboardShell>
+    </div>
   );
 }

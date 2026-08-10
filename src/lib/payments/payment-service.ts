@@ -283,61 +283,70 @@ export class PaymentService {
       }
     } else if (metadata?.type === 'course_enrollment' && metadata.courseId) {
       // Create enrollment record when payment is confirmed
-      const existingEnrollment = await prisma.enrollment.findFirst({
-        where: {
-          studentId: transaction.userId,
-          courseId: metadata.courseId,
-        },
+      const studentProfile = await prisma.student.findUnique({
+        where: { userId: transaction.userId },
+        select: { id: true },
       });
 
-      let enrollment = null;
-      if (!existingEnrollment) {
-        const course = await prisma.course.findUnique({
-          where: { id: metadata.courseId },
-          select: { modules: { select: { id: true } }, instructorId: true },
-        });
-
-        if (course) {
-          enrollment = await prisma.enrollment.create({
-            data: {
-              studentId: transaction.userId,
-              courseId: metadata.courseId,
-              totalModules: course.modules.length,
-              startedAt: new Date(),
-            },
-          });
-
-          await prisma.course.update({
-            where: { id: metadata.courseId },
-            data: { studentsCount: { increment: 1 } },
-          });
-
-          if (course.instructorId) {
-            await prisma.instructor.update({
-              where: { id: course.instructorId },
-              data: { studentsCount: { increment: 1 } },
-            });
-          }
-
-          logger.info('Enrollment created from webhook verification', { transactionId, courseId: metadata.courseId, userId: transaction.userId });
-        }
+      if (!studentProfile) {
+        logger.warn('Student profile not found for enrollment', { userId: transaction.userId, courseId: metadata.courseId });
       } else {
-        enrollment = existingEnrollment;
-        logger.info('Enrollment already exists for course enrollment payment', { transactionId, courseId: metadata.courseId });
-      }
-
-      // Link transaction to enrollment
-      if (enrollment) {
-        await prisma.transaction.update({
-          where: { id: transaction.id },
-          data: {
+        const existingEnrollment = await prisma.enrollment.findFirst({
+          where: {
+            studentId: studentProfile.id,
             courseId: metadata.courseId,
-            metadata: {
-              ...(transaction.metadata as any),
-              enrollmentId: enrollment.id,
-            },
           },
         });
+
+        let enrollment = null;
+        if (!existingEnrollment) {
+          const course = await prisma.course.findUnique({
+            where: { id: metadata.courseId },
+            select: { modules: { select: { id: true } }, instructorId: true },
+          });
+
+          if (course) {
+            enrollment = await prisma.enrollment.create({
+              data: {
+                studentId: studentProfile.id,
+                courseId: metadata.courseId,
+                totalModules: course.modules.length,
+                startedAt: new Date(),
+              },
+            });
+
+            await prisma.course.update({
+              where: { id: metadata.courseId },
+              data: { studentsCount: { increment: 1 } },
+            });
+
+            if (course.instructorId) {
+              await prisma.instructor.update({
+                where: { id: course.instructorId },
+                data: { studentsCount: { increment: 1 } },
+              });
+            }
+
+            logger.info('Enrollment created from webhook verification', { transactionId, courseId: metadata.courseId, userId: transaction.userId });
+          }
+        } else {
+          enrollment = existingEnrollment;
+          logger.info('Enrollment already exists for course enrollment payment', { transactionId, courseId: metadata.courseId });
+        }
+
+        // Link transaction to enrollment
+        if (enrollment) {
+          await prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              courseId: metadata.courseId,
+              metadata: {
+                ...(transaction.metadata as any),
+                enrollmentId: enrollment.id,
+              },
+            },
+          });
+        }
       }
     }
 

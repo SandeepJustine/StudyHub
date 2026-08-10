@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Toast } from '@/components/ui/toast';
 import { PageHero } from '@/components/ui/page-hero';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, MessageSquare, HelpCircle, Building2 } from 'lucide-react';
 
 export default function ContactPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,11 +25,24 @@ export default function ContactPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // In production, send to API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsLoading(false);
-    setIsSubmitted(true);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+
+      setIsSubmitted(true);
+    } catch (error: any) {
+      setToast({ message: error.message || 'Failed to send message', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -246,6 +261,7 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

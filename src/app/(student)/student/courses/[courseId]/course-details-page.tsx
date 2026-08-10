@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseDetails } from '@/components/features/course/course-details';
 import { CourseEnrollment } from '@/components/features/course/course-enrollment';
@@ -59,13 +59,16 @@ interface CourseDetailsPageProps {
   enrollmentStatus: 'not_enrolled' | 'enrolled' | 'completed' | 'payment_pending';
   enrollmentProgress: number;
   isFavorite: boolean;
+  hasReviewed?: boolean;
+  onSubmitReview?: (rating: number, comment: string, isAnonymous: boolean) => Promise<void>;
 }
 
-export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress, isFavorite: initialIsFavorite }: CourseDetailsPageProps) {
+export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress, isFavorite: initialIsFavorite, hasReviewed, onSubmitReview }: CourseDetailsPageProps) {
   const router = useRouter();
   const [showEnrollment, setShowEnrollment] = useState(false);
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [reviewSubmitted, setReviewSubmitted] = useState(hasReviewed || false);
 
   const handleEnroll = () => {
     if (course.price > 0) {
@@ -124,6 +127,13 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
     router.refresh();
   };
 
+  const handleSubmitReview = useCallback(async (rating: number, comment: string, isAnonymous: boolean) => {
+    if (!onSubmitReview) return;
+    await onSubmitReview(rating, comment, isAnonymous);
+    setReviewSubmitted(true);
+    setToast({ message: 'Review submitted successfully!', type: 'success' });
+  }, [onSubmitReview]);
+
   if (enrollmentStatus === 'payment_pending') {
     return (
       <div className="min-h-screen bg-grey-light">
@@ -161,6 +171,8 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
         onStartModule={handleStartModule}
         isFavorite={isFavorite}
         onToggleFavorite={handleToggleFavorite}
+        onSubmitReview={reviewSubmitted ? undefined : handleSubmitReview}
+        hasReviewed={reviewSubmitted}
       />
 
       <Modal isOpen={showEnrollment} onClose={() => setShowEnrollment(false)} title={`Enroll in "${course.title}"`} size="lg">

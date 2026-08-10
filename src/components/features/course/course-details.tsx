@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Star,
   Clock,
@@ -23,6 +24,7 @@ import {
   Download,
   Share2,
   Heart,
+  Send,
 } from 'lucide-react';
 import { formatCurrency, formatDuration, formatDate } from '@/utils/formatters';
 
@@ -81,6 +83,8 @@ interface CourseDetailsProps {
   onStartModule?: (moduleId: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: (courseId: string) => void;
+  onSubmitReview?: (rating: number, comment: string, isAnonymous: boolean) => Promise<void>;
+  hasReviewed?: boolean;
 }
 
 export function CourseDetails({
@@ -92,9 +96,15 @@ export function CourseDetails({
   onStartModule,
   isFavorite = false,
   onToggleFavorite,
+  onSubmitReview,
+  hasReviewed = false,
 }: CourseDetailsProps) {
   const [expandedModules, setExpandedModules] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   const contentTypeIcons: Record<string, React.ReactNode> = {
     VIDEO: <Play size={14} />,
@@ -104,6 +114,23 @@ export function CourseDetails({
     QUIZ: <FileText size={14} />,
     ASSIGNMENT: <FileText size={14} />,
   };
+
+  const handleSubmitReview = async () => {
+    if (!onSubmitReview || reviewRating === 0) return;
+    setIsSubmittingReview(true);
+    try {
+      await onSubmitReview(reviewRating, reviewComment, false);
+      setReviewSubmitted(true);
+      setReviewRating(0);
+      setReviewComment('');
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const showReviewForm = (enrollmentStatus === 'enrolled' || enrollmentStatus === 'completed') && !hasReviewed;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -322,6 +349,53 @@ export function CourseDetails({
 
           <TabsContent value="reviews" className="pt-6">
             <Card padding="lg">
+              {showReviewForm && !reviewSubmitted && (
+                <div className="mb-6 p-4 bg-navy/5 rounded-xl">
+                  <h4 className="font-semibold text-navy mb-3">Write a Review</h4>
+                  <div className="flex items-center gap-2 mb-3">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setReviewRating(i)}
+                        className="p-1 transition-colors"
+                      >
+                        <Star
+                          size={24}
+                          className={i <= reviewRating ? 'text-yellow-500 fill-yellow-500' : 'text-grey-light hover:text-yellow-400'}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-sm text-grey-medium ml-2">
+                      {reviewRating > 0 ? `${reviewRating} / 5` : 'Select a rating'}
+                    </span>
+                  </div>
+                  <Textarea
+                    placeholder="Share your experience with this course..."
+                    value={reviewComment}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReviewComment(e.target.value)}
+                    className="mb-3"
+                    rows={3}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSubmitReview}
+                    loading={isSubmittingReview}
+                    disabled={reviewRating === 0}
+                    leftIcon={<Send size={14} />}
+                  >
+                    Submit Review
+                  </Button>
+                </div>
+              )}
+
+              {reviewSubmitted && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-sm text-green-800 font-medium">Thank you for your review!</p>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 mb-6">
                 <div className="text-center">
                   <p className="text-4xl font-bold text-navy">{course.rating.toFixed(1)}</p>

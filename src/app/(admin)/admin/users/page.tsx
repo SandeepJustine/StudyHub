@@ -18,6 +18,7 @@ import {
   Shield,
   CheckCircle,
   XCircle,
+  LogIn,
 } from 'lucide-react';
 import { formatDate, formatRelativeTime } from '@/utils/formatters';
 
@@ -119,6 +120,22 @@ export default function AdminUsersPage() {
   const handleLockToggle = () => {
     if (selectedUser) {
       handleUserAction('toggle_lock', selectedUser.id);
+    }
+  };
+
+  const handleImpersonate = async () => {
+    if (!selectedUser) return;
+    try {
+      const response = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUser.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to impersonate user');
+      window.location.href = data.dashboardPath;
+    } catch (err: any) {
+      setToast({ message: err.message, type: 'error' });
     }
   };
 
@@ -391,6 +408,9 @@ export default function AdminUsersPage() {
                 setShowConfirmModal(true);
               }}>
                 {selectedUser.isLocked ? 'Unlock Account' : 'Lock Account'}
+              </Button>
+              <Button variant="primary" onClick={handleImpersonate} leftIcon={<LogIn size={14} />}>
+                Login as User
               </Button>
             </div>
           </div>
