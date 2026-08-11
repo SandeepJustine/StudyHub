@@ -231,33 +231,20 @@ export class NotificationService {
 // Email Provider (Primary Channel)
 class EmailProvider implements NotificationProvider {
   private transporter: Transporter;
-  private fromAddress = process.env.EMAIL_FROM || 'StudyHub Malawi <noreply@studyhub.mw>';
+  private fromAddress = process.env.EMAIL_FROM || 'StudyHub Malawi <info@studyhubmw.com>';
   private fromName = 'StudyHub Malawi';
 
   constructor() {
-    // Configure based on environment
-    if (process.env.NODE_ENV === 'production') {
-      // Use SendGrid in production (or SES, Mailgun, etc.)
-      this.transporter = createTransport({
-        host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER || 'apikey',
-          pass: process.env.SMTP_PASS || process.env.SENDGRID_API_KEY!,
-        },
-      });
-    } else {
-      // Use Mailtrap or local SMTP for development
-      this.transporter = createTransport({
-        host: process.env.SMTP_HOST || 'smtp.mailtrap.io',
-        port: parseInt(process.env.SMTP_PORT || '2525'),
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-    }
+    // Use StudyHub mail server by default
+    this.transporter = createTransport({
+      host: process.env.SMTP_HOST || 'mail.studyhubmw.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER || 'info@studyhubmw.com',
+        pass: process.env.SMTP_PASS || '',
+      },
+    });
   }
 
   async send(notification: {
