@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   title: 'StudyHub Malawi - Learn. Practice. Succeed.',
   description: 'Malawi\'s premier digital learning and examination platform',
   keywords: 'education, Malawi, MSCE, JCE, ICAM, TEVETA, online learning, exam preparation',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
