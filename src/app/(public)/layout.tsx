@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
+import TawkToWidget from '@/components/features/support/tawk-to-widget';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,6 +16,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Link href="/about" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>About</Link>
       <Link href="/pricing" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
       <Link href="/courses" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Courses</Link>
+      <Link href="/events" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Events</Link>
       <Link href="/trainings" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Trainings</Link>
       <Link href="/contact" className="text-slate-300 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
     </>
@@ -77,6 +79,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       {/* Main Content */}
       {children}
 
+      {/* Tawk.to Chat Widget */}
+      <TawkToWidget />
+
       {/* Footer - Fixed visibility */}
       <footer className="bg-[#0A152E] text-white py-16">
         <div className="max-w-7xl mx-auto px-4">
@@ -121,6 +126,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <li>
                   <Link href="/about" className="text-slate-300 hover:text-white transition-colors text-sm">
                     About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/events" className="text-slate-300 hover:text-white transition-colors text-sm">
+                    Events
                   </Link>
                 </li>
                 <li>

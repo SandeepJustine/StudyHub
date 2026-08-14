@@ -1,2 +1,1 @@
-// Barrel export file
-export {};
+export { EventService } from './event-service';
