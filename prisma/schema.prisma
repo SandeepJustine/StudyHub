@@ -307,6 +307,7 @@ model Student {
   studentExperiments StudentExperiment[]
   studentBadges StudentBadge[]
   virtualLabAttempts VirtualLabAttempt[]
+  aiConversations AIConversation[]
 }
 
 model SchoolAdmin {
@@ -578,6 +579,7 @@ model Course {
   experiments   Experiment[]
   virtualLabs       VirtualLab[]
   pastPapers        PastPaper[]
+  aiConversations   AIConversation[]
 }
 
 model PastPaper {
@@ -665,6 +667,7 @@ model CourseModule {
   progress        ModuleProgress[]
   experiments     Experiment[]
   virtualLabs     VirtualLab[]
+  aiConversations AIConversation[]
 
   @@index([courseId, order])
 }
@@ -755,6 +758,7 @@ model Quiz {
   questions       Question[]
   examAttempts    ExamAttempt[]
   timeSpent       Int      @default(0)
+  aiConversations AIConversation[]
 }
 
 model Question {
@@ -1298,4 +1302,51 @@ model VirtualLabAttempt {
 
   @@index([studentId])
   @@index([virtualLabId])
+}
+
+// ---------------------------------------------------------------------------
+// AI Tutor
+// ---------------------------------------------------------------------------
+
+model AIConversation {
+  id           String        @id @default(cuid())
+  studentId    String
+  student      Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title        String?
+  subject      String?
+  courseId     String?
+  course       Course?       @relation(fields: [courseId], references: [id])
+  moduleId     String?
+  module       CourseModule? @relation(fields: [moduleId], references: [id])
+  quizId       String?
+  quiz         Quiz?         @relation(fields: [quizId], references: [id])
+  isActive     Boolean       @default(true)
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  messages     AIMessage[]
+
+  @@index([studentId, createdAt])
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+model AIMessage {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String        // user, assistant, system
+  content        String        @db.Text
+  subject        String?
+  courseId       String?
+  moduleId       String?
+  quizId         String?
+  tokensUsed     Int?
+  modelVersion   String?
+  isError        Boolean       @default(false)
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([conversationId, createdAt])
 }
