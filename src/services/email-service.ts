@@ -1,4 +1,19 @@
 import prisma from '@/lib/utils/prisma';
+import { render } from '@react-email/render';
+import { WelcomeEmail } from '@/emails/welcome';
+import { createTransport } from 'nodemailer';
+
+const transporter = createTransport({
+  host: process.env.SMTP_HOST || 'mail.studyhubmw.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER || 'info@studyhubmw.com',
+    pass: process.env.SMTP_PASS || '',
+  },
+});
+
+const fromAddress = process.env.EMAIL_FROM || 'StudyHub Malawi <info@studyhubmw.com>';
 
 export class EmailService {
   /**
@@ -147,6 +162,43 @@ export class EmailService {
       subject: `You've been invited to teach at ${institutionName}`,
       html: this.buildTeacherInvitationEmail(user.fullName, institutionName, link),
     });
+  }
+
+  /**
+   * Build and send welcome email with password reset link
+   */
+  async sendWelcomeEmailWithReset(userId: string, resetToken: string, options?: {
+    role?: string;
+    institutionName?: string;
+  }) {
+    const user = await this.getUser(userId);
+    if (!user?.email) return false;
+
+    const resetLink = `${process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/reset-password?token=${resetToken}`;
+
+    const emailHtml = render(
+      WelcomeEmail({
+        userName: user.fullName,
+        role: options?.role || 'Student',
+        resetLink,
+        institutionName: options?.institutionName,
+      })
+    );
+
+    try {
+      await transporter.sendMail({
+        from: fromAddress,
+        to: user.email,
+        subject: options?.institutionName
+          ? `Welcome to ${options.institutionName} on StudyHub!`
+          : 'Welcome to StudyHub Malawi!',
+        html: emailHtml,
+      });
+      return true;
+    } catch (error) {
+      console.error('Welcome email send failed:', error);
+      return false;
+    }
   }
 
   // ============ Private Helpers ============

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,10 +18,11 @@ interface DocumentViewerProps {
 
 export function DocumentViewer({ url, title, contentType, canDownload, paperId, onClose }: DocumentViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const isPdf = contentType === 'application/pdf';
-  const isDoc = contentType.includes('word') || contentType.includes('document');
+  const [loadError, setLoadError] = useState(false);
+  const isPdf = contentType?.includes('pdf');
+  const isDoc = contentType?.includes('word') || contentType?.includes('document');
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     const link = document.createElement('a');
     link.href = `/api/past-papers/${paperId}/download`;
     link.download = title;
@@ -29,6 +30,63 @@ export function DocumentViewer({ url, title, contentType, canDownload, paperId, 
     link.click();
     document.body.removeChild(link);
   };
+
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+  };
+
+  const handleIframeError = () => {
+    setIsLoading(false);
+    setLoadError(true);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setLoadError(true);
+      }
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (loadError) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-grey-light">
+            <div className="flex items-center gap-3">
+              <FileText size={20} className="text-navy" />
+              <h2 className="text-lg font-semibold text-navy truncate">{title}</h2>
+            </div>
+            {onClose && (
+              <Button variant="ghost" size="xs" className="h-9 w-9 p-0" onClick={onClose}>
+                <X size={20} />
+              </Button>
+            )}
+          </div>
+          <div className="flex-1 flex items-center justify-center bg-grey-light">
+            <div className="text-center p-8">
+              <FileText size={64} className="text-grey-medium mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-navy mb-2">Unable to load document</h3>
+              <p className="text-grey-dark mb-4">The document could not be displayed. You can try downloading it instead.</p>
+              <div className="flex items-center justify-center gap-3">
+                <Button variant="outline" onClick={() => window.open(url, '_blank')}>
+                  Open in New Tab
+                </Button>
+                {canDownload && (
+                  <Button onClick={handleDownload}>
+                    <Download size={16} className="mr-1" />
+                    Download
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -77,7 +135,8 @@ export function DocumentViewer({ url, title, contentType, canDownload, paperId, 
             <iframe
               src={url}
               className="w-full h-full border-0"
-              onLoad={() => setIsLoading(false)}
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
               title={title}
             />
           )}

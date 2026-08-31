@@ -49,17 +49,24 @@ export async function GET(
 
     try {
       const fileBuffer = await readFile(filePath);
-      
+      const contentType = paper.contentType || 'application/pdf';
+      const isPdf = contentType.includes('pdf');
+      const extension = isPdf ? 'pdf' : 'docx';
+      const safeName = paper.title.replace(/[^a-z0-9.-]/gi, '-');
+
       return new NextResponse(fileBuffer, {
         headers: {
-          'Content-Type': paper.contentType || 'application/pdf',
-          'Content-Disposition': `attachment; filename="${paper.title.replace(/[^a-z0-9.-]/gi, '-')}.${paper.contentType.includes('pdf') ? 'pdf' : 'docx'}"`,
+          'Content-Type': contentType,
+          'Content-Disposition': `attachment; filename="${safeName}.${extension}"`,
           'Content-Length': fileBuffer.length.toString(),
         },
       });
     } catch {
-      // If file not found on disk, redirect to URL
-      return NextResponse.redirect(paper.fileUrl);
+      if (paper.fileUrl.startsWith('http')) {
+        return NextResponse.redirect(paper.fileUrl);
+      }
+      const baseUrl = new URL(req.url).origin;
+      return NextResponse.redirect(new URL(paper.fileUrl, baseUrl).toString());
     }
 
   } catch (error) {

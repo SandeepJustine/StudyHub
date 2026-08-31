@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const clientId = session.user.id;
+    const clientId = await recruitmentService.getClientId(session.user.id);
 
     const result = await recruitmentService.getJobPostings({
       clientId,
@@ -37,7 +37,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const posting = await recruitmentService.createJobPosting(session.user.id, body);
+    const clientId = await recruitmentService.getClientId(session.user.id);
+    const posting = await recruitmentService.createJobPosting(clientId, body);
 
     return NextResponse.json({ success: true, data: posting }, { status: 201 });
   } catch (error: any) {

@@ -34,7 +34,7 @@ export interface TutorResponse {
 export class GeminiTutorService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: any = null;
-  private readonly MODEL_NAME = 'gemini-2.5-flash';
+  private readonly MODEL_NAME = 'gemini-3.6-flash';
 
   private getModel(): any {
     if (!this.model) {
@@ -137,7 +137,7 @@ CRITICAL RULES:
 
   private buildHistory(messages: TutorMessage[]): any[] {
     return messages.map((msg) => ({
-      role: msg.role,
+      role: msg.role === 'assistant' ? 'model' : msg.role,
       parts: [{ text: msg.content }],
     }));
   }

@@ -48,9 +48,35 @@ export default function NewCoursePage() {
     title: '',
     ContentType: 'VIDEO',
     contentUrl: '',
+    contentData: '',
     description: '',
     isPreview: false,
   });
+
+  const handleModuleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    uploadData.append('type', currentModule.ContentType);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setCurrentModule({ ...currentModule, contentUrl: data.data.url });
+        setToast({ message: 'File uploaded successfully', type: 'success' });
+      } else {
+        setToast({ message: data.error || 'Upload failed', type: 'error' });
+      }
+    } catch (err: any) {
+      setToast({ message: err.message || 'Upload failed', type: 'error' });
+    }
+  };
 
   const addModule = () => {
     if (!currentModule.title.trim()) {
@@ -58,7 +84,7 @@ export default function NewCoursePage() {
       return;
     }
     setModules([...modules, { ...currentModule, id: Date.now().toString(), order: modules.length + 1 }]);
-    setCurrentModule({ title: '', ContentType: 'VIDEO', contentUrl: '', description: '', isPreview: false });
+    setCurrentModule({ title: '', ContentType: 'VIDEO', contentUrl: '', contentData: '', description: '', isPreview: false });
   };
 
   const removeModule = (id: string) => {
@@ -148,15 +174,16 @@ export default function NewCoursePage() {
            price: courseData.price,
            tags: courseData.tags,
            thumbnail: thumbnail || undefined,
-          modules: modules.map((m, i) => ({
-            title: m.title,
-            description: m.description,
-            ContentType: m.ContentType,
-            contentUrl: m.contentUrl || '',
-            duration: m.duration || 0,
-            isPreview: m.isPreview || false,
-            order: i + 1,
-          })),
+           modules: modules.map((m, i) => ({
+             title: m.title,
+             description: m.description,
+             ContentType: m.ContentType,
+             contentUrl: m.contentUrl || '',
+             contentData: m.contentData || '',
+             duration: m.duration || 0,
+             isPreview: m.isPreview || false,
+             order: i + 1,
+           })),
         }),
       });
 
@@ -305,11 +332,75 @@ export default function NewCoursePage() {
                     </button>
                   ))}
                 </div>
-              </div>
-              <Input label="Content URL" placeholder="YouTube link, audio URL, etc." value={currentModule.contentUrl} onChange={(e) => setCurrentModule({ ...currentModule, contentUrl: e.target.value })} />
-              <Input label="Description (optional)" placeholder="Brief description of this module" value={currentModule.description} onChange={(e) => setCurrentModule({ ...currentModule, description: e.target.value })} />
-              <label className="flex items-center gap-2"><input type="checkbox" checked={currentModule.isPreview} onChange={(e) => setCurrentModule({ ...currentModule, isPreview: e.target.checked })} /><span className="text-sm text-grey-dark">Available as preview</span></label>
-              <Button variant="secondary" onClick={addModule} leftIcon={<Plus size={14} />}>Add Module</Button>
+               </div>
+
+               {currentModule.ContentType === 'VIDEO' && (
+                 <div className="space-y-3">
+                   <Input label="Video URL or Upload" placeholder="YouTube/Vimeo link or upload a video file" value={currentModule.contentUrl} onChange={(e) => setCurrentModule({ ...currentModule, contentUrl: e.target.value })} />
+                   <div className="flex items-center gap-3">
+                     <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                       <Upload size={16} />
+                       Upload Video File
+                       <input type="file" accept="video/*" className="hidden" onChange={handleModuleUpload} />
+                     </label>
+                   </div>
+                 </div>
+               )}
+
+               {currentModule.ContentType === 'AUDIO' && (
+                 <div className="space-y-3">
+                   <Input label="Audio URL or Upload" placeholder="SoundCloud/Spotify link or upload audio file" value={currentModule.contentUrl} onChange={(e) => setCurrentModule({ ...currentModule, contentUrl: e.target.value })} />
+                   <div className="flex items-center gap-3">
+                     <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                       <Upload size={16} />
+                       Upload Audio File
+                       <input type="file" accept="audio/*" className="hidden" onChange={handleModuleUpload} />
+                     </label>
+                   </div>
+                 </div>
+               )}
+
+               {currentModule.ContentType === 'TEXT' && (
+                 <div>
+                   <label className="block text-sm font-medium text-grey-dark mb-1.5">Text Content</label>
+                   <textarea className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy min-h-[200px] text-sm" placeholder="Write your lesson content here..." value={currentModule.contentData} onChange={(e) => setCurrentModule({ ...currentModule, contentData: e.target.value })} />
+                 </div>
+               )}
+
+               {currentModule.ContentType === 'PDF' && (
+                 <div className="space-y-3">
+                   <Input label="PDF URL or Upload" placeholder="Link to a PDF file or upload from device" value={currentModule.contentUrl} onChange={(e) => setCurrentModule({ ...currentModule, contentUrl: e.target.value })} />
+                   <div className="flex items-center gap-3">
+                     <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                       <Upload size={16} />
+                       Upload PDF File
+                       <input type="file" accept="application/pdf" className="hidden" onChange={handleModuleUpload} />
+                     </label>
+                   </div>
+                 </div>
+               )}
+
+               {currentModule.ContentType === 'SLIDES' && (
+                 <div className="space-y-3">
+                   <Input label="Slides URL (Google Slides, Canva, etc.)" placeholder="https://docs.google.com/presentation/..." value={currentModule.contentUrl} onChange={(e) => setCurrentModule({ ...currentModule, contentUrl: e.target.value })} />
+                   <div className="flex items-center gap-3">
+                     <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                       <Upload size={16} />
+                       Upload Slides File
+                       <input type="file" accept=".ppt,.pptx,.pdf,.key" className="hidden" onChange={handleModuleUpload} />
+                     </label>
+                   </div>
+                   <Input label="Embed Code (optional)" placeholder="<iframe>...</iframe>" value={currentModule.contentData} onChange={(e) => setCurrentModule({ ...currentModule, contentData: e.target.value })} />
+                 </div>
+               )}
+
+               {currentModule.ContentType === 'LINK' && (
+                 <Input label="Link URL" placeholder="https://..." value={currentModule.contentUrl} onChange={(e) => setCurrentModule({ ...currentModule, contentUrl: e.target.value })} />
+               )}
+
+               <Input label="Description (optional)" placeholder="Brief description of this module" value={currentModule.description} onChange={(e) => setCurrentModule({ ...currentModule, description: e.target.value })} />
+               <label className="flex items-center gap-2"><input type="checkbox" checked={currentModule.isPreview} onChange={(e) => setCurrentModule({ ...currentModule, isPreview: e.target.checked })} /><span className="text-sm text-grey-dark">Available as preview</span></label>
+               <Button variant="secondary" onClick={addModule} leftIcon={<Plus size={14} />}>Add Module</Button>
             </CardContent>
           </Card>
 

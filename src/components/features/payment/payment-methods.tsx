@@ -33,38 +33,40 @@ interface PaymentMethodsProps {
   selectedMethod?: string;
 }
 
-function AirtelLogo() {
+export function AirtelLogo() {
   return (
-    <div className="relative w-8 h-8 flex items-center justify-center">
+    <div className="relative w-10 h-10 flex items-center justify-center">
+      <div className="absolute inset-0 bg-white rounded-lg shadow-sm" />
       <Image
         src="/images/payments/airtel.webp"
         alt="Airtel Money"
-        width={32}
-        height={32}
-        className="object-contain"
+        width={40}
+        height={40}
+        className="object-contain relative z-10"
       />
     </div>
   );
 }
 
-function TnmLogo() {
+export function TnmLogo() {
   return (
-    <div className="relative w-8 h-8 flex items-center justify-center">
+    <div className="relative w-10 h-10 flex items-center justify-center">
+      <div className="absolute inset-0 bg-white rounded-lg shadow-sm" />
       <Image
         src="/images/payments/tnm.webp"
         alt="TNM Mpamba"
-        width={32}
-        height={32}
-        className="object-contain"
+        width={40}
+        height={40}
+        className="object-contain relative z-10"
       />
     </div>
   );
 }
 
-function CardPaymentIcon() {
+export function CardPaymentIcon() {
   return (
-    <div className="relative w-8 h-8 flex items-center justify-center">
-      <svg viewBox="0 0 64 40" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+    <div className="relative w-10 h-10 flex items-center justify-center">
+      <svg viewBox="0 0 64 40" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
         <rect x="1" y="1" width="62" height="38" rx="4" fill="#1A1A2E" stroke="#16213E" strokeWidth="1"/>
         <rect x="4" y="6" width="56" height="28" rx="2" fill="#0F3460"/>
         <text x="32" y="24" textAnchor="middle" fill="#E94560" fontSize="8" fontWeight="bold" fontFamily="Arial, sans-serif">VISA</text>

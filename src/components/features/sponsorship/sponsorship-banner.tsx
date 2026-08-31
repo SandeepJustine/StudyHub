@@ -52,6 +52,7 @@ export function SponsorshipBanner({ sponsorships, placement = 'HERO' }: Sponsors
               src={item.image}
               alt={item.sponsor}
               fill
+              sizes="100vw"
               className="object-cover group-hover:scale-105 transition-transform duration-500"
               unoptimized
             />

@@ -71,6 +71,7 @@ export default withAuth(
           pathname.startsWith('/privacy') ||
           pathname.startsWith('/terms') ||
           pathname.startsWith('/courses') ||
+          pathname.startsWith('/events') ||
           pathname.startsWith('/trainings') ||
           pathname.startsWith('/auth/login') ||
           pathname.startsWith('/auth/register') ||
@@ -94,6 +95,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|images/|icons/|fonts/|locales/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images/|icons/|fonts/|locales/|uploads/).*)',
   ],
 };

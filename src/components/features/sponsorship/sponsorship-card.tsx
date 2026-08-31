@@ -53,6 +53,7 @@ export function SponsorshipCard({ sponsorships, placement = 'FEATURED_LISTING' }
                 src={item.image}
                 alt={item.sponsor}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                 unoptimized
               />

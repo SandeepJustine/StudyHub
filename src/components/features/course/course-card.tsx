@@ -28,6 +28,16 @@ interface CourseCardProps {
   onView?: (courseId: string) => void;
 }
 
+function getLocalImageSrc(src: string): string {
+  try {
+    const url = new URL(src, typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin);
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1') {
+      return url.pathname + url.search;
+    }
+  } catch {}
+  return src;
+}
+
 export function CourseCard({ course, onEnroll, onView }: CourseCardProps) {
   return (
     <Card hover padding="none" className="overflow-hidden">
@@ -35,10 +45,12 @@ export function CourseCard({ course, onEnroll, onView }: CourseCardProps) {
       <div className="relative h-48 bg-navy/5">
         {course.thumbnail ? (
           <Image
-            src={course.thumbnail}
+            src={getLocalImageSrc(course.thumbnail)}
             alt={course.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="flex items-center justify-center h-full">

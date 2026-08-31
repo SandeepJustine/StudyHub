@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import { FileText, Download, Eye, CreditCard, Smartphone, Building2, Lock } from 'lucide-react';
+import { AirtelLogo, TnmLogo, CardPaymentIcon } from '@/components/features/payment/payment-methods';
 
 interface Certificate {
   id: string;
@@ -44,10 +45,10 @@ export function StudentCertificatesClient({ initialCertificates }: StudentCertif
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const paymentMethods = [
-    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <Smartphone size={20} /> },
-    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <Smartphone size={20} /> },
-    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={20} /> },
-    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CreditCard size={20} /> },
+    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <AirtelLogo /> },
+    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <TnmLogo /> },
+    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={24} className="text-navy" /> },
+    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CardPaymentIcon /> },
   ];
 
   const handleRequestCertificate = async () => {

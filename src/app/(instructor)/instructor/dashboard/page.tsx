@@ -120,7 +120,7 @@ export default async function InstructorDashboardPage() {
             Create New Course
           </Button>
         </Link>
-        <Link href="/instructor/live-classes/new">
+        <Link href="/instructor/live-classes/schedule">
           <Button variant="outline" leftIcon={<Video size={16} />}>
             Schedule Live Class
           </Button>

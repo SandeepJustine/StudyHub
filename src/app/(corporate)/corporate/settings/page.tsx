@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ export default function CorporateSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadProfile();
@@ -77,6 +79,35 @@ export default function CorporateSettingsPage() {
       setToast({ message: err.message || 'Failed to save profile', type: 'error' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/corporate/settings/logo', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setProfile(prev => prev ? { ...prev, logo: result.url } : null);
+        setToast({ message: 'Logo uploaded successfully', type: 'success' });
+      } else {
+        setToast({ message: result.error || 'Failed to upload logo', type: 'error' });
+      }
+    } catch (err: any) {
+      setToast({ message: err.message || 'Failed to upload logo', type: 'error' });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -184,7 +215,20 @@ export default function CorporateSettingsPage() {
                     onChange={(e) => setProfile({ ...profile, logo: e.target.value || null })}
                     placeholder="https://example.com/logo.png"
                   />
-                  <Button variant="outline" size="sm" leftIcon={<Upload size={16} />}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Upload size={16} />}
+                    onClick={() => fileInputRef.current?.click()}
+                    loading={isUploading}
+                  >
                     Upload
                   </Button>
                 </div>

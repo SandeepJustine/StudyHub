@@ -18,6 +18,8 @@ interface WelcomeEmailProps {
   userName?: string;
   role?: string;
   features?: Array<{ icon: string; title: string; description: string }>;
+  resetLink?: string;
+  institutionName?: string;
 }
 
 export const WelcomeEmail = ({
@@ -29,6 +31,8 @@ export const WelcomeEmail = ({
     { icon: '🎓', title: 'Mock Exams', description: 'Prepare for real exams' },
     { icon: '💬', title: 'Community', description: 'Connect with other learners' },
   ],
+  resetLink,
+  institutionName,
 }: WelcomeEmailProps) => {
   return (
     <Html>
@@ -72,6 +76,28 @@ export const WelcomeEmail = ({
                 </Row>
               ))}
             </Section>
+
+            {resetLink && (
+              <>
+                <Text style={paragraph}>
+                  {institutionName
+                    ? `You have been added to ${institutionName} on StudyHub. Set your password to get started:`
+                    : 'Set your password to get started:'}
+                </Text>
+                <Section style={ctaContainer}>
+                  <Link href={resetLink} style={ctaButton}>
+                    Set Your Password
+                  </Link>
+                </Section>
+                <Text style={paragraph}>
+                  Once set, you can log in at{' '}
+                  <Link href={`${process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/login`} style={link}>
+                    {process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/login
+                  </Link>
+                  .
+                </Text>
+              </>
+            )}
 
             {/* CTA */}
             <Section style={ctaContainer}>

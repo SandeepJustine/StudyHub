@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -521,9 +523,17 @@ export function AITutorClient({ student, courses }: AITutorClientProps) {
                           )}
                         </div>
                       )}
-                      <p className="text-sm whitespace-pre-line leading-relaxed">
-                        {message.content}
-                      </p>
+                      {message.role === 'assistant' ? (
+                        <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:text-grey-dark prose-p:text-grey-dark prose-strong:text-grey-dark prose-code:bg-grey-lightest prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-grey-lightest prose-li:marker:text-purple-600 prose-blockquote:border-purple-300 prose-blockquote:text-grey-dark">
+                          <ReactMarkdown rehypePlugins={[[rehypeHighlight, { detect: true }]]}>
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm whitespace-pre-line leading-relaxed">
+                          {message.content}
+                        </p>
+                      )}
                       <p
                         className={`text-xs mt-2 ${
                           message.role === 'user' ? 'text-slate-300' : 'text-grey-medium'

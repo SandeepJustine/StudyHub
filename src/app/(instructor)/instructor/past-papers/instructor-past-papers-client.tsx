@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import { FileText, Upload, Download, Eye, Calendar, Search, Trash2, CreditCard, Smartphone, Building2, Check } from 'lucide-react';
+import { AirtelLogo, TnmLogo, CardPaymentIcon } from '@/components/features/payment/payment-methods';
 import { PRICING_TIERS, getTiersForRole } from '@/lib/billing/pricing-tiers';
 import { UpgradeBanner } from '@/components/features/subscription/upgrade-banner';
+import { DocumentViewer } from '@/components/features/past-papers/document-viewer';
 
 interface InstructorPastPapersClientProps {
   canUpload: boolean;
@@ -28,6 +30,7 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
   const [phone, setPhone] = useState('');
   const [subscribing, setSubscribing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [selectedPaper, setSelectedPaper] = useState<any>(null);
 
   const handleUpgrade = async () => {
     if (!selectedUpgradeTier || !paymentMethod) {
@@ -76,11 +79,20 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
     }
   };
 
+  const handleDownload = (paperId: string, title: string) => {
+    const link = document.createElement('a');
+    link.href = `/api/past-papers/${paperId}/download`;
+    link.download = title;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const paymentMethods = [
-    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <Smartphone size={20} /> },
-    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <Smartphone size={20} /> },
-    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={20} /> },
-    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CreditCard size={20} /> },
+    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <AirtelLogo /> },
+    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <TnmLogo /> },
+    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={24} className="text-navy" /> },
+    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CardPaymentIcon /> },
   ];
 
   const availableTiers = getTiersForRole('INSTRUCTOR').filter(t => t !== 'INSTRUCTOR_FREE');
@@ -137,8 +149,8 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
                   <td className="p-4"><Badge variant="success" size="sm">{paper.status}</Badge></td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="xs" className="h-8 w-8 p-0"><Eye size={14} /></Button>
-                      <Button variant="ghost" size="xs" className="h-8 w-8 p-0"><Download size={14} /></Button>
+                      <Button variant="ghost" size="xs" className="h-8 w-8 p-0" onClick={() => setSelectedPaper(paper)}><Eye size={14} /></Button>
+                      <Button variant="ghost" size="xs" className="h-8 w-8 p-0" onClick={() => handleDownload(paper.id, paper.title)}><Download size={14} /></Button>
                       <Button variant="ghost" size="xs" className="h-8 w-8 p-0 text-red hover:text-red-700"><Trash2 size={14} /></Button>
                     </div>
                   </td>
@@ -271,6 +283,18 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
       {/* Toast */}
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
+
+      {/* Document Viewer */}
+      {selectedPaper && (
+        <DocumentViewer
+          url={selectedPaper.fileUrl}
+          title={selectedPaper.title}
+          contentType={selectedPaper.contentType}
+          canDownload={true}
+          paperId={selectedPaper.id}
+          onClose={() => setSelectedPaper(null)}
+        />
       )}
     </div>
   );

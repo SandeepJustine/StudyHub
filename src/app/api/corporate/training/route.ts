@@ -12,7 +12,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const contracts = await trainingService.getClientContracts(session.user.id);
+    const clientId = await trainingService.getClientId(session.user.id);
+    const contracts = await trainingService.getClientContracts(clientId);
 
     return NextResponse.json({ success: true, data: contracts });
   } catch (error: any) {
@@ -29,7 +30,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const contract = await trainingService.createTrainingPackage(session.user.id, body);
+    const clientId = await trainingService.getClientId(session.user.id);
+    const contract = await trainingService.createTrainingPackage(clientId, body);
 
     return NextResponse.json({ success: true, data: contract }, { status: 201 });
   } catch (error: any) {

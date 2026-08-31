@@ -2,7 +2,7 @@ import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError } from '@/lib/utils/errors';
 import bcrypt from 'bcryptjs';
 import { emailService } from '@/services/email-service';
-import { AuthService } from '@/lib/auth/auth-service';
+import { generateVerificationToken } from '@/utils/helpers';
 
 export class InstitutionService {
   async getInstitutionByUserId(userId: string) {
@@ -268,14 +268,27 @@ export class InstitutionService {
         });
 
         if (!user) {
+          const token = generateVerificationToken();
+          const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
           user = await prisma.user.create({
             data: {
               email: studentData.email,
-              fullName: studentData.name,
+              fullName: studentData.name || studentData.fullName,
               role: 'STUDENT',
               passwordHash: await bcrypt.hash(Math.random().toString(36), 12),
+              passwordResetToken: token,
+              passwordResetExpires: expires,
             },
           });
+
+          try {
+            await emailService.sendWelcomeEmailWithReset(user.id, token, {
+              role: 'Student',
+              institutionName: institution.name,
+            });
+          } catch (error) {
+            console.error('Failed to send student welcome email:', error);
+          }
         }
 
         // Create student profile
@@ -455,18 +468,24 @@ export class InstitutionService {
       update: {},
     });
 
-    // Send invitation email with password reset link
+    // Send welcome email with password reset link
     if (institution) {
       try {
-        const authService = new AuthService();
-        const resetResult = await authService.requestPasswordReset(user.email);
-        if (resetResult.sent) {
-          const updatedUser = await prisma.user.findUnique({
-            where: { id: user.id },
-          });
-        }
+        const token = generateVerificationToken();
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            passwordResetToken: token,
+            passwordResetExpires: expires,
+          },
+        });
+        await emailService.sendWelcomeEmailWithReset(user.id, token, {
+          role: 'Instructor',
+          institutionName: institution.name,
+        });
       } catch (error) {
-        console.error('Failed to send teacher invitation email:', error);
+        console.error('Failed to send teacher welcome email:', error);
       }
     }
 

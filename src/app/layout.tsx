@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import '@/styles/globals.css';
+import 'highlight.js/styles/github.css';
 import { GoogleTranslate } from '@/components/ui/google-translate';
 
 const poppins = Poppins({

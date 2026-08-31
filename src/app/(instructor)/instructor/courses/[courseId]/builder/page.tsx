@@ -194,7 +194,7 @@ export default function CourseBuilderPage({ params }: { params: Promise<{ course
 
     const uploadData = new FormData();
     uploadData.append('file', file);
-    uploadData.append('type', 'VIDEO');
+    uploadData.append('type', formData.contentType);
 
     try {
       const response = await fetch('/api/upload', {
@@ -404,12 +404,26 @@ export default function CourseBuilderPage({ params }: { params: Promise<{ course
           )}
 
           {formData.contentType === 'AUDIO' && (
-            <Input
-              label="Audio URL or Upload"
-              placeholder="SoundCloud/Spotify link or upload audio file"
-              value={formData.contentUrl}
-              onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
-            />
+            <div className="space-y-3">
+              <Input
+                label="Audio URL or Upload"
+                placeholder="SoundCloud/Spotify link or upload audio file"
+                value={formData.contentUrl}
+                onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
+              />
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                  <Upload size={16} />
+                  Upload Audio File
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={handleUpload}
+                  />
+                </label>
+              </div>
+            </div>
           )}
 
           {formData.contentType === 'TEXT' && (
@@ -427,12 +441,26 @@ export default function CourseBuilderPage({ params }: { params: Promise<{ course
           )}
 
           {formData.contentType === 'PDF' && (
-            <Input
-              label="PDF URL"
-              placeholder="Upload or link to a PDF file"
-              value={formData.contentUrl}
-              onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
-            />
+            <div className="space-y-3">
+              <Input
+                label="PDF URL or Upload"
+                placeholder="Link to a PDF file or upload from device"
+                value={formData.contentUrl}
+                onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
+              />
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                  <Upload size={16} />
+                  Upload PDF File
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={handleUpload}
+                  />
+                </label>
+              </div>
+            </div>
           )}
 
           {formData.contentType === 'SLIDES' && (
@@ -443,6 +471,18 @@ export default function CourseBuilderPage({ params }: { params: Promise<{ course
                 value={formData.contentUrl}
                 onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
               />
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-grey-dark cursor-pointer">
+                  <Upload size={16} />
+                  Upload Slides File
+                  <input
+                    type="file"
+                    accept=".ppt,.pptx,.pdf,.key"
+                    className="hidden"
+                    onChange={handleUpload}
+                  />
+                </label>
+              </div>
               <Input
                 label="Embed Code (optional)"
                 placeholder="<iframe>...</iframe>"

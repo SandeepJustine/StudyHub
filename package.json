@@ -40,7 +40,9 @@
     "react-dnd-touch-backend": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-email": "^2.1.0",
+    "react-markdown": "^10.1.0",
     "recharts": "3.10.0",
+    "rehype-highlight": "^7.0.2",
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
     "tailwind-merge": "^2.2.1",
@@ -49,6 +51,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@testing-library/jest-dom": "7.0.0",
     "@testing-library/react": "^14.2.0",
     "@types/bcryptjs": "^2.4.6",

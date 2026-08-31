@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard, Smartphone, Building2 } from 'lucide-react';
+import { AirtelLogo, TnmLogo, CardPaymentIcon } from '@/components/features/payment/payment-methods';
 import { PRICING_TIERS } from '@/lib/billing/pricing-tiers';
 import { formatCurrency } from '@/utils/formatters';
 import { Input } from '@/components/ui/input';
@@ -25,10 +26,10 @@ export function SubscriptionForm({ currentTier, onSubscribe }: SubscriptionFormP
     .filter(([key]) => key.startsWith('STUDENT_'));
 
   const paymentMethods = [
-    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <Smartphone size={24} />, color: 'text-red' },
-    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <Smartphone size={24} />, color: 'text-blue-600' },
-    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={24} />, color: 'text-navy' },
-    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CreditCard size={24} />, color: 'text-green' },
+    { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: <AirtelLogo /> },
+    { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: <TnmLogo /> },
+    { id: 'BANK_TRANSFER', name: 'Bank Transfer', icon: <Building2 size={24} className="text-navy" /> },
+    { id: 'PAYCHANGU', name: 'Card Payment', icon: <CardPaymentIcon /> },
   ];
 
   const handleSubmit = async () => {
@@ -135,18 +136,18 @@ export function SubscriptionForm({ currentTier, onSubscribe }: SubscriptionFormP
           <h3 className="text-lg font-semibold text-navy">Select Payment Method</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                onClick={() => setPaymentMethod(method.id)}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  paymentMethod === method.id
-                    ? 'border-navy bg-navy/5'
-                    : 'border-grey-light hover:border-navy/50'
-                }`}
-              >
-                <div className={`${method.color} mb-2`}>{method.icon}</div>
-                <p className="text-sm font-medium text-grey-dark">{method.name}</p>
-              </button>
+               <button
+                 key={method.id}
+                 onClick={() => setPaymentMethod(method.id)}
+                 className={`p-4 rounded-xl border-2 transition-all ${
+                   paymentMethod === method.id
+                     ? 'border-navy bg-navy/5'
+                     : 'border-grey-light hover:border-navy/50'
+                 }`}
+               >
+                 <div className="mb-2">{method.icon}</div>
+                 <p className="text-sm font-medium text-grey-dark">{method.name}</p>
+               </button>
             ))}
           </div>
         </div>

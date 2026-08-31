@@ -82,7 +82,7 @@ export default function RecruitmentPage() {
       const response = await fetch(`/api/corporate/recruitment?${params.toString()}`);
       const result = await response.json();
       if (response.ok && result.success) {
-        setPostings(result.data || []);
+        setPostings(result.postings || []);
       } else {
         setToast({ message: result.error || 'Failed to load postings', type: 'error' });
       }

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Smartphone, Building2, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import Image from 'next/image';
+import { AirtelLogo, TnmLogo } from './payment-methods';
 
 interface PayChanguOperator {
   id: number;
@@ -126,19 +127,19 @@ export function PayoutRequestModal({
     {
       id: 'AIRTEL_MONEY',
       name: 'Airtel Money',
-      icon: <Image src="/images/payments/airtel.webp" alt="Airtel" width={28} height={28} className="object-contain" />,
+      icon: <AirtelLogo />,
       description: 'Payout to Airtel Money wallet',
     },
     {
       id: 'TNM_MPAMBA',
       name: 'TNM Mpamba',
-      icon: <Image src="/images/payments/tnm.webp" alt="TNM" width={28} height={28} className="object-contain" />,
+      icon: <TnmLogo />,
       description: 'Payout to TNM Mpamba wallet',
     },
     {
       id: 'BANK_TRANSFER',
       name: 'Bank Transfer',
-      icon: <Building2 size={20} />,
+      icon: <Building2 size={24} className="text-navy" />,
       description: 'Direct bank transfer',
     },
   ];
@@ -186,9 +187,9 @@ export function PayoutRequestModal({
                     ? 'border-navy bg-navy/5'
                     : 'border-grey-light hover:border-navy/50'
                 }`}
-              >
-                <span className={method === m.id ? 'text-navy' : 'text-grey-medium'}>{m.icon}</span>
-                <div>
+               >
+                 {m.icon}
+                 <div>
                   <p className="font-medium text-navy text-sm">{m.name}</p>
                   <p className="text-xs text-grey-medium">{m.description}</p>
                 </div>

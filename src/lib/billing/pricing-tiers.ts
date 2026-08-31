@@ -47,7 +47,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     annualPrice: null,
     features: [
       'Unlimited course access',
-      'AI Tutor assistance',
+      'ai:tutor',
       'Live class participation',
       'Mock examinations',
       'Digital certificates',
@@ -70,6 +70,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     annualPrice: 50000,
     features: [
       'All Premium features',
+      'ai:tutor',
       'Save 58% compared to monthly',
       'Early access to new features',
       'Exclusive webinars',

@@ -22,7 +22,7 @@ export function StudentPastPapersClient({ pastPapers, canDownload }: StudentPast
     <>
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
-        {[{ l:'Total Papers', v:pastPapers.length, i:<FileText size={16} className="text-orange-600" />, b:'bg-orange-50' },{ l:'Exam Boards', v:EXAM_BOARDS.length, i:<Search size={16} className="text-blue-600" />, b:'bg-blue-50' },{ l:'Subjects', v:SUBJECTS.length, i:<FileText size={16} className="text-green-600" />, b:'bg-green-50' },{ l:'Latest Year', v:2024, i:<Calendar size={16} className="text-purple-600" />, b:'bg-purple-50' }].map((s,i)=>(
+        {[{ l:'Total Papers', v:pastPapers.length, i:<FileText size={16} className="text-orange-600" />, b:'bg-orange-50' },{ l:'Exam Boards', v:EXAM_BOARDS.length, i:<Search size={16} className="text-blue-600" />, b:'bg-blue-50' },{ l:'Subjects', v:SUBJECTS.length, i:<FileText size={16} className="text-green-600" />, b:'bg-green-50' },{ l:'Latest Year', v:2026, i:<Calendar size={16} className="text-purple-600" />, b:'bg-purple-50' }].map((s,i)=>(
           <Card key={i} className="border-0 shadow-sm"><CardContent className="p-3 text-center"><div className={`p-1.5 rounded-lg ${s.b} inline-block mb-1`}>{s.i}</div><p className="text-xl font-bold text-navy">{s.v}</p><p className="text-xs text-grey-medium">{s.l}</p></CardContent></Card>
         ))}
       </div>
