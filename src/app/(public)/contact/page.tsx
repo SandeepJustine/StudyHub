@@ -138,7 +138,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-navy mb-1">Phone</h3>
-                    <p className="text-grey-dark">+265 888 000 000</p>
+                    <p className="text-grey-dark">+265 992 627 431</p>
                     <p className="text-sm text-grey-medium">Mon-Fri, 8am-5pm</p>
                   </div>
                 </div>
@@ -151,8 +151,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-navy mb-1">Email</h3>
-                    <p className="text-grey-dark">info@studyhub.mw</p>
-                    <p className="text-sm text-grey-medium">support@studyhub.mw</p>
+                    <p className="text-grey-dark">info@studyhubmw.com</p>
+                    <p className="text-sm text-grey-medium">support@studyhubmw.com</p>
                   </div>
                 </div>
               </Card>
