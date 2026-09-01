@@ -1,9 +1,10 @@
-import { BookOpen, Users, Calendar, Building2 } from 'lucide-react';
+import { BookOpen, Users, Calendar, Building2, MapPin, Monitor } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/formatters';
 import prisma from '@/lib/utils/prisma';
+import type { TrainingCategory, TrainingMode } from '@/types/corporate';
 
 export const metadata = {
   title: 'Corporate Trainings | StudyHub',
@@ -11,17 +12,15 @@ export const metadata = {
 };
 
 async function getPublicTrainings() {
-  return prisma.corporateContract.findMany({
-    where: { status: 'active' },
+  return prisma.corporateTrainingPackage.findMany({
+    where: { status: 'ACTIVE' },
     include: {
-      client: {
-        include: {
-          user: {
-            select: {
-              fullName: true,
-              avatar: true,
-            },
-          },
+      corporate: {
+        select: {
+          id: true,
+          companyName: true,
+          logo: true,
+          industry: true,
         },
       },
     },
@@ -29,40 +28,45 @@ async function getPublicTrainings() {
   });
 }
 
-interface TrainingContract {
+interface TrainingPackage {
   id: string;
   title: string;
-  description?: string | null;
-  employees: number;
-  courses: any;
-  totalAmount: number;
+  description: string;
+  category: TrainingCategory;
+  mode: TrainingMode;
+  totalBudget: number;
   status: string;
   startDate: Date;
   endDate: Date;
+  durationDays: number;
+  maximumParticipants: number;
+  enrolledCount: number;
+  certificationIncluded: boolean;
+  instructorName?: string | null;
+  curriculum: any;
   createdAt: Date;
-  client?: {
+  corporate?: {
     id: string;
     companyName: string;
     logo?: string | null;
-    user: {
-      fullName: string;
-      avatar?: string | null;
-    };
-  } | null;
+    industry?: string | null;
+  };
+}
+
+function getCategoryLabel(category: TrainingCategory): string {
+  return category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getModeIcon(mode: TrainingMode) {
+  switch (mode) {
+    case 'IN_PERSON': return <Building2 size={14} />;
+    case 'HYBRID': return <MapPin size={14} />;
+    default: return <Monitor size={14} />;
+  }
 }
 
 export default async function PublicTrainingsPage() {
-  const trainings = await getPublicTrainings() as TrainingContract[];
-
-  const parsedTrainings = trainings.map((training) => {
-    let parsedCourses: any[] = [];
-    try {
-      parsedCourses = JSON.parse(training.courses as string);
-    } catch {
-      parsedCourses = [];
-    }
-    return { ...training, courses: parsedCourses };
-  });
+  const packages = await getPublicTrainings() as TrainingPackage[];
 
   return (
     <div className="min-h-screen bg-white">
@@ -74,12 +78,12 @@ export default async function PublicTrainingsPage() {
           <div>
             <h1 className="text-3xl font-bold text-navy">Corporate Training Packages</h1>
             <p className="text-grey-dark mt-1">
-              Browse training contracts from companies across Malawi
+              Browse training packages from companies across Malawi
             </p>
           </div>
         </div>
 
-        {parsedTrainings.length === 0 ? (
+        {packages.length === 0 ? (
           <div className="text-center py-16">
             <Building2 size={64} className="mx-auto text-grey-medium mb-4" />
             <h3 className="text-xl font-semibold text-navy mb-2">No Training Packages Available</h3>
@@ -89,21 +93,15 @@ export default async function PublicTrainingsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {parsedTrainings.map((training) => (
-              <Card key={training.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            {packages.map((pkg) => (
+              <Card key={pkg.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3">
-                      {training.client?.logo ? (
+                      {pkg.corporate?.logo ? (
                         <img
-                          src={training.client.logo}
-                          alt={training.client.companyName}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      ) : training.client?.user.avatar ? (
-                        <img
-                          src={training.client.user.avatar}
-                          alt={training.client.user.fullName}
+                          src={pkg.corporate.logo}
+                          alt={pkg.corporate.companyName}
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       ) : (
@@ -112,73 +110,54 @@ export default async function PublicTrainingsPage() {
                         </div>
                       )}
                       <div>
-                        <h3 className="font-semibold text-navy text-lg">{training.title}</h3>
-                        {training.client?.companyName && (
-                          <p className="text-sm text-grey-dark">{training.client.companyName}</p>
+                        <h3 className="font-semibold text-navy text-lg">{pkg.title}</h3>
+                        {pkg.corporate?.companyName && (
+                          <p className="text-sm text-grey-dark">{pkg.corporate.companyName}</p>
                         )}
-                        <p className="text-xs text-grey-medium mt-1">
-                          by {training.client?.user.fullName || 'Unknown'}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="info" size="sm">{getCategoryLabel(pkg.category)}</Badge>
+                          <span className="flex items-center gap-1 text-xs text-grey-medium">
+                            {getModeIcon(pkg.mode)} {pkg.mode.replace('_', ' ')}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <Badge variant="success" size="sm">
-                      {training.status}
-                    </Badge>
+                    <Badge variant="success" size="sm">{pkg.status}</Badge>
                   </div>
 
-                  {training.description && (
+                  {pkg.description && (
                     <p className="text-sm text-grey-dark mb-4 line-clamp-2">
-                      {training.description}
+                      {pkg.description}
                     </p>
                   )}
 
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center gap-2 text-sm text-grey-dark">
                       <Users size={14} />
-                      <span>{training.employees} employees enrolled</span>
+                      <span>{pkg.enrolledCount}/{pkg.maximumParticipants} participants</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-grey-dark">
                       <Calendar size={14} />
                       <span>
-                        {new Date(training.startDate).toLocaleDateString()} -{' '}
-                        {new Date(training.endDate).toLocaleDateString()}
+                        {new Date(pkg.startDate).toLocaleDateString()} - {new Date(pkg.endDate).toLocaleDateString()}
+                        <span className="text-grey-medium ml-1">({pkg.durationDays} days)</span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-grey-dark">
                       <BookOpen size={14} />
-                      <span>{training.courses?.length || 0} courses included</span>
+                      <span>{pkg.curriculum?.length || 0} modules</span>
+                      {pkg.certificationIncluded && <span className="text-xs text-green">(Certificate included)</span>}
                     </div>
+                    {pkg.instructorName && (
+                      <div className="flex items-center gap-2 text-sm text-grey-dark">
+                        <span className="text-xs text-grey-medium">Instructor: {pkg.instructorName}</span>
+                      </div>
+                    )}
                   </div>
-
-                  {training.courses && training.courses.length > 0 && (
-                    <div className="space-y-2 mb-4">
-                      {training.courses.slice(0, 3).map((course: any) => (
-                        <div
-                          key={course.courseId}
-                          className="flex items-center justify-between p-2 bg-grey-light/30 rounded-lg"
-                        >
-                          <span className="text-sm text-navy">{course.title}</span>
-                          <div className="text-right">
-                            <span className="text-xs text-grey-medium">
-                              {course.quantity}x @ {formatCurrency(course.price)}
-                            </span>
-                            <p className="text-sm font-medium text-green">
-                              {formatCurrency(course.total)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {training.courses.length > 3 && (
-                        <p className="text-xs text-grey-medium text-center">
-                          +{training.courses.length - 3} more courses
-                        </p>
-                      )}
-                    </div>
-                  )}
 
                   <div className="flex items-center justify-between pt-3 border-t border-grey-light">
                     <p className="text-xl font-bold text-navy">
-                      Total: {formatCurrency(training.totalAmount)}
+                      {formatCurrency(pkg.totalBudget)}
                     </p>
                     <Button variant="outline" size="sm">
                       Contact Sales

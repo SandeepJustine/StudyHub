@@ -7,19 +7,21 @@ export async function GET(req: Request) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20;
     const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
     const skip = (page - 1) * limit;
+    const category = searchParams.get('category');
 
-    const [contracts, total] = await Promise.all([
-      prisma.corporateContract.findMany({
-        where: { status: 'active' },
+    const [packages, total] = await Promise.all([
+      prisma.corporateTrainingPackage.findMany({
+        where: {
+          status: 'ACTIVE',
+          ...(category ? { category: category as any } : {}),
+        },
         include: {
-          client: {
-            include: {
-              user: {
-                select: {
-                  fullName: true,
-                  avatar: true,
-                },
-              },
+          corporate: {
+            select: {
+              id: true,
+              companyName: true,
+              logo: true,
+              industry: true,
             },
           },
         },
@@ -27,43 +29,40 @@ export async function GET(req: Request) {
         skip,
         take: limit,
       }),
-      prisma.corporateContract.count({
-        where: { status: 'active' },
+      prisma.corporateTrainingPackage.count({
+        where: {
+          status: 'ACTIVE',
+          ...(category ? { category: category as any } : {}),
+        },
       }),
     ]);
 
-    const trainings = contracts.map((contract) => {
-      let parsedCourses: any[] = [];
-      try {
-        parsedCourses = JSON.parse(contract.courses as string);
-      } catch {
-        parsedCourses = [];
-      }
-
-      return {
-        id: contract.id,
-        title: contract.title,
-        description: contract.description,
-        employees: contract.employees,
-        courses: parsedCourses,
-        totalAmount: contract.totalAmount,
-        status: contract.status,
-        startDate: contract.startDate,
-        endDate: contract.endDate,
-        createdAt: contract.createdAt,
-        client: contract.client
-          ? {
-              id: contract.client.id,
-              companyName: contract.client.companyName,
-              logo: contract.client.logo,
-              user: {
-                fullName: contract.client.user.fullName,
-                avatar: contract.client.user.avatar,
-              },
-            }
-          : undefined,
-      };
-    });
+    const trainings = packages.map((pkg: any) => ({
+      id: pkg.id,
+      title: pkg.title,
+      description: pkg.description,
+      category: pkg.category,
+      mode: pkg.mode,
+      level: pkg.level,
+      pricePerParticipant: pkg.pricePerParticipant,
+      maximumParticipants: pkg.maximumParticipants,
+      totalBudget: pkg.totalBudget,
+      status: pkg.status,
+      startDate: pkg.startDate,
+      endDate: pkg.endDate,
+      durationDays: pkg.durationDays,
+      certificationIncluded: pkg.certificationIncluded,
+      instructorName: pkg.instructorName,
+      createdAt: pkg.createdAt,
+      client: pkg.corporate
+        ? {
+            id: pkg.corporate.id,
+            companyName: pkg.corporate.companyName,
+            logo: pkg.corporate.logo,
+            industry: pkg.corporate.industry,
+          }
+        : undefined,
+    }));
 
     const totalPages = Math.ceil(total / limit);
 

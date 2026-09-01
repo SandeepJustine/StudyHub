@@ -352,7 +352,7 @@ model CorporateClient {
   companySize   String?
   isVerified    Boolean  @default(false)  // ➕ ADD THIS
   logo          String?                   // ➕ ADD THIS (optional)
-  contracts     CorporateContract[]
+  contracts     CorporateTrainingPackage[]
   jobPostings   RecruitmentPosting[]
 }
 
@@ -864,19 +864,116 @@ model JobApplication {
   @@unique([postingId, studentId])
 }
 
-model CorporateContract {
-  id            String   @id @default(cuid())
-  clientId      String
-  client        CorporateClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?
-  employees     Int      @default(0)
-  courses       Json     // Array of course packages
-  totalAmount   Int
-  status        String   @default("draft")
-  startDate     DateTime
-  endDate       DateTime
-  createdAt     DateTime @default(now())
+enum TrainingCategory {
+  EXCEL
+  LEADERSHIP
+  CYBERSECURITY
+  DATA_ANALYSIS
+  PROJECT_MANAGEMENT
+  COMMUNICATION
+  FINANCE
+  MARKETING
+  HR_MANAGEMENT
+  CUSTOMER_SERVICE
+  SALES
+  CODING
+  DESIGN
+  COMPLIANCE
+  OTHER
+}
+
+enum TrainingMode {
+  ONLINE
+  IN_PERSON
+  HYBRID
+}
+
+enum TrainingLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum TrainingStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum OnlinePlatform {
+  ZOOM
+  GOOGLE_MEET
+  TEAMS
+  STUDYHUB
+}
+
+model CorporateTrainingPackage {
+  id                    String   @id @default(cuid())
+  corporateId           String
+  corporate             CorporateClient @relation(fields: [corporateId], references: [id], onDelete: Cascade)
+  title                 String
+  description           String   @db.Text
+  category              TrainingCategory @default(OTHER)
+  mode                  TrainingMode @default(ONLINE)
+  level                 TrainingLevel @default(ALL_LEVELS)
+
+  // Pricing
+  pricePerParticipant   Int      @default(0)
+  minimumParticipants   Int      @default(1)
+  maximumParticipants   Int      @default(50)
+  totalBudget           Int      @default(0)
+  currency              String   @default("MWK")
+
+  // Schedule
+  startDate             DateTime
+  endDate               DateTime
+  durationDays          Int      @default(1)
+  schedule              Json?
+
+  // Content
+  curriculum            Json     // TrainingModule[]
+  prerequisites         String[] @default([])
+  learningOutcomes      String[] @default([])
+  materialsProvided     String[] @default([])
+  certificationIncluded Boolean  @default(false)
+
+  // Instructor
+  instructorId          String?
+  instructorName        String?
+  instructorBio         String?  @db.Text
+
+  // Location
+  location              Json?
+
+  // Online details
+  onlinePlatform        OnlinePlatform?
+  meetingLink           String?  @db.Text
+
+  // Requirements
+  requirements          Json     @default("{}")
+
+  // Status
+  status                TrainingStatus @default(DRAFT)
+  approvalNotes         String?  @db.Text
+  approvedBy            String?
+  approvedAt            DateTime?
+
+  // Stats
+  enrolledCount         Int      @default(0)
+  completionRate        Float    @default(0)
+  averageRating         Float    @default(0)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([corporateId, status])
+  @@index([category])
+  @@index([startDate])
 }
 
 // ---------------------------------------------------------------------------

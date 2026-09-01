@@ -32,19 +32,19 @@ export class CorporateAnalyticsService {
       prisma.jobApplication.count({ where: { posting: { clientId }, status: 'hired' } }),
     ]);
 
-    // Get contracts stats
+    // Get training packages stats
     const [totalContracts, activeContracts, draftContracts] = await Promise.all([
-      prisma.corporateContract.count({ where: { clientId } }),
-      prisma.corporateContract.count({ where: { clientId, status: 'active' } }),
-      prisma.corporateContract.count({ where: { clientId, status: 'draft' } }),
+      prisma.corporateTrainingPackage.count({ where: { corporateId: clientId } }),
+      prisma.corporateTrainingPackage.count({ where: { corporateId: clientId, status: 'ACTIVE' } }),
+      prisma.corporateTrainingPackage.count({ where: { corporateId: clientId, status: 'DRAFT' } }),
     ]);
 
     // Get total spending
-    const totalSpendingResult = await prisma.corporateContract.aggregate({
-      where: { clientId, status: 'active' },
-      _sum: { totalAmount: true },
+    const totalSpendingResult = await prisma.corporateTrainingPackage.aggregate({
+      where: { corporateId: clientId, status: 'ACTIVE' },
+      _sum: { totalBudget: true },
     });
-    const totalSpending = Number(totalSpendingResult._sum.totalAmount || 0);
+    const totalSpending = Number(totalSpendingResult._sum.totalBudget || 0);
 
     // Get recent applications
     const recentApplications = await prisma.jobApplication.findMany({

@@ -26,45 +26,45 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Corporate client not found' }, { status: 404 });
     }
 
-    const [activePostings, totalApplications, activeContracts, recentPostings, recentApplications, recentContracts] = await Promise.all([
-      prisma.recruitmentPosting.count({ where: { clientId: client.id, status: 'active' } }),
-      prisma.jobApplication.count({
-        where: {
-          posting: { clientId: client.id },
-        },
-      }),
-      prisma.corporateContract.count({ where: { clientId: client.id, status: 'active' } }),
-      prisma.recruitmentPosting.findMany({
-        where: { clientId: client.id },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        include: {
-          _count: { select: { applications: true } },
-        },
-      }),
-      prisma.jobApplication.findMany({
-        where: {
-          posting: { clientId: client.id },
-        },
-        orderBy: { appliedAt: 'desc' },
-        take: 10,
-        include: {
-          student: {
-            include: {
-              user: { select: { fullName: true } },
-            },
-          },
-          posting: {
-            select: { title: true },
-          },
-        },
-      }),
-      prisma.corporateContract.findMany({
-        where: { clientId: client.id },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      }),
-    ]);
+     const [activePostings, totalApplications, activeContracts, recentPostings, recentApplications, recentPackages] = await Promise.all([
+       prisma.recruitmentPosting.count({ where: { clientId: client.id, status: 'active' } }),
+       prisma.jobApplication.count({
+         where: {
+           posting: { clientId: client.id },
+         },
+       }),
+       prisma.corporateTrainingPackage.count({ where: { corporateId: client.id, status: 'ACTIVE' } }),
+       prisma.recruitmentPosting.findMany({
+         where: { clientId: client.id },
+         orderBy: { createdAt: 'desc' },
+         take: 5,
+         include: {
+           _count: { select: { applications: true } },
+         },
+       }),
+       prisma.jobApplication.findMany({
+         where: {
+           posting: { clientId: client.id },
+         },
+         orderBy: { appliedAt: 'desc' },
+         take: 10,
+         include: {
+           student: {
+             include: {
+               user: { select: { fullName: true } },
+             },
+           },
+           posting: {
+             select: { title: true },
+           },
+         },
+       }),
+       prisma.corporateTrainingPackage.findMany({
+         where: { corporateId: client.id },
+         orderBy: { createdAt: 'desc' },
+         take: 5,
+       }),
+     ]);
 
     const totalSpent = await prisma.transaction.aggregate({
       where: {
@@ -86,29 +86,28 @@ export async function GET(req: Request) {
           activeContracts,
           totalSpent: totalSpent._sum.amount || 0,
         },
-        recentPostings: recentPostings.map(p => ({
+        recentPostings: recentPostings.map((p: any) => ({
           id: p.id,
           title: p.title,
           status: p.status,
           applications: p._count.applications,
           createdAt: p.createdAt,
         })),
-        recentApplications: recentApplications.map(a => ({
+        recentApplications: recentApplications.map((a: any) => ({
           id: a.id,
-          applicantName: a.student.user.fullName,
-          position: a.posting.title,
+          applicantName: a.student?.user?.fullName || 'Unknown',
+          position: a.posting?.title || '',
           appliedAt: a.appliedAt,
           status: a.status,
         })),
-        recentContracts: recentContracts.map(c => ({
-          id: c.id,
-          title: c.title,
-          employees: c.employees,
-          startDate: c.startDate,
-          endDate: c.endDate,
-          status: c.status,
-          amount: c.totalAmount,
-          courses: c.courses,
+        recentPackages: recentPackages.map((pkg: any) => ({
+          id: pkg.id,
+          title: pkg.title,
+          category: pkg.category,
+          startDate: pkg.startDate,
+          endDate: pkg.endDate,
+          status: pkg.status,
+          budget: pkg.totalBudget,
         })),
       },
     });

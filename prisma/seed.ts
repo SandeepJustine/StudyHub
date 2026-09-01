@@ -15,8 +15,8 @@ async function cleanDatabase() {
   await prisma.forumThread.deleteMany();
   await prisma.jobApplication.deleteMany();
   await prisma.recruitmentPosting.deleteMany();
-  await prisma.corporateContract.deleteMany();
-  await prisma.eventRegistration.deleteMany();
+   await prisma.corporateTrainingPackage.deleteMany();
+   await prisma.eventRegistration.deleteMany();
   await prisma.event.deleteMany();
   await prisma.liveClass.deleteMany();
   await prisma.assignmentSubmission.deleteMany();

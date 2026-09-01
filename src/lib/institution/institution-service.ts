@@ -237,6 +237,7 @@ export class InstitutionService {
   async bulkEnrollStudents(institutionId: string, students: Array<{
     email: string;
     name: string;
+    fullName?: string;
     grade?: string;
     examBoard?: string;
     subjects?: string[];
@@ -273,7 +274,7 @@ export class InstitutionService {
           user = await prisma.user.create({
             data: {
               email: studentData.email,
-              fullName: studentData.name || studentData.fullName,
+              fullName: studentData.name || studentData.fullName || '',
               role: 'STUDENT',
               passwordHash: await bcrypt.hash(Math.random().toString(36), 12),
               passwordResetToken: token,
