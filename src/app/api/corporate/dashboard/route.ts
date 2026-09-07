@@ -26,7 +26,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Corporate client not found' }, { status: 404 });
     }
 
-     const [activePostings, totalApplications, activeContracts, recentPostings, recentApplications, recentPackages] = await Promise.all([
+     const [activePostings, totalApplications, activeContracts, recentPostings, recentApplications, recentPackages, pendingInquiries] = await Promise.all([
        prisma.recruitmentPosting.count({ where: { clientId: client.id, status: 'active' } }),
        prisma.jobApplication.count({
          where: {
@@ -63,6 +63,15 @@ export async function GET(req: Request) {
          where: { corporateId: client.id },
          orderBy: { createdAt: 'desc' },
          take: 5,
+       }),
+       prisma.notification.findMany({
+         where: {
+           userId: session.user.id,
+           type: 'TRAINING_INQUIRY',
+           status: 'pending',
+         },
+         orderBy: { createdAt: 'desc' },
+         take: 10,
        }),
      ]);
 
@@ -108,6 +117,13 @@ export async function GET(req: Request) {
           endDate: pkg.endDate,
           status: pkg.status,
           budget: pkg.totalBudget,
+        })),
+        pendingInquiries: pendingInquiries.map((inq: any) => ({
+          id: inq.id,
+          title: inq.title,
+          message: inq.message,
+          metadata: inq.metadata,
+          createdAt: inq.createdAt,
         })),
       },
     });

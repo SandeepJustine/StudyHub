@@ -9,7 +9,8 @@ import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import {
   Plus, Users, Calendar, DollarSign, BookOpen, Loader2, MapPin,
-  Clock, Award, Monitor, Video, Building2, ChevronRight,
+  Clock, Award, Monitor, Video, Building2, ChevronRight, Link2, QrCode,
+  Copy, Check,
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import type {
@@ -40,6 +41,51 @@ const LEVELS: { value: TrainingLevel; label: string }[] = [
   { value: 'ADVANCED', label: 'Advanced' },
   { value: 'ALL_LEVELS', label: 'All Levels' },
 ];
+
+const ONLINE_PLATFORMS: { value: 'ZOOM' | 'GOOGLE_MEET' | 'TEAMS' | 'STUDYHUB'; label: string; placeholder: string }[] = [
+  { value: 'ZOOM', label: 'Zoom', placeholder: 'https://zoom.us/j/XXXXXXXXXX' },
+  { value: 'GOOGLE_MEET', label: 'Google Meet', placeholder: 'https://meet.google.com/xxx-xxxx-xxx' },
+  { value: 'TEAMS', label: 'Microsoft Teams', placeholder: 'https://teams.microsoft.com/l/meetup-join/...' },
+  { value: 'STUDYHUB', label: 'StudyHub Meet', placeholder: 'https://meet.studyhub.mw/...' },
+];
+
+function generateQRCodeUrl(data: string, size = 200): string {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;
+}
+
+function QRCodeDisplay({ url, title }: { url: string; title?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (!url) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-3 p-4 bg-grey-light/30 rounded-lg">
+      {title && <p className="text-sm font-medium text-navy">{title}</p>}
+      <img
+        src={generateQRCodeUrl(url, 180)}
+        alt="Meeting QR Code"
+        className="w-[180px] h-[180px] border border-grey-light rounded-lg"
+      />
+      <div className="flex items-center gap-2 w-full">
+        <input
+          type="text"
+          value={url}
+          readOnly
+          className="flex-1 px-3 py-1.5 text-xs border border-grey-light rounded bg-white truncate"
+        />
+        <Button variant="outline" size="sm" onClick={handleCopy}>
+          {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const STATUS_COLORS: Record<TrainingStatus, string> = {
   DRAFT: 'neutral',
@@ -301,7 +347,26 @@ export default function TrainingPage() {
                     <span>{pkg.location.venue}, {pkg.location.city}</span>
                   </div>
                 )}
+                {pkg.meetingLink && (
+                  <div className="flex items-center gap-2">
+                    <Link2 size={14} className="text-navy" />
+                    <a
+                      href={pkg.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-xs truncate max-w-[200px]"
+                    >
+                      {pkg.onlinePlatform?.replace('_', ' ')} Meeting Link
+                    </a>
+                  </div>
+                )}
               </div>
+
+              {pkg.meetingLink && (
+                <div className="mt-3">
+                  <QRCodeDisplay url={pkg.meetingLink} title={`${pkg.onlinePlatform?.replace('_', ' ')} QR Code`} />
+                </div>
+              )}
 
               <div className="flex gap-2 mt-4">
                 <Button variant="outline" size="sm">View Details</Button>
@@ -526,6 +591,48 @@ export default function TrainingPage() {
                   value={formData.location.city}
                   onChange={(e) => setFormData({ ...formData, location: { ...formData.location, city: e.target.value } })}
                 />
+              </div>
+            )}
+
+            {(formData.mode === 'ONLINE' || formData.mode === 'HYBRID') && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-navy flex items-center gap-2">
+                  <Link2 size={18} />
+                  Online Meeting Details
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-grey-dark mb-1.5">Platform</label>
+                    <select
+                      className="w-full px-4 py-3 border-2 border-grey-light rounded-lg"
+                      value={formData.onlinePlatform}
+                      onChange={(e) => setFormData({ ...formData, onlinePlatform: e.target.value as any })}
+                    >
+                      {ONLINE_PLATFORMS.map((p) => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <Input
+                    label="Meeting Link"
+                    placeholder={ONLINE_PLATFORMS.find(p => p.value === formData.onlinePlatform)?.placeholder}
+                    value={formData.meetingLink}
+                    onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                  />
+                </div>
+                {formData.meetingLink && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <QRCodeDisplay url={formData.meetingLink} title={`${formData.onlinePlatform} Meeting QR Code`} />
+                    <div className="flex flex-col justify-center text-sm text-grey-dark space-y-2">
+                      <p className="font-medium text-navy">Meeting Access Instructions:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Scan the QR code to join on mobile</li>
+                        <li>Copy the link to share with participants</li>
+                        <li>Platform: {formData.onlinePlatform?.replace('_', ' ')}</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -1,32 +1,14 @@
-import { BookOpen, Users, Calendar, Building2, MapPin, Monitor } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { BookOpen, Users, Calendar, Building2, MapPin, Monitor, X, Send, Mail, Phone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { formatCurrency } from '@/utils/formatters';
-import prisma from '@/lib/utils/prisma';
 import type { TrainingCategory, TrainingMode } from '@/types/corporate';
-
-export const metadata = {
-  title: 'Corporate Trainings | StudyHub',
-  description: 'Explore corporate training packages from companies across Malawi',
-};
-
-async function getPublicTrainings() {
-  return prisma.corporateTrainingPackage.findMany({
-    where: { status: 'ACTIVE' },
-    include: {
-      corporate: {
-        select: {
-          id: true,
-          companyName: true,
-          logo: true,
-          industry: true,
-        },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-}
 
 interface TrainingPackage {
   id: string;
@@ -36,15 +18,15 @@ interface TrainingPackage {
   mode: TrainingMode;
   totalBudget: number;
   status: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   durationDays: number;
   maximumParticipants: number;
   enrolledCount: number;
   certificationIncluded: boolean;
   instructorName?: string | null;
   curriculum: any;
-  createdAt: Date;
+  createdAt: string;
   corporate?: {
     id: string;
     companyName: string;
@@ -65,8 +47,76 @@ function getModeIcon(mode: TrainingMode) {
   }
 }
 
-export default async function PublicTrainingsPage() {
-  const packages = await getPublicTrainings() as TrainingPackage[];
+export default function PublicTrainingsPage() {
+  const [packages, setPackages] = useState<TrainingPackage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPackage, setSelectedPackage] = useState<TrainingPackage | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  useEffect(() => {
+    loadPackages();
+  }, []);
+
+  const loadPackages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/public/trainings');
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setPackages(result.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load trainings', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleContactSales = (pkg: TrainingPackage) => {
+    setSelectedPackage(pkg);
+    setContactForm(prev => ({
+      ...prev,
+      message: `I am interested in the "${pkg.title}" training package by ${pkg.corporate?.companyName || 'your company'}. Please provide more information.`,
+    }));
+    setSubmitSuccess(false);
+    setShowContactModal(true);
+  };
+
+  const handleSubmitInquiry = async () => {
+    if (!contactForm.name || !contactForm.email) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/public/contact-sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...contactForm,
+          packageId: selectedPackage?.id,
+          packageName: selectedPackage?.title,
+          companyName: selectedPackage?.corporate?.companyName,
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitSuccess(true);
+        setContactForm({ name: '', email: '', phone: '', company: '', message: '' });
+      }
+    } catch (error) {
+      console.error('Failed to submit inquiry', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,7 +133,21 @@ export default async function PublicTrainingsPage() {
           </div>
         </div>
 
-        {packages.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2].map(i => (
+              <Card key={i} className="border-0 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-6 bg-grey-light/50 rounded w-3/4"></div>
+                    <div className="h-4 bg-grey-light/50 rounded w-1/2"></div>
+                    <div className="h-4 bg-grey-light/50 rounded w-1/4"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : packages.length === 0 ? (
           <div className="text-center py-16">
             <Building2 size={64} className="mx-auto text-grey-medium mb-4" />
             <h3 className="text-xl font-semibold text-navy mb-2">No Training Packages Available</h3>
@@ -159,7 +223,7 @@ export default async function PublicTrainingsPage() {
                     <p className="text-xl font-bold text-navy">
                       {formatCurrency(pkg.totalBudget)}
                     </p>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleContactSales(pkg)}>
                       Contact Sales
                     </Button>
                   </div>
@@ -169,6 +233,91 @@ export default async function PublicTrainingsPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        title="Contact Sales"
+        size="md"
+      >
+        {selectedPackage && !submitSuccess ? (
+          <div className="space-y-4">
+            <div className="p-3 bg-grey-light/50 rounded-lg">
+              <p className="text-sm font-medium text-navy">{selectedPackage.title}</p>
+              <p className="text-xs text-grey-medium">by {selectedPackage.corporate?.companyName || 'Company'}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Your Name *"
+                placeholder="John Banda"
+                value={contactForm.name}
+                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+              />
+              <Input
+                label="Email *"
+                type="email"
+                placeholder="john@company.com"
+                value={contactForm.email}
+                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Phone"
+                placeholder="+265 888 000 000"
+                value={contactForm.phone}
+                onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+              />
+              <Input
+                label="Company"
+                placeholder="Your Company Ltd"
+                value={contactForm.company}
+                onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-grey-dark">Message</label>
+              <textarea
+                className="w-full px-4 py-3 border-2 border-grey-light rounded-lg min-h-[100px]"
+                placeholder="Tell us about your training needs..."
+                value={contactForm.message}
+                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setShowContactModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSubmitInquiry}
+                loading={isSubmitting}
+                disabled={!contactForm.name || !contactForm.email}
+                leftIcon={<Send size={16} />}
+              >
+                Send Inquiry
+              </Button>
+            </div>
+          </div>
+        ) : submitSuccess ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Send size={24} className="text-green-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-navy mb-2">Inquiry Sent!</h3>
+            <p className="text-sm text-grey-dark mb-4">
+              Thank you for your interest. Our team will contact you within 24 hours.
+            </p>
+            <Button variant="outline" onClick={() => setShowContactModal(false)}>
+              Close
+            </Button>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

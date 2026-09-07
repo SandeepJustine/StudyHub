@@ -33,15 +33,28 @@ interface DashboardData {
     appliedAt: string;
     status: string;
   }>;
-  recentContracts: Array<{
+  recentPackages: Array<{
     id: string;
     title: string;
-    employees: number;
+    category: string;
     startDate: string;
     endDate: string;
     status: string;
-    amount: number;
-    courses: any[];
+    budget: number;
+  }>;
+  pendingInquiries: Array<{
+    id: string;
+    title: string;
+    message: string;
+    metadata: {
+      applicantName: string;
+      applicantEmail: string;
+      applicantPhone?: string;
+      applicantCompany?: string;
+      packageName: string;
+      message?: string;
+    };
+    createdAt: string;
   }>;
 }
 
@@ -69,6 +82,22 @@ export default function CorporateDashboardPage() {
       setError(err.message || 'Failed to load dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleInquiryResponse = async (inquiryId: string, action: 'confirm' | 'reject') => {
+    try {
+      const response = await fetch(`/api/corporate/training/inquiries/${inquiryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        loadDashboard();
+      }
+    } catch (err) {
+      console.error('Failed to respond to inquiry:', err);
     }
   };
 
@@ -288,39 +317,102 @@ export default function CorporateDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Training Contracts */}
+      {/* Training Packages */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Training Contracts</CardTitle>
-            <Link href="/corporate/training">
+            <CardTitle>Training Packages</CardTitle>
+            <Link href="/corporate/contracts">
               <Button variant="ghost" size="sm">View All</Button>
             </Link>
           </div>
         </CardHeader>
         <CardContent>
-          {data.recentContracts.length === 0 ? (
+          {data.recentPackages.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-grey-medium">No training contracts yet</p>
+              <p className="text-grey-medium">No training packages yet</p>
               <Link href="/corporate/training">
                 <Button variant="primary" size="sm" className="mt-3">Create your first package</Button>
               </Link>
             </div>
           ) : (
             <div className="space-y-4">
-              {data.recentContracts.map((contract) => (
-                <div key={contract.id} className="flex items-center justify-between p-4 bg-grey-light/50 rounded-lg">
+              {data.recentPackages.map((pkg) => (
+                <div key={pkg.id} className="flex items-center justify-between p-4 bg-grey-light/50 rounded-lg">
                   <div>
-                    <h3 className="font-semibold text-navy">{contract.title}</h3>
+                    <h3 className="font-semibold text-navy">{pkg.title}</h3>
                     <p className="text-sm text-grey-medium">
-                      {contract.employees} employees • {new Date(contract.startDate).toLocaleDateString()} - {new Date(contract.endDate).toLocaleDateString()}
+                      {pkg.category.replace('_', ' ')} • {new Date(pkg.startDate).toLocaleDateString()} - {new Date(pkg.endDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green">{formatCurrency(contract.amount)}</p>
-                    <Badge variant={contract.status === 'active' ? 'success' : 'warning'} size="sm">
-                      {contract.status}
+                    <p className="font-bold text-green">{formatCurrency(pkg.budget)}</p>
+                    <Badge variant={pkg.status === 'ACTIVE' ? 'success' : 'warning'} size="sm">
+                      {pkg.status}
                     </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pending Training Inquiries */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Training Inquiries</CardTitle>
+            <Badge variant={data.pendingInquiries.length > 0 ? 'warning' : 'neutral'} size="sm">
+              {data.pendingInquiries.length} pending
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {data.pendingInquiries.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-grey-medium">No pending inquiries</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {data.pendingInquiries.map((inq) => (
+                <div key={inq.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold text-navy">{inq.metadata?.applicantName || 'Applicant'}</h3>
+                      <p className="text-sm text-grey-medium">{inq.metadata?.applicantEmail}</p>
+                      {inq.metadata?.applicantCompany && (
+                        <p className="text-xs text-grey-medium">{inq.metadata.applicantCompany}</p>
+                      )}
+                    </div>
+                    <Badge variant="warning" size="sm">Pending</Badge>
+                  </div>
+                  <p className="text-sm text-grey-dark mb-1">
+                    Interested in: <strong>{inq.metadata?.packageName}</strong>
+                  </p>
+                  {inq.metadata?.message && (
+                    <p className="text-sm text-grey-medium italic mb-3">"{inq.metadata.message}"</p>
+                  )}
+                  <div className="flex items-center justify-between pt-2 border-t border-yellow-200">
+                    <span className="text-xs text-grey-medium">
+                      {formatRelativeTime(new Date(inq.createdAt))}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleInquiryResponse(inq.id, 'confirm')}
+                      >
+                        Confirm
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleInquiryResponse(inq.id, 'reject')}
+                      >
+                        Reject
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

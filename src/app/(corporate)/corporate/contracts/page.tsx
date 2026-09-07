@@ -8,10 +8,60 @@ import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import {
   FileText, Users, Calendar, DollarSign, Clock, CheckCircle,
-  AlertCircle, RefreshCw, Eye, Play,
+  AlertCircle, RefreshCw, Eye, Play, Link2, Copy, Check,
 } from 'lucide-react';
 import { formatCurrency, formatRelativeTime } from '@/utils/formatters';
 import type { CorporateTrainingPackage, TrainingStatus } from '@/types/corporate';
+
+function generateQRCodeUrl(data: string, size = 200): string {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;
+}
+
+function MeetingLinkCard({ pkg }: { pkg: CorporateTrainingPackage }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!pkg.meetingLink) return null;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(pkg.meetingLink!);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex items-center gap-2 mb-3">
+        <Link2 size={16} className="text-blue-600" />
+        <p className="text-sm font-medium text-blue-800">
+          {pkg.onlinePlatform?.replace('_', ' ')} Meeting Access
+        </p>
+      </div>
+      <div className="flex items-center gap-4">
+        <img
+          src={generateQRCodeUrl(pkg.meetingLink, 120)}
+          alt="Meeting QR Code"
+          className="w-[120px] h-[120px] border border-blue-200 rounded-lg bg-white"
+        />
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={pkg.meetingLink}
+              readOnly
+              className="flex-1 px-3 py-1.5 text-xs border border-blue-200 rounded bg-white truncate"
+            />
+            <Button variant="outline" size="sm" onClick={handleCopy}>
+              {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+            </Button>
+          </div>
+          <p className="text-xs text-blue-700">
+            Scan QR code or copy link to share with participants
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const statusConfig: Record<TrainingStatus, { label: string; variant: 'success' | 'warning' | 'error' | 'info' | 'neutral'; icon: React.ReactNode }> = {
   DRAFT: { label: 'Draft', variant: 'warning', icon: <Clock size={14} /> },
@@ -251,6 +301,8 @@ export default function ContractsPage() {
                 )}
               </div>
             )}
+
+            <MeetingLinkCard pkg={selectedPackage} />
 
             {selectedPackage.learningOutcomes && selectedPackage.learningOutcomes.length > 0 && (
               <div>

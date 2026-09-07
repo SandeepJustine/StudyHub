@@ -25,8 +25,13 @@ export class EmailService {
     html: string;
   }) {
     try {
-      // In production, use nodemailer or SendGrid
-      console.log('Sending email:', payload.subject, 'to', payload.to);
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.html,
+      });
+      console.log('Email sent:', info.messageId, 'to', payload.to);
       return true;
     } catch (error) {
       console.error('Email send failed:', error);
