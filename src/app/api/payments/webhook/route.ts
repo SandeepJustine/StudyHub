@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { paymentService } from '@/lib/payments/payment-service';
-import { PaymentMethod } from '@/types/subscription';
+import { PaymentMethod } from '@/hooks/types/subscription';
 import crypto from 'crypto';
 
 export async function POST(req: Request) {

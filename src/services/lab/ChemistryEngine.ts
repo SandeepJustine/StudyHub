@@ -1,7 +1,7 @@
 // services/lab/ChemistryEngine.ts
 // Rule-based chemistry experiment engine
 
-import { Chemical, ReactionRule, ExperimentStep, StudentObservation, ObservationType } from '../../types/lab';
+import { Chemical, ReactionRule, ExperimentStep, StudentObservation, ObservationType } from '../../hooks/types/lab';
 
 export class ChemistryEngine {
   private reactionRules: ReactionRule[] = [];

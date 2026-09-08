@@ -223,7 +223,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
     monthlyPrice: 25000,
     annualPrice: null,
     features: [
-      'course:create:unlimited',
+      'course:create',
       'analytics:advanced',
       'listing:priority',
       'marketing:tools',

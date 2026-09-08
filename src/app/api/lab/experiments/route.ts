@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/utils/prisma';
 import { ChemistryEngine } from '@/services/lab/ChemistryEngine';
-import { Experiment } from '@/types/lab';
-import { BiologyExperiment } from '@/types/lab';
-import { PhysicsExperiment } from '@/types/lab';
+import { Experiment } from '@/hooks/types/lab';
+import { BiologyExperiment } from '@/hooks/types/lab';
+import { PhysicsExperiment } from '@/hooks/types/lab';
 import { PhysicsEngine } from '@/services/lab/PhysicsEngine';
 import { BiologyEngine } from '@/services/lab/BiologyEngine';
 const engine = new ChemistryEngine();

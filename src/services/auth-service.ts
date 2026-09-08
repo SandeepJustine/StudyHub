@@ -4,7 +4,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { compare, hash } from 'bcryptjs';
 import { EmailService } from '@/lib/email/email-service';
-import { UserRole } from '@/types/common';
+import { UserRole } from '@/hooks/types/common';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),

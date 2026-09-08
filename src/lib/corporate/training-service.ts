@@ -7,7 +7,7 @@ import type {
   TrainingLevel,
   TrainingStatus,
   TrainingModule,
-} from '@/types/corporate';
+} from '@/hooks/types/corporate';
 
 const PrismaJson = {
   parse: (v: any) => v === null ? undefined : v,

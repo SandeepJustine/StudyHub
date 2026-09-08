@@ -1,6 +1,6 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError, AuthorizationError, PaymentError } from '@/lib/utils/errors';
-import { Certificate, CertificateTemplate, CertificateBranding, GenerateCertificateData, CertificateType, CertificatePaymentStatus } from '@/types/certificates';
+import { Certificate, CertificateTemplate, CertificateBranding, GenerateCertificateData, CertificateType, CertificatePaymentStatus } from '@/hooks/types/certificates';
 import { paymentService } from '@/lib/payments/payment-service';
 import { NotificationService } from '@/lib/notifications/notification-service';
 import { certificateTemplateService } from '@/lib/certificates/certificate-template-service';

@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/utils/prisma";
-import { UserRole } from "@/types/common";
+import { UserRole } from "@/hooks/types/common";
 import {
   AppError,
   ValidationError,
@@ -126,6 +126,22 @@ export class AuthService {
           userId: user.id,
           institutionId: institution.id,
           role: 'HEAD',
+        },
+      });
+    }
+
+    // Create default free subscription for instructors
+    if (data.role === 'INSTRUCTOR') {
+      await prisma.subscription.create({
+        data: {
+          userId: user.id,
+          tier: 'INSTRUCTOR_FREE',
+          cycle: 'MONTHLY',
+          status: 'active',
+          amount: 0,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          autoRenew: true,
         },
       });
     }

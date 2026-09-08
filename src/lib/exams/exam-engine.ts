@@ -1,6 +1,6 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError, ValidationError } from '@/lib/utils/errors';
-import { QuestionType } from '@/types/course';
+import { QuestionType } from '@/hooks/types/course';
 
 export class ExamEngine {
   /**

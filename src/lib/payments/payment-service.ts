@@ -1,7 +1,7 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, PaymentError } from '@/lib/utils/errors';
 import { NotificationService } from '@/lib/notifications/notification-service';
-import { PaymentMethod } from '@/types/subscription';
+import { PaymentMethod } from '@/hooks/types/subscription';
 import {
   PaymentRequest, 
   PaymentResult, 

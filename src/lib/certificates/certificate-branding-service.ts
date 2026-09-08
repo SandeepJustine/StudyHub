@@ -1,6 +1,6 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError } from '@/lib/utils/errors';
-import { CertificateBranding } from '@/types/certificates';
+import { CertificateBranding } from '@/hooks/types/certificates';
 
 export class CertificateBrandingService {
   async getBranding(institutionId: string): Promise<CertificateBranding | null> {

@@ -5,7 +5,7 @@ import {
   LabEquipmentItem, 
   Experiment, 
   StudentExperiment,
-} from '@/types/lab';
+} from '@/hooks/types/lab';
 
 interface LabStore {
   // Lab State

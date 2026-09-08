@@ -39,7 +39,7 @@
         "./src/services/*"
       ],
       "@types/*": [
-        "./src/types/*"
+        "src/hooks/types/*"
       ],
       "@emails/*": [
         "./src/emails/*"

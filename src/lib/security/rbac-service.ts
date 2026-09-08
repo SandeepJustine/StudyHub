@@ -1,4 +1,4 @@
-import { UserRole } from '@/types/common';
+import { UserRole } from '@/hooks/types/common';
 
 type Permission = string;
 type Role = UserRole;

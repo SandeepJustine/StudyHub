@@ -119,10 +119,10 @@ async function main() {
   console.log('  ✅ School Admin');
 
   const instructorUser = await prisma.user.upsert({
-    where: { email: 'instructor@studyhub.mw' },
+    where: { email: 'instructor@studyhubmw.com' },
     update: {},
     create: {
-      email: 'instructor@studyhub.mw',
+      email: 'instructor@studyhubmw.com',
       phone: '+265888000004',
       passwordHash: password,
       fullName: 'Prof. Michael Instructor',
@@ -145,10 +145,10 @@ async function main() {
   console.log('  ✅ Instructor');
 
   const corporateUser = await prisma.user.upsert({
-    where: { email: 'corporate@studyhub.mw' },
+    where: { email: 'corporate@studyhubmw.com' },
     update: {},
     create: {
-      email: 'corporate@studyhub.mw',
+      email: 'corporate@studyhubmw.com',
       phone: '+265888000005',
       passwordHash: password,
       fullName: 'David Corporate',
@@ -170,10 +170,10 @@ async function main() {
   console.log('  ✅ Corporate Client');
 
   const parentUser = await prisma.user.upsert({
-    where: { email: 'parent@studyhub.mw' },
+    where: { email: 'parent@studyhubmw.com' },
     update: {},
     create: {
-      email: 'parent@studyhub.mw',
+      email: 'parent@studyhubmw.com',
       phone: '+265888000006',
       passwordHash: password,
       fullName: 'Mary Parent',
@@ -202,17 +202,17 @@ async function main() {
   console.log('Creating institution...');
 
   const institution = await prisma.institution.upsert({
-    where: { slug: 'lilongwe-secondary' },
+    where: { slug: 'studyhub-academy' },
     update: {},
     create: {
-      name: 'Lilongwe Secondary School',
-      slug: 'lilongwe-secondary',
-      tier: SubscriptionTier.INSTITUTION_BRONZE,
-      maxStudents: 200,
+      name: 'StudyHub Academy',
+      slug: 'studyhub-academy',
+      tier: SubscriptionTier.INSTITUTION_GOLD,
+      maxStudents: 1000,
       currentStudents: 0,
       settings: {
-        contactPhone: '+265111000000',
-        contactEmail: 'info@lilongwesec.mw',
+        contactPhone: '+265997011620',
+        contactEmail: 'info@studyhubmw.com',
       },
     },
   });
@@ -262,7 +262,7 @@ async function main() {
       data: {
         userId: schoolAdmin.id,
         institutionId: institution.id,
-        tier: SubscriptionTier.INSTITUTION_BRONZE,
+        tier: SubscriptionTier.INSTITUTION_GOLD,
         cycle: BillingCycle.MONTHLY,
         status: 'active',
         amount: 100000,
@@ -332,13 +332,13 @@ async function main() {
   console.log('🎉 SEED COMPLETED SUCCESSFULLY');
   console.log('='.repeat(60));
   console.log('');
-  console.log('📋 Test Accounts (password: password123):');
-  console.log('  Admin:      admin@studyhub.mw');
-  console.log('  Student:    student@studyhub.mw');
-  console.log('  School:     school@studyhub.mw');
-  console.log('  Instructor: instructor@studyhub.mw');
-  console.log('  Corporate:  corporate@studyhub.mw');
-  console.log('  Parent:     parent@studyhub.mw');
+  console.log('📋 Test Accounts (password: StudyHubMW!@2063)');
+  console.log('  Admin:      admin@studyhubmw.com');
+  console.log('  Student:    student@studyhubmw.com');
+  console.log('  School:     school@studyhubmw.com');
+  console.log('  Instructor: instructor@studyhubmw.com');
+  console.log('  Corporate:  corporate@studyhubmw.com');
+  console.log('  Parent:     parent@studyhubmw.com');
   console.log('');
 }
 

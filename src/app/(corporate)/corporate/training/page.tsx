@@ -20,7 +20,7 @@ import type {
   TrainingLevel,
   TrainingStatus,
   TrainingModule,
-} from '@/types/corporate';
+} from '@/hooks/types/corporate';
 
 const CATEGORIES: TrainingCategory[] = [
   'EXCEL', 'LEADERSHIP', 'CYBERSECURITY', 'DATA_ANALYSIS',

@@ -1,9 +1,9 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError, ValidationError, PaymentError } from '@/lib/utils/errors';
-import { CourseStatus as ContentStatus, ContentType, QuestionType } from '@/types/course';
+import { CourseStatus as ContentStatus, ContentType, QuestionType } from '@/hooks/types/course';
 import { featureGating } from '@/lib/billing/feature-gating';
 import { PaymentService } from '@/lib/payments/payment-service';
-import { PaymentMethod } from '@/types/subscription';
+import { PaymentMethod } from '@/hooks/types/subscription';
 
 export class CourseService {
   /**

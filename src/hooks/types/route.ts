@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/utils/prisma';
-import { UserRole } from '@/types/common';
+import { UserRole } from '@/hooks/types/common';
 import { notificationService } from '@/lib/notifications/notification-service';
 
 const registerSchema = z.object({

@@ -1,7 +1,7 @@
 /**
  * Push notification service for in-app and browser notifications
  */
-import { RealtimePushPayload } from '@/types/notification';
+import { RealtimePushPayload } from '@/hooks/types/notification';
 import prisma from '@/lib/utils/prisma';
 
 export class PushNotificationService {

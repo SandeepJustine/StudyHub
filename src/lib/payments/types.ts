@@ -1,4 +1,4 @@
-import { PaymentMethod, TransactionStatus } from '@/types/subscription';
+import { PaymentMethod, TransactionStatus } from '@/hooks/types/subscription';
 
 export interface PaymentRequest {
   userId: string;

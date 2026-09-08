@@ -15,7 +15,7 @@ import {
   StudentObservation,
   LabEquipment,
   ObservationType,
-} from '@/types/lab';
+} from '@/hooks/types/lab';
 
 const ItemTypes = {
   EQUIPMENT: 'equipment',

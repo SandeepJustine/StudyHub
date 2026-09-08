@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import { Plus, Edit, Trash2, FileText, Check, X, Palette, Type, Layout, Upload } from 'lucide-react';
-import { CertificateTemplate, CertificateDesignConfig } from '@/types/certificates';
+import { CertificateTemplate, CertificateDesignConfig } from '@/hooks/types/certificates';
 import { CertificateTemplateManager } from '@/components/features/certificate/CertificateTemplateManager';
 import { TabContainer } from '@/components/shared/TabContainer';
 

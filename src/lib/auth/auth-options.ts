@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/utils/prisma";
-import { UserRole } from "@/types/common";
+import { UserRole } from "@/hooks/types/common";
 import { verifyRecaptcha, isRecaptchaEnabled } from "@/lib/captcha";
 import { verifyImpersonationJWT } from "@/lib/auth/impersonation";
 

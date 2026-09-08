@@ -1,6 +1,6 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError, AuthorizationError } from '@/lib/utils/errors';
-import { CertificateTemplate } from '@/types/certificates';
+import { CertificateTemplate } from '@/hooks/types/certificates';
 
 export class CertificateTemplateService {
   async createTemplate(data: {

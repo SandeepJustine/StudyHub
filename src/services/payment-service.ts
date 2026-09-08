@@ -1,5 +1,5 @@
 import { PaymentMethod, PaymentStatus } from '@prisma/client';
-import type { PaymentTransaction } from '@/types/payment';
+import type { PaymentTransaction } from '@/hooks/types/payment';
 import { AirtelMoneyAdapter } from '@/lib/payments/adapters/airtel-money.adapter';
 import { MpambaAdapter } from '@/lib/payments/adapters/tnm-mpamba.adapter';
 import { PayChanguAdapter } from '@/lib/payments/adapters/paychangu.adapter';

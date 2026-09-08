@@ -3,7 +3,7 @@ import { AppError, SubscriptionError, PaymentError } from '@/lib/utils/errors';
 import { PRICING_TIERS, getTierPricing, calculateProration } from './pricing-tiers';
 import { PaymentService } from '@/lib/payments/payment-service';
 import { NotificationService } from '@/lib/notifications/notification-service';
-import { SubscriptionTier, BillingCycle, PaymentMethod } from '@/types/subscription';
+import { SubscriptionTier, BillingCycle, PaymentMethod } from '@/hooks/types/subscription';
 
 export class SubscriptionService {
   private paymentService: PaymentService;

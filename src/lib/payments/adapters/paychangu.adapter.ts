@@ -6,8 +6,8 @@ import {
   PaymentVerification, 
   RefundResult,
   PaymentRequest 
-} from '@/types/payment';
-import { TransactionStatus } from '@/types/subscription';
+} from '@/hooks/types/payment';
+import { TransactionStatus } from '@/hooks/types/subscription';
 import { logger } from '@/lib/utils/logger';
 
 // ─── Response Types ───────────────────────────────────────────

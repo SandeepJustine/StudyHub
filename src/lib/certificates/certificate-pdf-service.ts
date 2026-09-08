@@ -1,4 +1,4 @@
-import { Certificate, CertificateTemplate, CertificateBranding } from '@/types/certificates';
+import { Certificate, CertificateTemplate, CertificateBranding } from '@/hooks/types/certificates';
 
 function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);

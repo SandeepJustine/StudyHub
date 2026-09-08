@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Specimen, CellOrganelle, MicroscopeView } from '@/types/lab';
+import { Specimen, CellOrganelle, MicroscopeView } from '@/hooks/types/lab';
 
 // ---- Structural types mirrored from BiologyEngine's internal (unexported) shapes ----
 // These aren't exported by BiologyEngine, so we derive them structurally from the

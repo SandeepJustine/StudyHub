@@ -11,7 +11,7 @@ import {
   AlertCircle, RefreshCw, Eye, Play, Link2, Copy, Check,
 } from 'lucide-react';
 import { formatCurrency, formatRelativeTime } from '@/utils/formatters';
-import type { CorporateTrainingPackage, TrainingStatus } from '@/types/corporate';
+import type { CorporateTrainingPackage, TrainingStatus } from '@/hooks/types/corporate';
 
 function generateQRCodeUrl(data: string, size = 200): string {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;

@@ -1,7 +1,7 @@
 // services/lab/PhysicsEngine.ts
 // Physics simulation engine
 
-import { PhysicsComponent, PhysicsExperiment, CircuitNode } from '../../types/lab';
+import { PhysicsComponent, PhysicsExperiment, CircuitNode } from '../../hooks/types/lab';
 
 interface PhysicsRule {
   id: string;

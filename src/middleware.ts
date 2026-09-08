@@ -1,7 +1,7 @@
 // src/middleware.ts - RBAC enforcement at API layer
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import { UserRole } from '@/types/common';
+import { UserRole } from '@/hooks/types/common';
 
 // Define role-based access control mappings to their dashboards
 const roleAccess: Record<UserRole, string[]> = {

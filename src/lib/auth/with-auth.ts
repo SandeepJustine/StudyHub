@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "./auth-options";
-import { UserRole } from "@/types/common";
+import { UserRole } from "@/hooks/types/common";
 import prisma from "@/lib/utils/prisma";
 
 /**

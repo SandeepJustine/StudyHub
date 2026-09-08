@@ -4,7 +4,7 @@
 import { 
   BiologyExperiment, Specimen, CellOrganelle, 
   MicroscopeView, BiologyEquipment 
-} from '../../types/lab';
+} from '../../hooks/types/lab';
 
 interface CellStructure {
   name: string;

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { formatCurrency } from '@/utils/formatters';
-import type { TrainingCategory, TrainingMode } from '@/types/corporate';
+import type { TrainingCategory, TrainingMode } from '@/hooks/types/corporate';
 
 interface TrainingPackage {
   id: string;
