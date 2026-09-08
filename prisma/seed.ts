@@ -51,10 +51,11 @@ async function cleanDatabase() {
 async function main() {
   console.log('🌱 Starting database seed...\n');
 
+  const PASSWORD = 'StudyHubMW!@2063';
+  const passwordHash = await bcrypt.hash(PASSWORD, 12);
+
   // Uncomment to wipe all data before reseeding:
   // await cleanDatabase();
-
-  const password = await bcrypt.hash('password123', 12);
 
   // ============================================
   // CREATE USERS
@@ -64,11 +65,11 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@studyhub.mw' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'admin@studyhub.mw',
       phone: '+265888000001',
-      passwordHash: password,
+      passwordHash,
       fullName: 'Platform Administrator',
       role: UserRole.PLATFORM_ADMIN,
       emailVerified: new Date(),
@@ -79,11 +80,11 @@ async function main() {
 
   const studentUser = await prisma.user.upsert({
     where: { email: 'student@studyhub.mw' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'student@studyhub.mw',
       phone: '+265888000002',
-      passwordHash: password,
+      passwordHash,
       fullName: 'John Student',
       role: UserRole.STUDENT,
       emailVerified: new Date(),
@@ -105,11 +106,11 @@ async function main() {
 
   const schoolAdmin = await prisma.user.upsert({
     where: { email: 'school@studyhub.mw' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'school@studyhub.mw',
       phone: '+265888000003',
-      passwordHash: password,
+      passwordHash,
       fullName: 'Sarah SchoolAdmin',
       role: UserRole.SCHOOL_ADMIN,
       emailVerified: new Date(),
@@ -120,11 +121,11 @@ async function main() {
 
   const instructorUser = await prisma.user.upsert({
     where: { email: 'instructor@studyhubmw.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'instructor@studyhubmw.com',
       phone: '+265888000004',
-      passwordHash: password,
+      passwordHash,
       fullName: 'Prof. Michael Instructor',
       role: UserRole.INSTRUCTOR,
       emailVerified: new Date(),
@@ -146,11 +147,11 @@ async function main() {
 
   const corporateUser = await prisma.user.upsert({
     where: { email: 'corporate@studyhubmw.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'corporate@studyhubmw.com',
       phone: '+265888000005',
-      passwordHash: password,
+      passwordHash,
       fullName: 'David Corporate',
       role: UserRole.CORPORATE_CLIENT,
       emailVerified: new Date(),
@@ -171,11 +172,11 @@ async function main() {
 
   const parentUser = await prisma.user.upsert({
     where: { email: 'parent@studyhubmw.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'parent@studyhubmw.com',
       phone: '+265888000006',
-      passwordHash: password,
+      passwordHash,
       fullName: 'Mary Parent',
       role: UserRole.PARENT,
       emailVerified: new Date(),
@@ -252,10 +253,12 @@ async function main() {
       },
     });
     console.log('  ✅ Student subscription');
+  } else {
+    console.log('  ℹ️  Student subscription already exists');
   }
 
   const existingInstSub = await prisma.subscription.findFirst({
-    where: { institutionId: institution.id, status: 'active' },
+    where: { userId: schoolAdmin.id, status: 'active' },
   });
   if (!existingInstSub) {
     await prisma.subscription.create({
@@ -272,6 +275,8 @@ async function main() {
       },
     });
     console.log('  ✅ Institution subscription');
+  } else {
+    console.log('  ℹ️  Institution subscription already exists');
   }
 
   const existingInstructorSub = await prisma.subscription.findFirst({
@@ -291,6 +296,8 @@ async function main() {
       },
     });
     console.log('  ✅ Instructor subscription');
+  } else {
+    console.log('  ℹ️  Instructor subscription already exists');
   }
 
   console.log('  ✅ Subscriptions checked/created\n');
@@ -325,6 +332,81 @@ async function main() {
   console.log('  ✅ Certificate templates checked/created\n');
 
   // ============================================
+  // VERIFICATION
+  // ============================================
+
+  console.log('Verifying seed data...');
+
+  const counts = {
+    users: await prisma.user.count(),
+    students: await prisma.student.count(),
+    instructors: await prisma.instructor.count(),
+    institutions: await prisma.institution.count(),
+    schoolAdmins: await prisma.schoolAdmin.count(),
+    corporateClients: await prisma.corporateClient.count(),
+    parents: await prisma.parent.count(),
+    subscriptions: await prisma.subscription.count(),
+    certificateTemplates: await prisma.certificateTemplate.count(),
+  };
+
+  console.log('  📊 Counts:', counts);
+
+  const expected = {
+    users: 6,
+    students: 1,
+    instructors: 1,
+    institutions: 1,
+    schoolAdmins: 1,
+    corporateClients: 1,
+    parents: 1,
+    subscriptions: 3,
+    certificateTemplates: 1,
+  };
+
+  const mismatches: string[] = [];
+  for (const [key, expectedCount] of Object.entries(expected)) {
+    const actual = counts[key as keyof typeof counts];
+    if (actual !== expectedCount) {
+      mismatches.push(`${key}: expected ${expectedCount}, got ${actual}`);
+    }
+  }
+
+  if (mismatches.length > 0) {
+    console.error('❌ Seed verification failed:');
+    mismatches.forEach(m => console.error('  -', m));
+    process.exit(1);
+  }
+
+  console.log('  ✅ All counts verified\n');
+
+  // Verify specific users
+  const expectedEmails = [
+    'admin@studyhub.mw',
+    'student@studyhub.mw',
+    'school@studyhub.mw',
+    'instructor@studyhubmw.com',
+    'corporate@studyhubmw.com',
+    'parent@studyhubmw.com',
+  ];
+
+  const users = await prisma.user.findMany({
+    where: { email: { in: expectedEmails } },
+    select: { email: true, role: true },
+  });
+
+  const foundEmails = users.map(u => u.email).sort();
+  const sortedExpected = [...expectedEmails].sort();
+
+  if (JSON.stringify(foundEmails) !== JSON.stringify(sortedExpected)) {
+    console.error('❌ Missing or extra users found');
+    console.error('  Expected:', sortedExpected);
+    console.error('  Found:', foundEmails);
+    process.exit(1);
+  }
+
+  console.log('  ✅ All expected users verified\n');
+
+  // ============================================
   // SUMMARY
   // ============================================
 
@@ -332,10 +414,10 @@ async function main() {
   console.log('🎉 SEED COMPLETED SUCCESSFULLY');
   console.log('='.repeat(60));
   console.log('');
-  console.log('📋 Test Accounts (password: StudyHubMW!@2063)');
-  console.log('  Admin:      admin@studyhubmw.com');
-  console.log('  Student:    student@studyhubmw.com');
-  console.log('  School:     school@studyhubmw.com');
+  console.log(`📋 Test Accounts (password: ${PASSWORD})`);
+  console.log('  Admin:      admin@studyhub.mw');
+  console.log('  Student:    student@studyhub.mw');
+  console.log('  School:     school@studyhub.mw');
   console.log('  Instructor: instructor@studyhubmw.com');
   console.log('  Corporate:  corporate@studyhubmw.com');
   console.log('  Parent:     parent@studyhubmw.com');
