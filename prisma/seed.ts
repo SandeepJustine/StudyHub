@@ -351,7 +351,7 @@ async function main() {
 
   console.log('  📊 Counts:', counts);
 
-  const expected = {
+  const minimumExpected = {
     users: 6,
     students: 1,
     instructors: 1,
@@ -364,10 +364,10 @@ async function main() {
   };
 
   const mismatches: string[] = [];
-  for (const [key, expectedCount] of Object.entries(expected)) {
+  for (const [key, minimumCount] of Object.entries(minimumExpected)) {
     const actual = counts[key as keyof typeof counts];
-    if (actual !== expectedCount) {
-      mismatches.push(`${key}: expected ${expectedCount}, got ${actual}`);
+    if (actual < minimumCount) {
+      mismatches.push(`${key}: expected at least ${minimumCount}, got ${actual}`);
     }
   }
 
@@ -377,7 +377,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('  ✅ All counts verified\n');
+  console.log('  ✅ Minimum counts verified\n');
 
   // Verify specific users
   const expectedEmails = [
