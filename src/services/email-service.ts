@@ -179,7 +179,7 @@ export class EmailService {
     const user = await this.getUser(userId);
     if (!user?.email) return false;
 
-    const resetLink = `${process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/reset-password?token=${resetToken}`;
+    const resetLink = `${process.env.NEXT_PUBLIC_URL || 'https://studyhubmw.com'}/auth/reset-password?token=${resetToken}`;
 
     const emailHtml = render(
       WelcomeEmail({

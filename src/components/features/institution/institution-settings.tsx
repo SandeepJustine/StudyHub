@@ -96,7 +96,7 @@ export function InstitutionSettings({ settings, tier, onSave }: InstitutionSetti
                 label="Slug"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                helperText="Used for your institution's URL: studyhub.mw/school/{slug}"
+                helperText="Used for your institution's URL: studyhubmw.com/school/{slug}"
               />
               <Input
                 label="Website"

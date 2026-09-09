@@ -47,7 +47,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ inquiryI
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden">
 <div style="background:#0D1B3D;padding:20px;text-align:center"><h1 style="color:#fff;margin:0">StudyHub Malawi</h1></div>
 <div style="padding:30px"><h2 style="color:#0D1B3D">Enrollment Confirmed!</h2><p>Hi ${applicantName},</p><p>Great news! Your enrollment in <strong>${packageName}</strong> has been confirmed by the training provider.</p><p>The provider will contact you soon with next steps and schedules.</p><p>Login to your account to view updates.</p>
-<a href="${process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/login" style="display:inline-block;background:#E63946;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;margin:20px 0">Login to StudyHub</a></div></div>`,
+<a href="${process.env.NEXT_PUBLIC_URL || 'https://studyhubmw.com'}/auth/login" style="display:inline-block;background:#E63946;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;margin:20px 0">Login to StudyHub</a></div></div>`,
           });
           if (!sent) {
             console.warn('Email returned false for:', applicantEmail);

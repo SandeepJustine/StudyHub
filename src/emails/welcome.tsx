@@ -43,7 +43,7 @@ export const WelcomeEmail = ({
           {/* Header */}
           <Section style={header}>
             <Img
-              src="https://studyhub.mw/logo-white.png"
+              src="https://studyhubmw.com/logo-white.png"
               width="150"
               height="40"
               alt="StudyHub Malawi"
@@ -91,8 +91,8 @@ export const WelcomeEmail = ({
                 </Section>
                 <Text style={paragraph}>
                   Once set, you can log in at{' '}
-                  <Link href={`${process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/login`} style={link}>
-                    {process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw'}/auth/login
+                  <Link href={`${process.env.NEXT_PUBLIC_URL || 'https://studyhubmw.com'}/auth/login`} style={link}>
+                    {process.env.NEXT_PUBLIC_URL || 'https://studyhubmw.com'}/auth/login
                   </Link>
                   .
                 </Text>
@@ -101,14 +101,14 @@ export const WelcomeEmail = ({
 
             {/* CTA */}
             <Section style={ctaContainer}>
-              <Link href="https://studyhub.mw/student/dashboard" style={ctaButton}>
+              <Link href="https://studyhubmw.com/student/dashboard" style={ctaButton}>
                 Start Learning Now
               </Link>
             </Section>
 
             <Text style={paragraph}>
               Need help getting started? Check out our{' '}
-              <Link href="https://studyhub.mw/help" style={link}>
+              <Link href="https://studyhubmw.com/help" style={link}>
                 Getting Started Guide
               </Link>
               .

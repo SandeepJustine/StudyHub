@@ -7,7 +7,7 @@ import prisma from '@/lib/utils/prisma';
 let currentSettings = {
   platformName: 'StudyHub Malawi',
   tagline: 'Learn. Practice. Succeed.',
-  supportEmail: 'support@studyhub.mw',
+  supportEmail: 'support@studyhubmw.com',
   supportPhone: '+265 888 000 000',
   minimumPayout: 10000,
   payoutDay: 15,

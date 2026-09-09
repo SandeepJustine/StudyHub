@@ -78,7 +78,7 @@ export default function AdminUsersPage() {
       setUsers([
         { id: '1', fullName: 'John Phiri', email: 'john@email.com', phone: '+265888000001', role: 'STUDENT', locale: 'en', isVerified: true, isLocked: false, stats: { subscriptions: 1, transactions: 5, notifications: 12 }, createdAt: '2025-01-15', lastLoginAt: new Date(Date.now() - 3600000).toISOString() },
         { id: '2', fullName: 'Mary Banda', email: 'mary@email.com', phone: '+265888000002', role: 'INSTRUCTOR', locale: 'en', isVerified: true, isLocked: false, stats: { subscriptions: 1, transactions: 25, notifications: 45 }, createdAt: '2025-03-10', lastLoginAt: new Date(Date.now() - 7200000).toISOString() },
-        { id: '3', fullName: 'Platform Admin', email: 'admin@studyhub.mw', phone: '+265888000000', role: 'PLATFORM_ADMIN', locale: 'en', isVerified: true, isLocked: false, stats: { subscriptions: 0, transactions: 0, notifications: 100 }, createdAt: '2025-01-01', lastLoginAt: new Date().toISOString() },
+        { id: '3', fullName: 'Platform Admin', email: 'admin@studyhubmw.com', phone: '+265888000000', role: 'PLATFORM_ADMIN', locale: 'en', isVerified: true, isLocked: false, stats: { subscriptions: 0, transactions: 0, notifications: 100 }, createdAt: '2025-01-01', lastLoginAt: new Date().toISOString() },
         { id: '4', fullName: 'Suspended User', email: 'suspended@email.com', phone: null, role: 'STUDENT', locale: 'en', isVerified: true, isLocked: true, stats: { subscriptions: 0, transactions: 1, notifications: 5 }, createdAt: '2025-08-20', lastLoginAt: null },
       ]);
       setPagination({ page: 1, limit: 20, total: 4, totalPages: 1 });

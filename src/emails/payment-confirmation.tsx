@@ -36,7 +36,7 @@ export const PaymentConfirmationEmail = ({
     month: 'long', 
     day: 'numeric' 
   }),
-  invoiceUrl = 'https://studyhub.mw/invoices/SH-20260723-ABC123',
+  invoiceUrl = 'https://studyhubmw.com/invoices/SH-20260723-ABC123',
 }: PaymentConfirmationEmailProps) => {
   return (
     <Html>
@@ -47,7 +47,7 @@ export const PaymentConfirmationEmail = ({
           {/* Header */}
           <Section style={header}>
             <Img
-              src="https://studyhub.mw/logo-color.png"
+              src="https://studyhubmw.com/logo-color.png"
               width="150"
               height="40"
               alt="StudyHub Malawi"
@@ -104,7 +104,7 @@ export const PaymentConfirmationEmail = ({
 
             {/* CTA Button */}
             <Section style={ctaContainer}>
-              <Link href="https://studyhub.mw/student/dashboard" style={ctaButton}>
+              <Link href="https://studyhubmw.com/student/dashboard" style={ctaButton}>
                 Go to Dashboard
               </Link>
             </Section>
@@ -127,8 +127,8 @@ export const PaymentConfirmationEmail = ({
             </Text>
             <Text style={footerText}>
               Need help? Contact us at{' '}
-              <Link href="mailto:support@studyhub.mw" style={link}>
-                support@studyhub.mw
+              <Link href="mailto:support@studyhubmw.com" style={link}>
+                support@studyhubmw.com
               </Link>
             </Text>
             <Text style={footerTextSmall}>

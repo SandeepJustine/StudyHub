@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       mobile: mobile,
       payment_method: 'mobile_money',
       currency: 'MWK',
-      email: 'test@studyhub.mw',
+      email: 'test@studyhubmw.com',
       first_name: 'Test',
       last_name: 'User',
     };

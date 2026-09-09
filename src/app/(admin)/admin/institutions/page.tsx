@@ -74,7 +74,7 @@ export default function AdminInstitutionsPage() {
 
   const handleViewPortal = (institution: any) => {
     // Open institution portal in new tab
-    window.open(`https://${institution.slug}.studyhub.mw`, '_blank');
+        window.open(`https://${institution.slug}.studyhubmw.com`, '_blank');
   };
 
   const handleManageSubscription = (institution: any) => {
@@ -141,7 +141,7 @@ export default function AdminInstitutionsPage() {
           </div>
           <div>
             <p className="font-medium text-navy">{inst.name}</p>
-            <p className="text-xs text-grey-medium">{inst.slug}.studyhub.mw</p>
+            <p className="text-xs text-grey-medium">{inst.slug}.studyhubmw.com</p>
           </div>
         </div>
       ),

@@ -11,9 +11,9 @@ import { Badge } from '@/components/ui/badge';
 
 // This is a placeholder. In a real app, you would fetch this data from an API.
 const users = [
-  { id: '1', name: 'John Student', email: 'student@studyhub.mw', role: 'STUDENT', status: 'Active' },
-  { id: '2', name: 'Jane Instructor', email: 'instructor@studyhub.mw', role: 'INSTRUCTOR', status: 'Active' },
-  { id: '3', name: 'Admin User', email: 'admin@studyhub.mw', role: 'PLATFORM_ADMIN', status: 'Active' },
+  { id: '1', name: 'John Student', email: 'student@studyhubmw.com', role: 'STUDENT', status: 'Active' },
+  { id: '2', name: 'Jane Instructor', email: 'instructor@studyhubmw.com', role: 'INSTRUCTOR', status: 'Active' },
+  { id: '3', name: 'Admin User', email: 'admin@studyhubmw.com', role: 'PLATFORM_ADMIN', status: 'Active' },
 ];
 
 export default function AdminUsersPage() {

@@ -64,10 +64,10 @@ async function main() {
   console.log('Creating users...');
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@studyhub.mw' },
+    where: { email: 'admin@studyhubmw.com' },
     update: { passwordHash },
     create: {
-      email: 'admin@studyhub.mw',
+      email: 'admin@studyhubmw.com',
       phone: '+265888000001',
       passwordHash,
       fullName: 'Platform Administrator',
@@ -79,10 +79,10 @@ async function main() {
   console.log('  ✅ Admin');
 
   const studentUser = await prisma.user.upsert({
-    where: { email: 'student@studyhub.mw' },
+    where: { email: 'student@studyhubmw.com' },
     update: { passwordHash },
     create: {
-      email: 'student@studyhub.mw',
+      email: 'student@studyhubmw.com',
       phone: '+265888000002',
       passwordHash,
       fullName: 'John Student',
@@ -105,10 +105,10 @@ async function main() {
   console.log('  ✅ Student');
 
   const schoolAdmin = await prisma.user.upsert({
-    where: { email: 'school@studyhub.mw' },
+    where: { email: 'school@studyhubmw.com' },
     update: { passwordHash },
     create: {
-      email: 'school@studyhub.mw',
+      email: 'school@studyhubmw.com',
       phone: '+265888000003',
       passwordHash,
       fullName: 'Sarah SchoolAdmin',
@@ -381,9 +381,9 @@ async function main() {
 
   // Verify specific users
   const expectedEmails = [
-    'admin@studyhub.mw',
-    'student@studyhub.mw',
-    'school@studyhub.mw',
+    'admin@studyhubmw.com',
+    'student@studyhubmw.com',
+    'school@studyhubmw.com',
     'instructor@studyhubmw.com',
     'corporate@studyhubmw.com',
     'parent@studyhubmw.com',
@@ -415,9 +415,9 @@ async function main() {
   console.log('='.repeat(60));
   console.log('');
   console.log(`📋 Test Accounts (password: ${PASSWORD})`);
-  console.log('  Admin:      admin@studyhub.mw');
-  console.log('  Student:    student@studyhub.mw');
-  console.log('  School:     school@studyhub.mw');
+  console.log('  Admin:      admin@studyhubmw.com');
+  console.log('  Student:    student@studyhubmw.com');
+  console.log('  School:     school@studyhubmw.com');
   console.log('  Instructor: instructor@studyhubmw.com');
   console.log('  Corporate:  corporate@studyhubmw.com');
   console.log('  Parent:     parent@studyhubmw.com');

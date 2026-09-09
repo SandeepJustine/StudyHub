@@ -180,7 +180,7 @@ export class ParentService {
       const newUser = await prisma.user.create({
         data: {
           phone,
-          email: `${phone}@parent.studyhub.mw`, // Temporary email
+          email: `${phone}@parent.studyhubmw.com`, // Temporary email
           fullName: 'Parent',
           role: 'PARENT',
           passwordHash: '', // No password, OTP only

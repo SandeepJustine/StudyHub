@@ -46,7 +46,7 @@ const ONLINE_PLATFORMS: { value: 'ZOOM' | 'GOOGLE_MEET' | 'TEAMS' | 'STUDYHUB'; 
   { value: 'ZOOM', label: 'Zoom', placeholder: 'https://zoom.us/j/XXXXXXXXXX' },
   { value: 'GOOGLE_MEET', label: 'Google Meet', placeholder: 'https://meet.google.com/xxx-xxxx-xxx' },
   { value: 'TEAMS', label: 'Microsoft Teams', placeholder: 'https://teams.microsoft.com/l/meetup-join/...' },
-  { value: 'STUDYHUB', label: 'StudyHub Meet', placeholder: 'https://meet.studyhub.mw/...' },
+  { value: 'STUDYHUB', label: 'StudyHub Meet', placeholder: 'https://meet.studyhubmw.com/...' },
 ];
 
 function generateQRCodeUrl(data: string, size = 200): string {

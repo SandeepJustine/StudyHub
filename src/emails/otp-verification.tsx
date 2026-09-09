@@ -52,7 +52,7 @@ export const OTPVerificationEmail = ({
 
             <Text style={paragraph}>
               If you didn't request this code, please ignore this email or{' '}
-              <Link href="mailto:security@studyhub.mw" style={link}>
+              <Link href="mailto:security@studyhubmw.com" style={link}>
                 contact our security team
               </Link>
               .

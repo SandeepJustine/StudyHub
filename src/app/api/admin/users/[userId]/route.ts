@@ -142,7 +142,7 @@ export async function DELETE(
       where: { id: userId },
       data: {
         lockedUntil: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // Lock for 100 years
-        email: `deleted_${userId}@studyhub.mw`, // Free up email
+        email: `deleted_${userId}@studyhubmw.com`, // Free up email
       },
     });
 

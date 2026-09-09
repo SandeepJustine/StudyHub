@@ -337,7 +337,7 @@ export class MultimediaService {
       title: title || metadata.title,
       description: metadata.description,
       thumbnail: metadata.thumbnail,
-      isExternal: !url.includes(process.env.NEXT_PUBLIC_URL || 'studyhub.mw'),
+      isExternal: !url.includes(process.env.NEXT_PUBLIC_URL || 'studyhubmw.com'),
       requiresLogin: false,
     };
   }

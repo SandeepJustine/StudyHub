@@ -71,7 +71,7 @@ export async function GET(req: Request) {
     const formattedLogs = logs.map(log => ({
       id: log.id,
       admin: log.admin?.fullName || 'System',
-      adminEmail: log.admin?.email || 'system@studyhub.mw',
+      adminEmail: log.admin?.email || 'system@studyhubmw.com',
       action: log.action,
       entity: log.entity,
       entityId: log.entityId,

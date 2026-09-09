@@ -5,9 +5,9 @@
 export const APP_NAME = 'StudyHub Malawi';
 export const APP_TAGLINE = 'Learn. Practice. Succeed.';
 export const APP_DESCRIPTION = 'Malawi\'s digital learning and examination platform';
-export const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://studyhub.mw';
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.studyhub.mw';
-export const SUPPORT_EMAIL = 'support@studyhub.mw';
+export const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://studyhubmw.com';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.studyhubmw.com';
+export const SUPPORT_EMAIL = 'support@studyhubmw.com';
 export const SUPPORT_PHONE = '+265 888 000 000';
 
 export const PAGINATION = {

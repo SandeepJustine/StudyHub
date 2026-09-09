@@ -274,7 +274,7 @@ export default function TermsPage() {
                   <p className="text-sm text-red-800">
                     <strong>Copyright Infringement:</strong> We respect intellectual property rights. 
                     If you believe your copyright has been infringed on our Platform, please contact 
-                    us at copyright@studyhub.mw with detailed information.
+                     us at copyright@studyhubmw.com with detailed information.
                   </p>
                 </div>
               </div>
@@ -449,7 +449,7 @@ export default function TermsPage() {
                 </div>
 
                 <p className="text-sm text-grey-medium mt-4">
-                  For copyright infringement notices, please email: copyright@studyhub.mw
+                   For copyright infringement notices, please email: copyright@studyhubmw.com
                 </p>
               </div>
             </Card>

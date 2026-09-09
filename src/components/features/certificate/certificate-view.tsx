@@ -162,7 +162,7 @@ export function CertificateView({
             <p className="font-medium text-navy text-sm">Verified Certificate</p>
             <p className="text-xs text-grey-dark mt-1">
               This certificate can be verified using the verification ID above.
-              Visit <span className="text-navy font-medium">studyhub.mw/verify</span> to authenticate.
+              Visit <span className="text-navy font-medium">studyhubmw.com/verify</span> to authenticate.
             </p>
           </div>
         </div>
