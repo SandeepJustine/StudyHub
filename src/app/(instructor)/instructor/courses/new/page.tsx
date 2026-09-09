@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Toast } from '@/components/ui/toast';
+import { MarkdownEditor } from '@/components/features/course/markdown-editor';
 import { Plus, Trash2, GripVertical, Upload, Link as LinkIcon, FileText, Video, Music, Presentation, ArrowRight, ArrowLeft, Check, X, BookOpen } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -360,12 +361,16 @@ export default function NewCoursePage() {
                  </div>
                )}
 
-               {currentModule.ContentType === 'TEXT' && (
-                 <div>
-                   <label className="block text-sm font-medium text-grey-dark mb-1.5">Text Content</label>
-                   <textarea className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy min-h-[200px] text-sm" placeholder="Write your lesson content here..." value={currentModule.contentData} onChange={(e) => setCurrentModule({ ...currentModule, contentData: e.target.value })} />
-                 </div>
-               )}
+{currentModule.ContentType === 'TEXT' && (
+                  <div>
+                    <label className="block text-sm font-medium text-grey-dark mb-1.5">Text Content</label>
+                    <MarkdownEditor
+                      value={currentModule.contentData}
+                      onChange={(val) => setCurrentModule({ ...currentModule, contentData: val })}
+                      placeholder="Write your lesson content here... Use the toolbar to add formatting."
+                    />
+                  </div>
+                )}
 
                {currentModule.ContentType === 'PDF' && (
                  <div className="space-y-3">

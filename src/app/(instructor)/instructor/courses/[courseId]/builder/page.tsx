@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
+import { MarkdownEditor } from '@/components/features/course/markdown-editor';
 import {
   Plus, Trash2, Edit, Save, ArrowLeft, Video, Music, FileText,
   Presentation, Link as LinkIcon, Upload, GripVertical, Play,
@@ -431,11 +432,10 @@ export default function CourseBuilderPage({ params }: { params: Promise<{ course
               <label className="block text-sm font-medium text-grey-dark mb-1.5">
                 Text Content
               </label>
-              <textarea
-                className="w-full px-4 py-3 border-2 border-grey-light rounded-lg focus:border-navy min-h-[200px] text-sm"
-                placeholder="Write your lesson content here..."
+              <MarkdownEditor
                 value={formData.contentData}
-                onChange={(e) => setFormData({ ...formData, contentData: e.target.value })}
+                onChange={(val) => setFormData({ ...formData, contentData: val })}
+                placeholder="Write your lesson content here... Use the toolbar to add formatting."
               />
             </div>
           )}

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
+import { MarkdownEditor } from '@/components/features/course/markdown-editor';
 import { BookOpen, Plus, Edit, Trash2, GripVertical } from 'lucide-react';
 
 interface Module {
@@ -256,6 +257,19 @@ export function ModuleList({ courseId, modules }: ModuleListProps) {
             value={formData.contentUrl}
             onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
           />
+
+          {formData.contentType === 'TEXT' && (
+            <div>
+              <label className="block text-sm font-medium text-grey-dark mb-1.5">
+                Text Content
+              </label>
+              <MarkdownEditor
+                value={formData.contentData || ''}
+                onChange={(val) => setFormData({ ...formData, contentData: val })}
+                placeholder="Write your lesson content here... Use the toolbar to add formatting."
+              />
+            </div>
+          )}
 
           <Input
             label="Duration (minutes)"
