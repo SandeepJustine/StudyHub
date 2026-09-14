@@ -290,9 +290,9 @@ export class AuthService {
       },
     });
 
-    // Send reset email
+    // Send reset email with link
     const emailService = new EmailService();
-    await emailService.sendOTP(user.id, token, 'password_reset');
+    await emailService.sendPasswordResetEmail(user.id, token);
 
     return { sent: true };
   }

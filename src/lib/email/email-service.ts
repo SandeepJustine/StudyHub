@@ -3,9 +3,11 @@ import { NotificationService } from '@/lib/notifications/notification-service';
 
 export class EmailService {
   private notificationService: NotificationService;
+  private appUrl: string;
 
   constructor() {
     this.notificationService = new NotificationService();
+    this.appUrl = process.env.NEXT_PUBLIC_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
   }
 
   async sendPaymentConfirmation(userId: string, paymentData: {
@@ -39,6 +41,21 @@ export class EmailService {
       channel: ['EMAIL', 'SMS'],
       priority: 'high',
       metadata: { otp, purpose, expiryMinutes: 10, template: 'otp-verification' },
+    });
+  }
+
+  async sendPasswordResetEmail(userId: string, token: string) {
+    const resetLink = `${this.appUrl}/auth/reset-password?token=${token}`;
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true, email: true } });
+    
+    await this.notificationService.send({
+      userId,
+      type: 'PASSWORD_RESET',
+      title: 'Reset Your Password',
+      message: `Hi ${user?.fullName || 'there'},<br><br>You requested a password reset. Click the link below to create a new password:<br><br><a href="${resetLink}" style="display:inline-block;background:#DC2626;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">Reset Password</a><br><br>This link expires in 1 hour. If you didn't request this, please ignore this email.<br><br>— The StudyHub Team`,
+      channel: ['EMAIL'],
+      priority: 'high',
+      metadata: { resetLink, token, template: 'password-reset' },
     });
   }
 
