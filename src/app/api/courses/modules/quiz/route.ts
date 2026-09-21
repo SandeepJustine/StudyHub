@@ -1,4 +1,5 @@
 // API route for quiz management.
+// - GET: fetch quiz details by quizId or moduleId
 // - POST: create a new quiz for a module
 // - PUT: update an existing quiz
 // - DELETE: delete a quiz
@@ -7,6 +8,56 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
+
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const quizId = searchParams.get('quizId');
+    const moduleId = searchParams.get('moduleId');
+
+    if (!quizId && !moduleId) {
+      return NextResponse.json({ error: 'quizId or moduleId is required' }, { status: 400 });
+    }
+
+    const instructor = await prisma.instructor.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!instructor) {
+      return NextResponse.json({ error: 'Instructor profile not found' }, { status: 404 });
+    }
+
+    // Find quiz by quizId or moduleId
+    const quiz = await prisma.quiz.findFirst({
+      where: {
+        ...(quizId && { id: quizId }),
+        ...(moduleId && { moduleId }),
+      },
+      include: {
+        module: { include: { course: true } },
+        questions: { orderBy: { order: 'asc' } },
+      },
+    });
+
+    if (!quiz) {
+      return NextResponse.json({ error: 'Quiz not found' }, { status: 404 });
+    }
+
+    if (quiz.module.course.instructorId !== instructor.id) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    }
+
+    return NextResponse.json({ success: true, data: quiz });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to fetch quiz' }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   try {
