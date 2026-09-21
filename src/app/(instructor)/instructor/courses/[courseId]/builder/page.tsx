@@ -363,7 +363,7 @@ export default function CourseBuilderPage({ params }: { params: Promise<{ course
             <label className="block text-sm font-medium text-grey-dark mb-1.5">
               Content Type
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {CONTENT_TYPES.map((ct) => (
                 <button
                   key={ct.type}

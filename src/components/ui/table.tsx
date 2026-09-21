@@ -3,6 +3,7 @@
 import { cn } from '@/utils/cn';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { forwardRef } from 'react';
+import { Card, CardContent } from './card';
 
 // ============================================
 // Sub-components (exported individually)
@@ -44,7 +45,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, React.ThHTMLAttributes
     return (
       <th
         ref={ref}
-        className={cn('px-6 py-4 text-left text-sm font-semibold text-grey-dark', className)}
+        className={cn('px-4 py-3 text-left text-sm font-semibold text-grey-dark hidden md:table-cell', className)}
         {...props}
       >
         {children}
@@ -59,7 +60,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, React.TdHTMLAttributes
     return (
       <td
         ref={ref}
-        className={cn('px-6 py-4 text-sm text-grey-dark', className)}
+        className={cn('px-4 py-3 text-sm text-grey-dark hidden md:table-cell', className)}
         {...props}
       >
         {children}
@@ -103,6 +104,7 @@ interface Column<T> {
   accessor: (item: T) => React.ReactNode;
   sortable?: boolean;
   className?: string;
+  hideOnMobile?: boolean;
 }
 
 interface TableProps<T> {
@@ -115,6 +117,7 @@ interface TableProps<T> {
   sortDirection?: 'asc' | 'desc';
   onSort?: (column: string) => void;
   className?: string;
+  renderMobileCard?: (item: T) => React.ReactNode;
 }
 
 // ============================================
@@ -131,72 +134,93 @@ export function Table<T extends { id: string }>({
   sortDirection,
   onSort,
   className,
+  renderMobileCard,
 }: TableProps<T>) {
   if (isLoading) {
     return <TableSkeleton columns={columns.length} rows={5} />;
   }
 
   return (
-    <div className={cn('overflow-x-auto rounded-xl border border-grey-light', className)}>
-      <table className="w-full">
-        <TableHeader>
-          <TableRow className="bg-grey-light/50 hover:bg-grey-light/50">
-            {columns.map((column) => (
-              <TableHead
-                key={column.key}
-                className={cn(
-                  column.sortable && 'cursor-pointer select-none',
-                  column.className
-                )}
-                onClick={() => column.sortable && onSort?.(column.key)}
-              >
-                <div className="flex items-center gap-2">
-                  {column.header}
-                  {column.sortable && (
-                    <span className="text-grey-medium">
-                      {sortColumn === column.key ? (
-                        sortDirection === 'asc' ? (
-                          <ChevronUp size={16} />
-                        ) : (
-                          <ChevronDown size={16} />
-                        )
-                      ) : (
-                        <ChevronsUpDown size={16} />
-                      )}
-                    </span>
-                  )}
-                </div>
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className={cn('rounded-xl border border-grey-light', className)}>
+      {/* Mobile Card View */}
+      {renderMobileCard && (
+        <div className="md:hidden space-y-3 p-4">
           {data.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="px-6 py-12 text-center text-grey-medium"
-              >
-                {emptyMessage}
-              </TableCell>
-            </TableRow>
+            <div className="text-center py-12 text-grey-medium">{emptyMessage}</div>
           ) : (
             data.map((item) => (
-              <TableRow
-                key={item.id}
-                className={cn(onRowClick && 'cursor-pointer hover:bg-grey-light/30')}
-                onClick={() => onRowClick?.(item)}
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.key} className={column.className}>
-                    {column.accessor(item)}
-                  </TableCell>
-                ))}
-              </TableRow>
+              <Card key={item.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  {renderMobileCard(item)}
+                </CardContent>
+              </Card>
             ))
           )}
-        </TableBody>
-      </table>
+        </div>
+      )}
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full">
+          <TableHeader>
+            <TableRow className="bg-grey-light/50 hover:bg-grey-light/50">
+              {columns.map((column) => (
+                <TableHead
+                  key={column.key}
+                  className={cn(
+                    column.sortable && 'cursor-pointer select-none',
+                    column.className
+                  )}
+                  onClick={() => column.sortable && onSort?.(column.key)}
+                >
+                  <div className="flex items-center gap-2">
+                    {column.header}
+                    {column.sortable && (
+                      <span className="text-grey-medium">
+                        {sortColumn === column.key ? (
+                          sortDirection === 'asc' ? (
+                            <ChevronUp size={16} />
+                          ) : (
+                            <ChevronDown size={16} />
+                          )
+                        ) : (
+                          <ChevronsUpDown size={16} />
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="px-6 py-12 text-center text-grey-medium"
+                >
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className={cn(onRowClick && 'cursor-pointer hover:bg-grey-light/30')}
+                  onClick={() => onRowClick?.(item)}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.key} className={cn(column.className, column.hideOnMobile && 'hidden md:table-cell')}>
+                      {column.accessor(item)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </table>
+      </div>
     </div>
   );
 }
