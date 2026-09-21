@@ -78,12 +78,20 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
     }
   };
 
-  const enrollCourse = async (courseId: string, paymentMethod?: string, phone?: string) => {
+  const enrollCourse = async (courseId: string, paymentMethod?: string, extraData?: { phone?: string; proofFile?: File }) => {
     try {
+      const formData = new FormData();
+      formData.append('paymentMethod', paymentMethod || '');
+      if (extraData?.phone) {
+        formData.append('phone', extraData.phone);
+      }
+      if (extraData?.proofFile) {
+        formData.append('proofFile', extraData.proofFile);
+      }
+
       const response = await fetch(`/api/courses/${courseId}/enroll`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentMethod, phone }),
+        body: formData,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Enrollment failed');

@@ -11,7 +11,7 @@ export class PaymentService {
     [PaymentMethod.AIRTEL_MONEY]: new AirtelMoneyAdapter(),
     [PaymentMethod.TNM_MPAMBA]: new MpambaAdapter(),
     [PaymentMethod.PAYCHANGU]: new PayChanguAdapter(),
-    [PaymentMethod.BANK_TRANSFER]: new BankTransferAdapter(),
+    [PaymentMethod.MANUAL_PAYMENT]: new BankTransferAdapter(),
   };
 
   static async initiatePayment(

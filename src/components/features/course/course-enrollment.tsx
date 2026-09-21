@@ -28,18 +28,17 @@ interface CourseEnrollmentProps {
       user: { fullName: string };
     };
   };
-  onEnroll: (courseId: string, paymentMethod: string, phone?: string) => void;
+  onEnroll: (courseId: string, paymentMethod: string, extraData?: { phone?: string; proofFile?: File }) => void;
   onCancel: () => void;
 }
 
 export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmentProps) {
   const [step, setStep] = useState<'review' | 'payment'>('review');
   const [selectedPayment, setSelectedPayment] = useState('');
-  const [phone, setPhone] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
-  const handleEnroll = async () => {
+  const handleEnroll = async (extraData?: { phone?: string; proofFile?: File }) => {
     if (!selectedPayment) {
       setError('Please select a payment method');
       return;
@@ -49,7 +48,7 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
     setError('');
 
     try {
-      await onEnroll(course.id, selectedPayment, phone || undefined);
+      await onEnroll(course.id, selectedPayment, extraData);
     } catch (err: any) {
       setError(err.message || 'Enrollment failed');
     } finally {
@@ -149,21 +148,13 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
           <PaymentMethods
             amount={course.price}
             selectedMethod={selectedPayment}
-            onSelect={setSelectedPayment}
+            onSelect={(methodId, extraData) => {
+              setSelectedPayment(methodId);
+              if (extraData?.phone || extraData?.proofFile) {
+                handleEnroll(extraData);
+              }
+            }}
           />
-
-          {/* Phone Number for Mobile Money */}
-          {(selectedPayment === 'AIRTEL_MONEY' || selectedPayment === 'TNM_MPAMBA') && (
-            <Input
-              label={selectedPayment === 'AIRTEL_MONEY' ? 'Airtel Phone Number' : 'TNM Phone Number'}
-              placeholder={selectedPayment === 'AIRTEL_MONEY' ? '+265 999 000 000' : '+265 888 000 000'}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              disabled={isProcessing}
-              helperText={selectedPayment === 'AIRTEL_MONEY' ? 'Your Airtel Money registered phone number' : 'Your TNM Mpamba registered phone number'}
-            />
-          )}
 
           {/* Error */}
           {error && (
@@ -189,8 +180,8 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
               size="lg"
               fullWidth
               loading={isProcessing}
-              onClick={handleEnroll}
-              disabled={!selectedPayment}
+              onClick={() => handleEnroll()}
+              disabled={!selectedPayment || isProcessing}
             >
               {course.price === 0 ? 'Confirm Enrollment' : `Pay ${formatCurrency(course.price)}`}
             </Button>

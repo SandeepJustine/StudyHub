@@ -18,9 +18,9 @@ export type PaymentMethod =
   | 'AIRTEL_MONEY'
   | 'TNM_MPAMBA'
   | 'PAYCHANGU'
+  | 'MANUAL_PAYMENT'
   | 'VISA'
   | 'MASTERCARD'
-  | 'BANK_TRANSFER'
   | 'SCHOOL_INVOICE';
 
 export interface SubscriptionPlan {

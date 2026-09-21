@@ -235,8 +235,8 @@ export async function HEAD(req: Request) {
       icon: `/icons/payment/${method.toLowerCase()}.svg`,
       enabled: true,
       limits: {
-        min: method === 'BANK_TRANSFER' ? 5000 : 100,
-        max: method === 'BANK_TRANSFER' ? 10000000 : 500000,
+        min: method === 'MANUAL_PAYMENT' ? 5000 : 100,
+        max: method === 'MANUAL_PAYMENT' ? 10000000 : 500000,
       },
     }));
 

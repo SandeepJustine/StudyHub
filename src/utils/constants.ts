@@ -21,21 +21,28 @@ export const PAYMENT_METHODS = {
     name: 'Airtel Money',
     icon: '/icons/airtel-money.png',
     color: '#ED1C24',
+    phoneNumber: '0997011620',
   },
   TNM_MPAMBA: {
     name: 'TNM Mpamba',
     icon: '/icons/tnm-mpamba.png',
     color: '#00529B',
+    phoneNumber: '0997011620',
   },
   PAYCHANGU: {
     name: 'Card Payment',
     icon: '/icons/card.png',
     color: '#16A34A',
   },
-  BANK_TRANSFER: {
-    name: 'Bank Transfer',
+  MANUAL_PAYMENT: {
+    name: 'Manual Payment (Bank Transfer)',
     icon: '/icons/bank.png',
     color: '#0D1B3D',
+    bankDetails: {
+      bank: 'National Bank of Malawi',
+      accountNumber: '1008157053',
+      accountName: 'StudyHub Malawi',
+    },
   },
 } as const;
 

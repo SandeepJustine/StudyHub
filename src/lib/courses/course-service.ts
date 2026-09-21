@@ -556,18 +556,18 @@ export class CourseService {
     }
   }
 
-  /**
+/**
    * Enroll student in course
    * Processes payment first; only creates enrollment if payment succeeds.
    */
-  async enrollStudent(studentId: string, courseId: string, paymentMethod?: string, phone?: string) {
+  async enrollStudent(studentId: string, courseId: string, paymentMethod?: string, phone?: string, proofFile?: File) {
     // Check if course exists and is approved
     const course = await this.getCourseById(courseId);
     if (course.status !== 'APPROVED') {
       throw new AppError('Course is not available for enrollment', 'COURSE_UNAVAILABLE', 400);
     }
 
-// Check if already enrolled
+    // Check if already enrolled
     const existing = await prisma.enrollment.findFirst({
       where: {
         studentId,
@@ -618,6 +618,43 @@ export class CourseService {
         );
       }
 
+      // Handle manual payment (bank transfer with proof)
+      if (paymentMethod === 'MANUAL_PAYMENT') {
+        if (!proofFile) {
+          throw new AppError('Proof of payment is required for manual payments', 'PROOF_REQUIRED', 400);
+        }
+
+        // Upload proof file
+        const { uploadFile } = await import('@/lib/utils/file-upload');
+        const uploadResult = await uploadFile(proofFile, `payment-proofs/${student.userId}/${courseId}`);
+
+        // Create pending transaction
+        const reference = `MANUAL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        transaction = await prisma.transaction.create({
+          data: {
+            userId: student.userId,
+            courseId,
+            amount: course.price,
+            currency: 'MWK',
+            paymentMethod: 'MANUAL_PAYMENT' as any,
+            status: 'PENDING',
+            reference,
+            description: `Manual payment for ${course.title}`,
+            metadata: {
+              proofFileUrl: uploadResult.url,
+              proofFileName: proofFile.name,
+              bankDetails: {
+                bank: 'National Bank of Malawi',
+                accountNumber: '1008157053',
+                accountName: 'StudyHub Malawi',
+              },
+            },
+          },
+        });
+
+        return { transaction, redirectUrl: null };
+      }
+
       // Resolve phone for mobile money payments
       const resolvedPhone = phone || (await prisma.user.findUnique({
         where: { id: student.userId },
@@ -636,7 +673,7 @@ export class CourseService {
       const paymentResult = await paymentService.processPayment({
         userId: student.userId,
         amount: course.price,
-        method: paymentMethod as PaymentMethod,
+        method: paymentMethod as any,
         metadata: {
           type: 'course_enrollment',
           courseId,

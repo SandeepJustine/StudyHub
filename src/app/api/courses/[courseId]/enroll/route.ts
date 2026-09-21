@@ -16,7 +16,25 @@ export async function POST(
     }
 
     const { courseId } = await params;
-    const { paymentMethod, phone } = await req.json();
+    
+    // Check if it's FormData (for manual payments with proof)
+    const contentType = req.headers.get('content-type') || '';
+    let paymentMethod: string | undefined = undefined;
+    let phone: string | undefined = undefined;
+    let proofFile: File | undefined = undefined;
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      const pm = formData.get('paymentMethod') as string;
+      paymentMethod = pm || undefined;
+      phone = formData.get('phone') as string || undefined;
+      const proofEntry = formData.get('proofFile');
+      proofFile = proofEntry instanceof File ? proofEntry : undefined;
+    } else {
+      const body = await req.json();
+      paymentMethod = body.paymentMethod;
+      phone = body.phone;
+    }
     
     // Get student ID from session
     const student = await prisma.student.findUnique({
@@ -34,7 +52,8 @@ export async function POST(
       studentId,
       courseId,
       paymentMethod,
-      phone
+      phone,
+      proofFile
     );
 
     if (result.redirectUrl) {

@@ -59,7 +59,7 @@ export class PaymentService {
     }
 
     // Bank Transfer (always available)
-    this.providers.set('BANK_TRANSFER', new BankTransferAdapter());
+    this.providers.set('MANUAL_PAYMENT', new BankTransferAdapter());
     this.providers.set('SCHOOL_INVOICE', new BankTransferAdapter());
   }
 
@@ -524,7 +524,7 @@ export class PaymentService {
       where: {
         status: 'PENDING',
         createdAt: { lt: cutoffTime },
-        paymentMethod: { not: 'BANK_TRANSFER' },
+        paymentMethod: { not: 'MANUAL_PAYMENT' },
       },
       take: 50,
     });
@@ -578,7 +578,7 @@ export class PaymentService {
       where: {
         status: 'PENDING',
         createdAt: { lt: cutoffTime },
-        paymentMethod: { not: 'BANK_TRANSFER' },
+        paymentMethod: { not: 'MANUAL_PAYMENT' },
       },
       select: {
         id: true,
