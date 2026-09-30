@@ -4,6 +4,7 @@ import '@/styles/globals.css';
 import 'highlight.js/styles/github.css';
 import { GoogleTranslate } from '@/components/ui/google-translate';
 import WhatsAppWidget from '@/components/features/support/whatsapp-widget';
+import { PwaProvider } from '@/components/pwa/pwa-provider';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -63,6 +64,7 @@ export default function RootLayout({
         />
         */}
         <WhatsAppWidget />
+        <PwaProvider />
       </body>
     </html>
   );

@@ -1,17 +1,18 @@
 {
-  "name": "StudyHub Malawi",
+  "id": "/",
+  "name": "StudyHub Malawi - Learn. Practice. Succeed.",
   "short_name": "StudyHub",
   "description": "Malawi's premier digital learning and examination platform",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#0D1B3D",
+  "lang": "en-MW",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
   "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "16x16 32x32 48x48",
-      "type": "image/x-icon"
-    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
@@ -25,9 +26,36 @@
       "purpose": "any"
     },
     {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Courses",
+      "short_name": "Courses",
+      "url": "/student/courses",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Virtual Lab",
+      "short_name": "Lab",
+      "url": "/student/lab",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
