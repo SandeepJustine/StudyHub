@@ -1,22 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PaymentMethods } from '@/components/features/payment/payment-methods';
+import {
+  PaymentMethods,
+  type PaymentExtraData,
+  type PaymentMethodsHandle,
+} from '@/components/features/payment/payment-methods';
+import { PaymentStatusIndicator } from '@/components/features/payment/payment-status-indicator';
+import type { PaymentTransactionState } from '@/hooks/usePaymentStatus';
 import { 
   Check, 
   Shield, 
   Clock, 
-  Smartphone,
-  CreditCard,
-  Building2,
   AlertCircle,
   ArrowRight,
+  CheckCircle2,
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+
+export interface EnrollResult {
+  transaction?: { status: string } | null;
+  redirectUrl?: string | null;
+}
 
 interface CourseEnrollmentProps {
   course: {
@@ -28,19 +36,49 @@ interface CourseEnrollmentProps {
       user: { fullName: string };
     };
   };
-  onEnroll: (courseId: string, paymentMethod: string, extraData?: { phone?: string; proofFile?: File }) => void;
+  onEnroll: (
+    courseId: string,
+    paymentMethod: string,
+    extraData?: PaymentExtraData
+  ) => void | Promise<EnrollResult | void>;
   onCancel: () => void;
 }
+
+type Phase = 'form' | 'awaiting_payment' | 'completed';
 
 export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmentProps) {
   const [step, setStep] = useState<'review' | 'payment'>('review');
   const [selectedPayment, setSelectedPayment] = useState('');
+  const [extraData, setExtraData] = useState<PaymentExtraData>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [phase, setPhase] = useState<Phase>('form');
+  const paymentRef = useRef<PaymentMethodsHandle>(null);
 
-  const handleEnroll = async (extraData?: { phone?: string; proofFile?: File }) => {
+  const handleVerified = useCallback(() => {
+    setPhase('completed');
+  }, []);
+
+  const handlePaymentStatusChange = useCallback(
+    (status: PaymentTransactionState | null) => {
+      if (status === 'COMPLETED') setPhase('completed');
+      if (status === 'FAILED') {
+        setPhase('form');
+        setError('Your payment could not be confirmed. Please select a payment method and try again.');
+      }
+    },
+    []
+  );
+
+  const handleEnroll = async () => {
     if (!selectedPayment) {
       setError('Please select a payment method');
+      return;
+    }
+
+    const validationError = paymentRef.current?.validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -48,7 +86,21 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
     setError('');
 
     try {
-      await onEnroll(course.id, selectedPayment, extraData);
+      const result = (await onEnroll(course.id, selectedPayment, extraData)) as EnrollResult | void;
+
+      if (course.price === 0) {
+        setPhase('completed');
+        return;
+      }
+
+      // A completed/redirected payment is handled by the parent; otherwise keep the
+      // student on this screen so the live status indicator can take over.
+      if (result?.transaction?.status === 'COMPLETED') {
+        setPhase('completed');
+        return;
+      }
+
+      setPhase('awaiting_payment');
     } catch (err: any) {
       setError(err.message || 'Enrollment failed');
     } finally {
@@ -57,7 +109,7 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
   };
 
   return (
-    <Card padding="lg" className="max-w-lg mx-auto">
+    <Card padding="md" className="w-full max-w-full">
       {/* Steps */}
       <div className="flex items-center gap-4 mb-8">
         <div className={`flex items-center gap-2 ${step === 'review' ? 'text-navy' : 'text-grey-medium'}`}>
@@ -79,7 +131,40 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
         </div>
       </div>
 
-      {step === 'review' ? (
+      {phase === 'completed' ? (
+        <div className="space-y-5 text-center py-4">
+          <CheckCircle2 size={48} className="text-green mx-auto" />
+          <div>
+            <h3 className="text-lg font-semibold text-navy">You are enrolled!</h3>
+            <p className="text-sm text-grey-dark mt-1">
+              Your payment was confirmed and <span className="font-medium text-navy">{course.title}</span> is now in
+              your library.
+            </p>
+          </div>
+          <Button variant="primary" size="lg" fullWidth onClick={onCancel}>
+            Start Learning
+          </Button>
+        </div>
+      ) : phase === 'awaiting_payment' ? (
+        <div className="space-y-5">
+          <div>
+            <h3 className="text-base font-semibold text-navy">Payment initiated</h3>
+            <p className="text-sm text-grey-dark mt-1">
+              Keep this window open — this panel updates automatically when your payment is confirmed.
+            </p>
+          </div>
+
+          <PaymentStatusIndicator
+            courseId={course.id}
+            onStatusChange={handlePaymentStatusChange}
+            onVerified={handleVerified}
+          />
+
+          <Button variant="outline" fullWidth onClick={onCancel}>
+            Close and check later
+          </Button>
+        </div>
+      ) : step === 'review' ? (
         <div className="space-y-6">
           {/* Course Summary */}
           <div className="bg-grey-light/50 rounded-xl p-6">
@@ -146,48 +231,51 @@ export function CourseEnrollment({ course, onEnroll, onCancel }: CourseEnrollmen
         <div className="space-y-6">
           {/* Payment Methods */}
           <PaymentMethods
+            ref={paymentRef}
             amount={course.price}
             selectedMethod={selectedPayment}
-            onSelect={(methodId, extraData) => {
+            onSelect={(methodId, methodExtraData) => {
               setSelectedPayment(methodId);
-              if (extraData?.phone || extraData?.proofFile) {
-                handleEnroll(extraData);
-              }
+              setExtraData(methodExtraData ?? {});
+              setError('');
             }}
           />
 
           {/* Error */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red">
-              <AlertCircle size={16} />
-              {error}
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-sm text-red">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span className="min-w-0 break-words">{error}</span>
             </div>
           )}
 
           {/* Security Notice */}
           <div className="flex items-center gap-2 text-xs text-grey-medium">
-            <Shield size={14} />
+            <Shield size={14} className="shrink-0" />
             <span>Your payment information is encrypted and secure</span>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setStep('review')}>
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setStep('review')} className="w-full sm:w-auto shrink-0">
               Back
             </Button>
             <Button
               variant="primary"
               size="lg"
               fullWidth
+              className="min-w-0"
               loading={isProcessing}
-              onClick={() => handleEnroll()}
+              onClick={handleEnroll}
               disabled={!selectedPayment || isProcessing}
             >
-              {course.price === 0 ? 'Confirm Enrollment' : `Pay ${formatCurrency(course.price)}`}
+              <span className="truncate">
+                {course.price === 0 ? 'Confirm Enrollment' : `Pay ${formatCurrency(course.price)}`}
+              </span>
             </Button>
           </div>
 
-          <div className="flex justify-center gap-4 text-xs text-grey-medium">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-grey-medium">
             <span className="flex items-center gap-1">
               <Clock size={12} /> Instant Access
             </span>

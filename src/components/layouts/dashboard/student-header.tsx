@@ -1,9 +1,10 @@
 'use client';
 
-import { Search, Bell } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NotificationBell } from '@/components/features/notification/notification-bell';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -27,10 +28,7 @@ export function StudentHeader() {
           className="w-full rounded-lg bg-grey-light pl-8 md:w-[200px] lg:w-[336px]"
         />
       </div>
-      <Button variant="ghost" size="sm">
-        <Bell className="h-5 w-5" />
-        <span className="sr-only">Notifications</span>
-      </Button>
+      <NotificationBell />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="overflow-hidden rounded-full">

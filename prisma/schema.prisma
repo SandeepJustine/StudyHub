@@ -341,6 +341,7 @@ model Instructor {
   rating        Float    @default(0)
   certificateSignatures CertificateSignature[]
   ratings       InstructorRating[]
+  experimentSubjects ExperimentSubjectAssignment[]
 }
 
 model CorporateClient {
@@ -1320,11 +1321,29 @@ model Experiment {
 
   steps         ExperimentStep[]
   attempts      StudentExperiment[]
+  subjectAssignments ExperimentSubjectAssignment[]
 
   @@index([subject])
   @@index([difficulty])
   @@index([courseId])
   @@index([moduleId])
+}
+
+// Instructor-curated mapping of an existing experiment to a teaching subject.
+// Distinct from Experiment.subject, which is the lab simulator type
+// (chemistry/physics/biology) and must not be overwritten.
+model ExperimentSubjectAssignment {
+  id           String     @id @default(cuid())
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  subject      String
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([experimentId, subject, instructorId])
+  @@index([instructorId, subject])
+  @@index([subject])
 }
 
 model ExperimentStep {

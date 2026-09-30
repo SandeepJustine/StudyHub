@@ -10,6 +10,7 @@ import { Plus, Beaker, Users, BookOpen, ChevronRight, Microscope } from 'lucide-
 import Link from 'next/link';
 import { formatDate } from '@/utils/formatters';
 import { ExperimentManager } from './experiment-manager';
+import { SubjectExperimentManager } from './subject-experiment-manager';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,11 +21,12 @@ export default async function InstructorVirtualLabPage() {
   }
 
   const instructor = await instructorService.resolveByUserId(session.user.id);
-  const [labs, experiments, courses, templates] = await Promise.all([
+  const [labs, experiments, courses, templates, subjectBoard] = await Promise.all([
     labService.getInstructorLabs(instructor.id),
     labService.getAllExperiments(),
     labService.getInstructorCoursesWithModules(instructor.id),
     labService.getExperimentTemplates(),
+    labService.getSubjectAssignmentBoard(instructor.id),
   ]);
 
   // Serialize data for the client component (Date objects → strings)
@@ -33,6 +35,8 @@ export default async function InstructorVirtualLabPage() {
 
   const assignedCount = experiments.filter((e) => e.courseId).length;
   const unassignedCount = experiments.filter((e) => !e.courseId).length;
+  const subjectAssignments = subjectBoard.assignments.length;
+  const subjectsInUse = subjectBoard.subjects.filter((s) => s.count > 0).length;
 
   return (
     <div className="container mx-auto p-6">
@@ -51,7 +55,7 @@ export default async function InstructorVirtualLabPage() {
         </Link>
       </div>
 
-      {/* Stats Row */}
+{/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4 text-center">
@@ -62,19 +66,21 @@ export default async function InstructorVirtualLabPage() {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green">{assignedCount}</div>
-            <p className="text-xs text-grey-medium">Assigned</p>
+            <p className="text-xs text-grey-medium">In Courses</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-navy">{subjectAssignments}</div>
+            <p className="text-xs text-grey-medium">
+              Subject Assignments ({subjectsInUse} subject{subjectsInUse === 1 ? '' : 's'})
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-orange">{unassignedCount}</div>
             <p className="text-xs text-grey-medium">Unassigned</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-navy">{labs.length}</div>
-            <p className="text-xs text-grey-medium">Virtual Labs</p>
           </CardContent>
         </Card>
       </div>
@@ -127,6 +133,9 @@ export default async function InstructorVirtualLabPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Subject Assignments */}
+      <SubjectExperimentManager />
 
       {/* All Experiments with Assignment Controls */}
       <ExperimentManager

@@ -48,11 +48,11 @@ export function Modal({
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
-    full: 'max-w-full m-4',
+    full: 'max-w-full h-[calc(100dvh-2rem)]',
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
@@ -62,26 +62,27 @@ export function Modal({
       {/* Modal Content */}
       <div
         className={cn(
-          'relative bg-white rounded-2xl shadow-2xl w-full animate-scale',
+          'relative bg-white rounded-2xl shadow-2xl w-full min-w-0 animate-scale',
           sizeClasses[size],
-          'mx-4 max-h-[90vh] overflow-hidden flex flex-col'
+          'max-h-[90dvh] overflow-hidden flex flex-col min-h-0'
         )}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-grey-light">
-            <div>
+          <div className="flex items-start justify-between gap-4 p-4 sm:p-6 border-b border-grey-light shrink-0">
+            <div className="min-w-0">
               {title && (
-                <h2 className="text-xl font-bold text-navy font-poppins">{title}</h2>
+                <h2 className="text-base sm:text-xl font-bold text-navy font-poppins break-words">{title}</h2>
               )}
               {description && (
-                <p className="text-sm text-grey-dark mt-1">{description}</p>
+                <p className="text-sm text-grey-dark mt-1 break-words">{description}</p>
               )}
             </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-grey-light rounded-lg transition-colors"
+                className="p-2 hover:bg-grey-light rounded-lg transition-colors shrink-0"
+                aria-label="Close"
               >
                 <X size={20} className="text-grey-dark" />
               </button>
@@ -90,13 +91,13 @@ export function Modal({
         )}
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto overflow-x-hidden overscroll-contain flex-1 min-h-0">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="p-6 border-t border-grey-light bg-grey-light/50">
+          <div className="p-4 sm:p-6 border-t border-grey-light bg-grey-light/50 shrink-0">
             {footer}
           </div>
         )}

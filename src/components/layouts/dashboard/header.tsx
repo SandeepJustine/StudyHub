@@ -2,19 +2,19 @@
 
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Bell, Search, User, Settings, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
+import { Search, User, Settings, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { NotificationBell } from '@/components/features/notification/notification-bell';
 import Link from 'next/link';
 
 interface DashboardHeaderProps {
   title: string;
   description?: string;
-  unreadNotifications?: number;
 }
 
-export function DashboardHeader({ title, description, unreadNotifications = 0 }: DashboardHeaderProps) {
+export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -73,18 +73,7 @@ export function DashboardHeader({ title, description, unreadNotifications = 0 }:
           </div>
 
           {/* Notifications */}
-          <button className="relative p-2 hover:bg-grey-light rounded-lg transition-colors">
-            <Bell size={20} className="text-grey-dark" />
-            {unreadNotifications > 0 && (
-              <Badge
-                variant="error"
-                size="sm"
-                className="absolute -top-1 -right-1 min-w-[20px] justify-center"
-              >
-                {unreadNotifications > 99 ? '99+' : unreadNotifications}
-              </Badge>
-            )}
-          </button>
+          <NotificationBell />
 
           {/* User Menu */}
           <div className="relative">

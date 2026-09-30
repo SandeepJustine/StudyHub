@@ -560,7 +560,7 @@ export class CourseService {
    * Enroll student in course
    * Processes payment first; only creates enrollment if payment succeeds.
    */
-  async enrollStudent(studentId: string, courseId: string, paymentMethod?: string, phone?: string, proofFile?: File) {
+  async enrollStudent(studentId: string, courseId: string, paymentMethod?: string, phone?: string, proofFile?: File, bankInfo?: string) {
     // Check if course exists and is approved
     const course = await this.getCourseById(courseId);
     if (course.status !== 'APPROVED') {
@@ -624,6 +624,18 @@ export class CourseService {
           throw new AppError('Proof of payment is required for manual payments', 'PROOF_REQUIRED', 400);
         }
 
+        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        if (proofFile.type && !allowedTypes.includes(proofFile.type)) {
+          throw new ValidationError('Proof of payment must be a JPEG, PNG, or PDF file', {
+            proofFile: ['Only JPEG, PNG, or PDF files are allowed'],
+          });
+        }
+        if (proofFile.size > 5 * 1024 * 1024) {
+          throw new ValidationError('Proof of payment must be less than 5MB', {
+            proofFile: ['File size must be less than 5MB'],
+          });
+        }
+
         // Upload proof file
         const { uploadFile } = await import('@/lib/utils/file-upload');
         const uploadResult = await uploadFile(proofFile, `payment-proofs/${student.userId}/${courseId}`);
@@ -643,6 +655,7 @@ export class CourseService {
             metadata: {
               proofFileUrl: uploadResult.url,
               proofFileName: proofFile.name,
+              ...(bankInfo?.trim() && { bankReference: bankInfo.trim() }),
               bankDetails: {
                 bank: 'National Bank of Malawi',
                 accountNumber: '1008157053',

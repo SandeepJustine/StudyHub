@@ -39,18 +39,26 @@ export class NotificationService {
       ? (Array.isArray(notification.channel) ? notification.channel : [notification.channel])
       : this.determineChannels(notification.type, notification.priority);
 
+    // `status` tracks read state; per-channel delivery lives in <channel>Status/<channel>SentAt.
     const notificationRecord = await prisma.notification.create({
-      data: { userId: notification.userId, type: notification.type, title: notification.title, message: notification.message, status: 'pending', channels, metadata: notification.metadata },
+      data: { userId: notification.userId, type: notification.type, title: notification.title, message: notification.message, status: 'unread', channels, metadata: notification.metadata },
     });
 
     for (const channel of channels) {
+      // PUSH rides on the Socket.IO server in src/server.ts, which the
+      // `next dev`/`next start` scripts never load. Without that transport the
+      // notification still reaches the bell by polling, so this is a no-op
+      // rather than a failed delivery: skipping it avoids stamping a false
+      // 'delivered' and avoids filling the retry queue with unsendable pushes.
+      if (channel === 'PUSH' && !global.io) continue;
+
       try {
         const provider = this.providers.get(channel);
         if (!provider) continue;
         const user = await prisma.user.findUnique({ where: { id: notification.userId }, select: { email: true, phone: true, notificationPreferences: true, locale: true } });
         if (!this.isChannelEnabled(user, channel, notification.type)) continue;
         const sent = await provider.send({ userId: notification.userId, email: user?.email ?? undefined, phone: user?.phone ?? undefined, title: notification.title, message: notification.message, type: notification.type, metadata: notification.metadata, locale: user?.locale || 'en' });
-        await prisma.notification.update({ where: { id: notificationRecord.id }, data: { status: sent ? 'sent' : 'failed', [`${channel.toLowerCase()}SentAt`]: sent ? new Date() : undefined, [`${channel.toLowerCase()}Status`]: sent ? 'delivered' : 'failed' } });
+        await prisma.notification.update({ where: { id: notificationRecord.id }, data: { [`${channel.toLowerCase()}SentAt`]: sent ? new Date() : undefined, [`${channel.toLowerCase()}Status`]: sent ? 'delivered' : 'failed' } });
         if (!sent) this.retryQueue.push({ ...notification, channel, retries: 0, notificationId: notificationRecord.id });
       } catch (error) {
         this.retryQueue.push({ ...notification, channel, retries: 0, notificationId: notificationRecord.id });
@@ -59,13 +67,27 @@ export class NotificationService {
     this.processRetryQueue();
   }
 
-   async getUserNotifications(userId: string, params: any) {
-    const { page = 1, limit = 20, type, read } = params;
+  /**
+   * Read state lives in `status`: 'read' means seen, anything else is unread.
+   * Older rows created before this convention ('pending'/'sent'/'failed') are
+   * therefore treated as unread, which is the correct default.
+   */
+  private buildWhere(userId: string, params: { type?: string; read?: boolean } = {}) {
     const where: any = { userId };
-    if (type) where.type = type;
-    if (read !== undefined) where.status = read ? 'read' : 'unread';
 
-    const [notifications, total] = await Promise.all([
+    if (params.type) where.type = params.type;
+    if (params.read === true) where.status = 'read';
+    else if (params.read === false) where.status = { not: 'read' };
+
+    return where;
+  }
+
+  async getUserNotifications(userId: string, params: any) {
+    const page = Math.max(1, Number(params?.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(params?.limit) || 20));
+    const where = this.buildWhere(userId, { type: params?.type ?? undefined, read: params?.read });
+
+    const [notifications, total, unreadCount] = await Promise.all([
       prisma.notification.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -73,20 +95,49 @@ export class NotificationService {
         take: limit,
       }),
       prisma.notification.count({ where }),
+      this.getUnreadCount(userId),
     ]);
 
     return {
-      notifications,
-      unreadCount: notifications.filter(n => n.status === 'unread').length,
+      notifications: notifications.map((n) => ({ ...n, isRead: n.status === 'read' })),
+      unreadCount,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  async markAsRead(notificationId: string, userId: string) {
-    await prisma.notification.updateMany({
-      where: { id: notificationId, userId },
+  async getUnreadCount(userId: string): Promise<number> {
+    return prisma.notification.count({ where: { userId, status: { not: 'read' } } });
+  }
+
+  async markAsRead(notificationId: string, userId: string): Promise<number> {
+    const result = await prisma.notification.updateMany({
+      where: { id: notificationId, userId, status: { not: 'read' } },
       data: { status: 'read' },
     });
+
+    return result.count;
+  }
+
+  async markAllAsRead(userId: string): Promise<number> {
+    const result = await prisma.notification.updateMany({
+      where: { userId, status: { not: 'read' } },
+      data: { status: 'read' },
+    });
+
+    return result.count;
+  }
+
+  async deleteNotification(notificationId: string, userId: string): Promise<boolean> {
+    const result = await prisma.notification.deleteMany({ where: { id: notificationId, userId } });
+    return result.count > 0;
+  }
+
+  async clearNotifications(userId: string, onlyRead = false): Promise<number> {
+    const result = await prisma.notification.deleteMany({
+      where: { userId, ...(onlyRead ? { status: 'read' } : {}) },
+    });
+
+    return result.count;
   }
 
   async updatePreferences(userId: string, preferences: any) {
@@ -128,10 +179,10 @@ export class NotificationService {
           const user = await prisma.user.findUnique({ where: { id: n.userId }, select: { email: true, phone: true } });
           const sent = await provider!.send({ userId: n.userId, email: user?.email ?? undefined, phone: user?.phone ?? undefined, title: n.title, message: n.message, type: n.type, metadata: n.metadata });
           if (!sent) { this.retryQueue.push({ ...n, retries: (n.retries || 0) + 1 }); }
-          else if (n.notificationId) { await prisma.notification.update({ where: { id: n.notificationId }, data: { status: 'sent', [`${n.channel.toLowerCase()}SentAt`]: new Date(), [`${n.channel.toLowerCase()}Status`]: 'delivered' } }); }
+          else if (n.notificationId) { await prisma.notification.update({ where: { id: n.notificationId }, data: { [`${n.channel.toLowerCase()}SentAt`]: new Date(), [`${n.channel.toLowerCase()}Status`]: 'delivered' } }); }
         } catch { this.retryQueue.push({ ...n, retries: (n.retries || 0) + 1 }); }
       } else if (n.notificationId) {
-        await prisma.notification.update({ where: { id: n.notificationId }, data: { status: 'failed', [`${n.channel.toLowerCase()}Status`]: 'failed', metadata: { maxRetriesReached: true, failedAt: new Date() } } });
+        await prisma.notification.update({ where: { id: n.notificationId }, data: { [`${n.channel.toLowerCase()}Status`]: 'failed', metadata: { maxRetriesReached: true, failedAt: new Date() } } });
       }
     }
   }
@@ -161,8 +212,11 @@ class SMSProvider implements NotificationProvider {
 
 class PushProvider implements NotificationProvider {
   async send(notification: { userId: string; title: string; message: string; metadata?: any }): Promise<boolean> {
+    const io = global.io;
+    if (!io) return false;
+
     try {
-      if (global.io) { global.io.to(`user:${notification.userId}`).emit('notification', { title: notification.title, message: notification.message, type: notification.metadata?.type, timestamp: new Date() }); }
+      io.to(`user:${notification.userId}`).emit('notification', { title: notification.title, message: notification.message, type: notification.metadata?.type, timestamp: new Date() });
       return true;
     } catch { return false; }
   }

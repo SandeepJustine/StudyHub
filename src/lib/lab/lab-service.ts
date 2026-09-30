@@ -1,8 +1,30 @@
 import prisma from '@/lib/utils/prisma';
 import { AppError, NotFoundError } from '@/lib/utils/errors';
 import { PhysicsEngine } from '@/services/lab/PhysicsEngine';
+import { SUBJECTS } from '@/utils/constants';
 
 const physicsEngine = new PhysicsEngine();
+
+/**
+ * Subjects an experiment may be assigned to. Kept separate from
+ * `Experiment.subject`, which selects the lab simulator to run and therefore
+ * must never be repurposed as a teaching-subject tag.
+ */
+const ASSIGNABLE_SUBJECTS: string[] = [...SUBJECTS];
+
+function normaliseSubject(subject: string): string {
+  const match = ASSIGNABLE_SUBJECTS.find((s) => s.toLowerCase() === String(subject || '').trim().toLowerCase());
+
+  if (!match) {
+    throw new AppError(
+      `Unknown subject "${subject}". Valid subjects: ${ASSIGNABLE_SUBJECTS.join(', ')}`,
+      'INVALID_SUBJECT',
+      400,
+    );
+  }
+
+  return match;
+}
 
 export class LabService {
   /**
@@ -180,6 +202,217 @@ export class LabService {
         moduleId: null,
       },
     });
+  }
+
+  /**
+   * Subjects an instructor can assign experiments to.
+   */
+  getAssignableSubjects(): string[] {
+    return ASSIGNABLE_SUBJECTS;
+  }
+
+  /**
+   * An instructor's subject → experiment assignments, grouped by subject.
+   * Includes the experiment details needed to render the assignment board.
+   */
+  async getSubjectAssignmentBoard(instructorId: string) {
+    const assignments = await prisma.experimentSubjectAssignment.findMany({
+      where: { instructorId },
+      include: {
+        experiment: {
+          select: {
+            id: true,
+            title: true,
+            subject: true,
+            difficulty: true,
+            description: true,
+            duration: true,
+            xpReward: true,
+            status: true,
+            _count: { select: { steps: true, attempts: true } },
+          },
+        },
+      },
+      orderBy: [{ subject: 'asc' }, { createdAt: 'desc' }],
+    });
+
+    const grouped = new Map<string, typeof assignments>();
+
+    for (const assignment of assignments) {
+      const list = grouped.get(assignment.subject) ?? [];
+      list.push(assignment);
+      grouped.set(assignment.subject, list);
+    }
+
+    const subjects = ASSIGNABLE_SUBJECTS.map((subject) => ({
+      subject,
+      count: grouped.get(subject)?.length ?? 0,
+    }));
+
+    // Include any subject already stored that is no longer in the canonical list,
+    // so an instructor never silently loses sight of their existing assignments.
+    for (const subject of grouped.keys()) {
+      if (!subjects.some((s) => s.subject === subject)) {
+        subjects.push({ subject, count: grouped.get(subject)!.length });
+      }
+    }
+
+    return {
+      subjects,
+      assignments: assignments.map((a) => ({
+        id: a.id,
+        subject: a.subject,
+        createdAt: a.createdAt,
+        experiment: a.experiment,
+      })),
+    };
+  }
+
+  /**
+   * Assign an existing experiment to a teaching subject.
+   * Idempotent: assigning the same experiment to the same subject twice is a no-op.
+   */
+  async assignExperimentToSubject(experimentId: string, subject: string, instructorId: string) {
+    const canonicalSubject = normaliseSubject(subject);
+
+    const experiment = await prisma.experiment.findUnique({
+      where: { id: experimentId },
+      select: { id: true, title: true, status: true },
+    });
+
+    if (!experiment) {
+      throw new NotFoundError('Experiment');
+    }
+
+    const assignment = await prisma.experimentSubjectAssignment.upsert({
+      where: {
+        experimentId_subject_instructorId: {
+          experimentId,
+          subject: canonicalSubject,
+          instructorId,
+        },
+      },
+      create: { experimentId, subject: canonicalSubject, instructorId },
+      update: {},
+      include: {
+        experiment: {
+          select: {
+            id: true,
+            title: true,
+            subject: true,
+            difficulty: true,
+            description: true,
+            duration: true,
+            xpReward: true,
+            status: true,
+            _count: { select: { steps: true, attempts: true } },
+          },
+        },
+      },
+    });
+
+    return assignment;
+  }
+
+  /**
+   * Remove one of the instructor's subject assignments.
+   * Assignments belonging to other instructors are never touched.
+   */
+  async unassignExperimentFromSubject(assignmentId: string, instructorId: string) {
+    const assignment = await prisma.experimentSubjectAssignment.findUnique({
+      where: { id: assignmentId },
+      select: { id: true, instructorId: true },
+    });
+
+    if (!assignment) {
+      throw new NotFoundError('Subject assignment');
+    }
+
+    if (assignment.instructorId !== instructorId) {
+      throw new AppError('Not authorized to modify this subject assignment', 'FORBIDDEN', 403);
+    }
+
+    await prisma.experimentSubjectAssignment.delete({ where: { id: assignmentId } });
+
+    return true;
+  }
+
+  /**
+   * Published experiments an instructor can still assign: everything not yet
+   * assigned to the given subject by this instructor.
+   */
+  async getAssignableExperiments(instructorId: string, subject?: string) {
+    const canonicalSubject = subject ? normaliseSubject(subject) : undefined;
+
+    const existing = await prisma.experimentSubjectAssignment.findMany({
+      where: {
+        instructorId,
+        ...(canonicalSubject ? { subject: canonicalSubject } : {}),
+      },
+      select: { experimentId: true },
+    });
+
+    const assignedIds = new Set(existing.map((a) => a.experimentId));
+
+    const experiments = await prisma.experiment.findMany({
+      where: { status: 'published' },
+      include: {
+        _count: { select: { steps: true, attempts: true } },
+      },
+      orderBy: { title: 'asc' },
+    });
+
+    return experiments.filter((exp) => !assignedIds.has(exp.id));
+  }
+
+  /**
+   * Student-facing read: published experiments available under a subject,
+   * either because an instructor assigned them there or because the
+   * experiment's own lab subject matches.
+   */
+  async getExperimentsForSubject(subject: string) {
+    const canonicalSubject = normaliseSubject(subject);
+
+    return prisma.experiment.findMany({
+      where: {
+        status: 'published',
+        OR: [
+          { subjectAssignments: { some: { subject: canonicalSubject } } },
+          { subject: { equals: canonicalSubject, mode: 'insensitive' } },
+        ],
+      },
+      include: {
+        steps: { orderBy: { order: 'asc' } },
+        _count: { select: { steps: true, attempts: true } },
+      },
+      orderBy: { title: 'asc' },
+    });
+  }
+
+  /**
+   * Student-facing read: which subjects have experiments, and how many.
+   */
+  async getLabSubjectCatalog() {
+    const assigned = await prisma.experimentSubjectAssignment.groupBy({
+      by: ['subject'],
+      where: { subject: { in: ASSIGNABLE_SUBJECTS } },
+      _count: { subject: true },
+    });
+
+    const counts = new Map(assigned.map((a) => [a.subject, a._count.subject]));
+
+    const intrinsic = await prisma.experiment.groupBy({
+      by: ['subject'],
+      where: { status: 'published' },
+      _count: { subject: true },
+    });
+
+    return ASSIGNABLE_SUBJECTS.map((subject) => ({
+      subject,
+      experimentCount:
+        (counts.get(subject) ?? 0) +
+        (intrinsic.find((e) => e.subject.toLowerCase() === subject.toLowerCase())?._count.subject ?? 0),
+    }));
   }
 
   /**

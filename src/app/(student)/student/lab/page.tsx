@@ -134,7 +134,7 @@ export default async function VirtualLabPage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {freeLabs.map((lab) => (
-            <Link key={lab.id} href={`/student/lab/${lab.id}`}>
+            <Link key={lab.id} href={`/student/lab/${lab.subject.toLowerCase()}/${lab.id}`}>
               <Card className="border-0 shadow-sm hover:shadow-md transition-all group cursor-pointer h-full">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
@@ -193,7 +193,7 @@ export default async function VirtualLabPage() {
                   <span>{lab.difficulty}</span>
                 </div>
                 {isPremium ? (
-                  <Link href={`/student/lab/${lab.id}`}>
+                  <Link href={`/student/lab/${lab.subject.toLowerCase()}/${lab.id}`}>
                     <Button variant="primary" size="sm" fullWidth rightIcon={<Play size={14} />}>
                       Start Experiment
                     </Button>

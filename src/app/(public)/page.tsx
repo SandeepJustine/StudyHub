@@ -54,9 +54,9 @@ export default function LandingPage() {
             {[
               { icon: '📚', title: 'Video Lessons', description: 'Learn from expert instructors with high-quality video content' },
               { icon: '📝', title: 'Practice Quizzes', description: 'Test your knowledge with interactive quizzes and instant feedback' },
-              { icon: '🎓', title: 'Mock Exams', description: 'Prepare for MSCE, JCE, ICAM, and TEVETA with timed mock exams' },
+              { icon: '🎓', title: 'Mock Exams', description: 'Prepare for MSCE, JCE, ICAM, ACCA and TEVETA with timed mock exams' },
               { icon: '💬', title: 'Live Classes', description: 'Join interactive live sessions with instructors and peers' },
-              { icon: '🤖', title: 'AI Tutor', description: 'Get personalized help with our AI-powered learning assistant' },
+              { icon: '🤖', title: 'AI Tutor & Virtual Science Labs', description: 'Get personalized help with our AI-powered learning assistant and get experience with our virtual science' },
               { icon: '📊', title: 'Progress Tracking', description: 'Monitor your learning journey with detailed analytics' },
             ].map((feature, i) => (
               <Card key={i} padding="lg" className="text-center">

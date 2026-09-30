@@ -21,19 +21,22 @@ export async function POST(
     const contentType = req.headers.get('content-type') || '';
     let paymentMethod: string | undefined = undefined;
     let phone: string | undefined = undefined;
+    let bankInfo: string | undefined = undefined;
     let proofFile: File | undefined = undefined;
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const pm = formData.get('paymentMethod') as string;
       paymentMethod = pm || undefined;
-      phone = formData.get('phone') as string || undefined;
+      phone = (formData.get('phone') as string) || undefined;
+      bankInfo = (formData.get('bankInfo') as string) || undefined;
       const proofEntry = formData.get('proofFile');
       proofFile = proofEntry instanceof File ? proofEntry : undefined;
     } else {
       const body = await req.json();
       paymentMethod = body.paymentMethod;
       phone = body.phone;
+      bankInfo = body.bankInfo;
     }
     
     // Get student ID from session
@@ -53,7 +56,8 @@ export async function POST(
       courseId,
       paymentMethod,
       phone,
-      proofFile
+      proofFile,
+      bankInfo
     );
 
     if (result.redirectUrl) {

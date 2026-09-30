@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseDetails } from '@/components/features/course/course-details';
 import { CourseEnrollment } from '@/components/features/course/course-enrollment';
+import { PaymentStatusIndicator } from '@/components/features/payment/payment-status-indicator';
 import { Modal } from '@/components/ui/modal';
 import { Toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
@@ -78,12 +79,20 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
     }
   };
 
-  const enrollCourse = async (courseId: string, paymentMethod?: string, extraData?: { phone?: string; proofFile?: File }) => {
+  const closeEnrollment = useCallback(() => {
+    setShowEnrollment(false);
+    router.refresh();
+  }, [router]);
+
+  const enrollCourse = async (courseId: string, paymentMethod?: string, extraData?: { phone?: string; proofFile?: File; bankInfo?: string }) => {
     try {
       const formData = new FormData();
       formData.append('paymentMethod', paymentMethod || '');
       if (extraData?.phone) {
         formData.append('phone', extraData.phone);
+      }
+      if (extraData?.bankInfo) {
+        formData.append('bankInfo', extraData.bankInfo);
       }
       if (extraData?.proofFile) {
         formData.append('proofFile', extraData.proofFile);
@@ -105,16 +114,21 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
         if (data.transaction.status === 'COMPLETED') {
           setToast({ message: 'Payment successful! You are now enrolled.', type: 'success' });
         } else if (data.transaction.status === 'PENDING') {
-          setToast({ message: 'Payment initiated. You will be enrolled once payment is confirmed.', type: 'success' });
+          setToast({
+            message: 'Payment initiated. We will confirm it automatically — you can also verify it right now.',
+            type: 'success',
+          });
+        } else if (data.transaction.status === 'FAILED') {
+          setToast({ message: 'Payment failed. Please choose another payment method.', type: 'error' });
         }
       } else {
         setToast({ message: 'Successfully enrolled! You can start learning now.', type: 'success' });
       }
 
-      setShowEnrollment(false);
-      router.refresh();
+      return data;
     } catch (error: any) {
       setToast({ message: error.message, type: 'error' });
+      throw error;
     }
   };
 
@@ -142,26 +156,29 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
     setToast({ message: 'Review submitted successfully!', type: 'success' });
   }, [onSubmitReview]);
 
-  if (enrollmentStatus === 'payment_pending') {
+if (enrollmentStatus === 'payment_pending') {
     return (
       <div className="min-h-screen bg-grey-light">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-navy mb-3">Payment Pending</h2>
-            <p className="text-grey-dark mb-2">
-              You have a pending payment for this course. Please complete your payment to access the course content.
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+          <div className="bg-white rounded-xl shadow-md p-6 sm:p-8 text-center">
+            <h2 className="text-2xl font-bold text-navy mb-2">Payment in progress</h2>
+            <p className="text-grey-dark mb-1">
+              Your payment for <span className="font-medium text-navy">{course.title}</span> has not been confirmed yet.
             </p>
-            <p className="text-sm text-grey-medium mb-6">
-              Once payment is confirmed, you will be able to start learning immediately.
+            <p className="text-sm text-grey-medium">
+              This page updates automatically. You can also check with your provider straight away.
             </p>
-            <div className="flex gap-3 justify-center">
-              <Button variant="primary" onClick={() => router.push(`/student/courses/${course.id}/learn`)}>
-                Try Accessing Course
-              </Button>
-              <Button variant="outline" onClick={() => router.back()}>
-                Back to Courses
-              </Button>
-            </div>
+          </div>
+
+          <PaymentStatusIndicator courseId={course.id} onVerified={() => router.refresh()} />
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="primary" onClick={() => router.push(`/student/courses/${course.id}/learn`)}>
+              Try Accessing Course
+            </Button>
+            <Button variant="outline" onClick={() => router.back()}>
+              Back to Courses
+            </Button>
           </div>
         </div>
       </div>
@@ -187,7 +204,7 @@ export function CourseDetailsPage({ course, enrollmentStatus, enrollmentProgress
         <CourseEnrollment
           course={course}
           onEnroll={enrollCourse}
-          onCancel={() => setShowEnrollment(false)}
+          onCancel={closeEnrollment}
         />
       </Modal>
 

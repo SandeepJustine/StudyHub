@@ -33,10 +33,16 @@ export default function ContactPage() {
   });
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<RecaptchaHandle>(null);
-  const [mathChallenge, setMathChallenge] = useState(generateMathChallenge());
+  const [mathChallenge, setMathChallenge] = useState<{ a: number; b: number; answer: number } | null>(null);
   const [mathAnswer, setMathAnswer] = useState('');
   const [formStartTime] = useState(() => Date.now());
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // The challenge must not be generated during render: Math.random() differs
+  // between the server pass and client hydration, which breaks hydration.
+  useEffect(() => {
+    setMathChallenge(generateMathChallenge());
+  }, []);
 
   const resetMathChallenge = useCallback(() => {
     setMathChallenge(generateMathChallenge());
@@ -69,7 +75,7 @@ export default function ContactPage() {
       }
 
       const userAnswer = parseInt(mathAnswer, 10);
-      if (isNaN(userAnswer) || userAnswer !== mathChallenge.answer) {
+      if (!mathChallenge || isNaN(userAnswer) || userAnswer !== mathChallenge.answer) {
         throw new Error('Incorrect answer. Please try again.');
         return;
       }
@@ -279,7 +285,7 @@ export default function ContactPage() {
 
                   <div className="p-4 bg-grey-light/50 rounded-lg">
                     <label className="block text-sm font-medium text-navy mb-2">
-                      Security Check: What is {mathChallenge.a} + {mathChallenge.b}?
+                      Security Check: {mathChallenge ? `What is ${mathChallenge.a} + ${mathChallenge.b}?` : 'Loading…'}
                     </label>
                     <Input
                       type="text"

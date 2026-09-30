@@ -15,7 +15,6 @@ interface DashboardShellProps {
     icon: React.ReactNode;
     badge?: string;
   }>;
-  unreadNotifications?: number;
 }
 
 export function DashboardShell({
@@ -24,20 +23,15 @@ export function DashboardShell({
   title,
   description,
   menuItems,
-  unreadNotifications,
 }: DashboardShellProps) {
   return (
     <SessionProvider>
       <div className="min-h-screen bg-grey-light">
         <Sidebar role={role} menuItems={menuItems} />
-        
+
         <div className="lg:ml-64">
-          <DashboardHeader
-            title={title}
-            description={description}
-            unreadNotifications={unreadNotifications}
-          />
-          
+          <DashboardHeader title={title} description={description} />
+
           <main className="p-6">
             {children}
           </main>

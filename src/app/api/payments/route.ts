@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       PAYCHANGU: { min: 1000, max: 5000000 },
       VISA: { min: 1000, max: 5000000 },
       MASTERCARD: { min: 1000, max: 5000000 },
-      BANK_TRANSFER: { min: 5000, max: 10000000 },
+      MANUAL_PAYMENT: { min: 5000, max: 10000000 },
       SCHOOL_INVOICE: { min: 50000, max: 10000000 },
     };
 

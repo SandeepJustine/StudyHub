@@ -74,18 +74,18 @@ export default async function PublicCoursesPage() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-2.5 bg-green-100 rounded-xl">
-            <BookOpen size={24} className="text-green" />
+            <BookOpen size={32} className="text-green" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-navy">Explore Courses</h1>
             <p className="text-grey-dark mt-1">
-              Discover {courses.length} {courses.length === 1 ? 'course' : 'courses'} from expert instructors across Malawi
+              Discover {courses.length} {courses.length === 1 ? 'course' : 'courses'} from expert instructors and teachers across Malawi
             </p>
           </div>
         </div>
 
         <PublicSponsorships placements={['FEATURED_LISTING', 'COURSE_LIST']} />
-
+        <br></br>
         <PublicCoursesClient courses={courses} />
       </div>
     </div>

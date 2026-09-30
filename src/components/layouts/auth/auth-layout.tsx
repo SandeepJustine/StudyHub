@@ -99,7 +99,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             <div>
               <h4 className="font-semibold text-white mb-4 text-sm">Support</h4>
               <ul className="space-y-2 text-sm text-slate-300">
-                <li>+265 997 011 620</li>
+                <li>+265 992 627 431</li>
                 <li>info@studyhubmw.com</li>
                 <li>Lilongwe, Malawi</li>
               </ul>

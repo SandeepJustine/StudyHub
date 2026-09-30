@@ -32,10 +32,10 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'past_paper:view',
       'Community forum access',
       'Progress tracking',
-      'Access to Virtual Lab',
+      'Access to Virtual Science Lab',
     ],
     limits: {
-      courses: 3,
+      courses: 5,
       storage: 500,
       liveClasses: 0,
     },
@@ -56,7 +56,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'past_paper:view',
       'past_paper:download',
       'Advanced analytics',
-      'Access to Virtual Lab',
+      'Access to Virtual Science Lab',
     ],
     limits: {
       courses: -1, // unlimited
@@ -79,7 +79,7 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Priority certificate processing',
       'past_paper:view',
       'past_paper:download',
-      'Access to Virtual Lab',
+      'Access to Virtual Science Lab',
     ],
     limits: {
       courses: -1,
@@ -102,7 +102,6 @@ export const PRICING_TIERS: Record<string, TierConfig> = {
       'Networking events',
       'past_paper:view',
       'past_paper:download',
-      'Access to Virtual Lab',
     ],
     limits: {
       courses: -1,

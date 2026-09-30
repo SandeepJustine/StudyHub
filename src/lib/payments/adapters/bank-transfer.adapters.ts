@@ -66,10 +66,10 @@ export class BankTransferAdapter implements PaymentProvider {
 
     try {
       // Validate amount (minimum transfer amount)
-      if (request.amount < 1000) {
+      if (request.amount < 5000) {
         return {
           success: false,
-          message: 'Minimum bank transfer amount is MWK 1,000',
+          message: 'Minimum bank transfer amount is MWK 5,000',
         };
       }
 

@@ -32,7 +32,6 @@ export default async function StudentLayout({ children }: { children: React.Reac
       title={`Hello, ${session.user.name?.split(' ')[0]}`}
       description="Continue your learning journey"
       menuItems={studentMenuItems}
-      unreadNotifications={3}
     >
       {children}
     </DashboardShell>

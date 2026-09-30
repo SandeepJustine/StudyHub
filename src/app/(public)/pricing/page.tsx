@@ -30,6 +30,7 @@ export default function PricingPage() {
         { included: true, text: 'Basic quizzes and exercises' },
         { included: true, text: 'Past papers access' },
         { included: true, text: 'Community forum access' },
+        { included: true, text: 'Vitual Science Lab' },
         { included: false, text: 'AI Tutor assistance' },
         { included: false, text: 'Live classes' },
         { included: false, text: 'Mock examinations' },
@@ -46,6 +47,7 @@ export default function PricingPage() {
       features: [
         { included: true, text: 'Unlimited course access' },
         { included: true, text: 'AI Tutor assistance' },
+        { included: true, text: 'Vitual Science Lab' },
         { included: true, text: 'Live class participation' },
         { included: true, text: 'Mock examinations' },
         { included: true, text: 'Digital certificates' },
@@ -68,6 +70,7 @@ export default function PricingPage() {
         { included: true, text: 'Exclusive webinars' },
         { included: true, text: 'Priority certificate processing' },
         { included: true, text: 'Extended AI Tutor usage' },
+        { included: true, text: 'Vitual Science Lab' },
         { included: true, text: 'Offline content access' },
         { included: true, text: 'Annual progress report' },
       ],

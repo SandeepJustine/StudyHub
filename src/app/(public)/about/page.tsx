@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
-import { Users, Target, Heart, Award, MapPin, Phone, Mail } from 'lucide-react';
+import { Users, Target, Heart, Award, MapPin, Phone, Mail, EyeIcon } from 'lucide-react';
 import { PageHero } from '@/components/ui/page-hero';
 
 export default function AboutPage() {
@@ -82,7 +82,7 @@ export default function AboutPage() {
             <Card padding="lg">
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart size={32} className="text-green" />
+                  <EyeIcon size={32} className="text-green" />
                 </div>
                 <h3 className="text-xl font-bold text-navy mb-4">Our Vision</h3>
                 <p className="text-grey-dark">
@@ -119,7 +119,7 @@ export default function AboutPage() {
               },
               {
                 title: 'Innovation',
-                description: 'We leverage technology like AI tutoring and adaptive learning to create personalized educational experiences.',
+                description: 'We leverage technology like AI tutoring, Virtual science labs and adaptive learning to create personalized educational experiences.',
                 icon: '💡',
               },
               {
@@ -189,7 +189,7 @@ export default function AboutPage() {
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-8">
             <div className="flex items-center gap-3">
               <Phone size={20} />
-              <span>+265 997 011 620</span>
+              <span>+265 992 627 431</span>
             </div>
             <div className="flex items-center gap-3">
               <Mail size={20} />
