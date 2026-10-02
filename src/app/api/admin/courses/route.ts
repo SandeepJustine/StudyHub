@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth/auth-options';
 import prisma from '@/lib/utils/prisma';
 
@@ -206,6 +207,14 @@ export async function PUT(req: Request) {
             publishedAt: course.publishedAt || new Date(),
           },
         });
+
+        // Refresh the public catalogue and this course's detail page so the
+        // newly approved course is visible immediately.
+        revalidatePath('/courses');
+        revalidatePath(`/courses/${courseId}`);
+        revalidatePath('/');
+        revalidatePath('/student/courses');
+
         auditAction = 'COURSE_APPROVED';
         break;
 
@@ -229,6 +238,9 @@ export async function PUT(req: Request) {
           },
         });
         auditAction = 'COURSE_REJECTED';
+
+        revalidatePath('/courses');
+        revalidatePath(`/courses/${courseId}`);
         break;
 
       case 'archive':
@@ -236,6 +248,10 @@ export async function PUT(req: Request) {
           where: { id: courseId },
           data: { status: 'ARCHIVED' },
         });
+
+        revalidatePath('/courses');
+        revalidatePath(`/courses/${courseId}`);
+
         auditAction = 'COURSE_ARCHIVED';
         break;
 
@@ -252,6 +268,10 @@ export async function PUT(req: Request) {
           },
         });
         auditAction = 'COURSE_FEATURED';
+
+        revalidatePath('/courses');
+        revalidatePath(`/courses/${courseId}`);
+        revalidatePath('/');
         break;
 
       case 'unfeature':
@@ -266,6 +286,10 @@ export async function PUT(req: Request) {
           },
         });
         auditAction = 'COURSE_UNFEATURED';
+
+        revalidatePath('/courses');
+        revalidatePath(`/courses/${courseId}`);
+        revalidatePath('/');
         break;
 
       default:

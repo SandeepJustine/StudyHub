@@ -8,6 +8,10 @@ export const metadata = {
   description: 'Browse courses from expert instructors across Malawi',
 };
 
+// The catalogue must reflect newly approved courses immediately, so this page
+// renders per-request instead of being prerendered at build time.
+export const dynamic = 'force-dynamic';
+
 async function getApprovedCourses() {
   const courses = await prisma.course.findMany({
     where: { status: 'APPROVED' },

@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description: 'Join live revision bootcamps and events across Malawi',
 };
 
+// Event listings change as events are created or cancelled, so render per-request.
+export const dynamic = 'force-dynamic';
+
 async function getPublicEvents() {
   const events = await prisma.event.findMany({
     where: {

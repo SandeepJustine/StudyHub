@@ -10,6 +10,10 @@ export const metadata = {
   description: 'View course details and enroll',
 };
 
+// Rendered per-request so a course becomes reachable the moment it is approved,
+// rather than when the app is next built.
+export const dynamic = 'force-dynamic';
+
 export default async function CourseDetailPage({
   params,
 }: {
