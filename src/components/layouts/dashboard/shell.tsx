@@ -26,15 +26,13 @@ export function DashboardShell({
 }: DashboardShellProps) {
   return (
     <SessionProvider>
-      <div className="min-h-screen bg-grey-light">
+      <div className="min-h-screen bg-grey-light overflow-x-hidden">
         <Sidebar role={role} menuItems={menuItems} />
 
         <div className="lg:ml-64">
           <DashboardHeader title={title} description={description} />
 
-          <main className="p-6">
-            {children}
-          </main>
+          <main className="p-4 sm:p-6">{children}</main>
         </div>
       </div>
     </SessionProvider>

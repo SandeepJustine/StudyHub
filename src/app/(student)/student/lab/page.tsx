@@ -52,7 +52,7 @@ export default async function VirtualLabPage() {
   const freeLabs = VIRTUAL_LABS.filter(lab => !lab.premium);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Page Title */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export default async function VirtualLabPage() {
       )}
 
       {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: 'Total', value: VIRTUAL_LABS.length, icon: <FlaskConical size={16} />, color: 'text-green', bg: 'bg-green-50' },
           { label: 'Free', value: freeLabs.length, icon: <Play size={16} />, color: 'text-blue-600', bg: 'bg-blue-50' },

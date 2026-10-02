@@ -147,7 +147,7 @@ export default function SchoolAdminCertificatesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-navy/10 rounded-xl">
@@ -210,7 +210,8 @@ export default function SchoolAdminCertificatesPage() {
           <div className="space-y-3">
             {certificates.length > 0 ? (
               <div className="bg-white rounded-lg border border-grey-light overflow-hidden">
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px]">
                   <thead className="bg-grey-light/50">
                     <tr>
                       <th className="text-left px-4 py-3 text-xs font-medium text-grey-dark uppercase tracking-wider">Certificate</th>
@@ -267,6 +268,7 @@ export default function SchoolAdminCertificatesPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             ) : (
               <Card className="border-0 shadow-sm">

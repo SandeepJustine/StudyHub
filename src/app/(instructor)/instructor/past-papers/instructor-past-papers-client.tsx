@@ -98,7 +98,7 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
   const availableTiers = getTiersForRole('INSTRUCTOR').filter(t => t !== 'INSTRUCTOR_FREE');
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-orange-100 rounded-xl"><FileText size={22} className="text-orange-600" /></div>
@@ -114,7 +114,7 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[{ l:'My Papers', v:myPapers.length, i:<FileText size={16} className="text-orange-600" />, b:'bg-orange-50' },{ l:'Exam Boards', v:examBoards.length, i:<Search size={16} className="text-blue-600" />, b:'bg-blue-50' },{ l:'Subjects', v:subjects.length, i:<FileText size={16} className="text-green-600" />, b:'bg-green-50' },{ l:'Total Views', v:myPapers.length * 12, i:<Eye size={16} className="text-purple-600" />, b:'bg-purple-50' }].map((s,i)=>(
           <Card key={i} className="border-0 shadow-sm"><CardContent className="p-3 text-center"><div className={`p-1.5 rounded-lg ${s.b} inline-block mb-1`}>{s.i}</div><p className="text-xl font-bold text-navy">{s.v}</p><p className="text-xs text-grey-medium">{s.l}</p></CardContent></Card>
         ))}
@@ -123,7 +123,8 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
       {/* Papers Table */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px]">
             <thead>
               <tr className="border-b border-grey-light">
                 <th className="text-left p-4 text-xs font-medium text-grey-medium uppercase">Title</th>
@@ -166,6 +167,7 @@ export function InstructorPastPapersClient({ canUpload, myPapers, examBoards, su
               )}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
 

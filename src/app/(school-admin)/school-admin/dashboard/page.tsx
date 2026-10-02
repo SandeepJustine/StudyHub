@@ -216,10 +216,10 @@ const fetchData = async () => {
     <div className="space-y-6">
       {/* Subscription Alert */}
       {isBronze && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AlertTriangle size={20} className="text-yellow-600" />
-            <div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <AlertTriangle size={20} className="text-yellow-600 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="min-w-0">
               <p className="font-medium text-yellow-800">Bronze Tier - Upgrade for More Features</p>
               <p className="text-sm text-yellow-700">
                 Unlock advanced analytics, custom branding, and parent portal with Silver or Gold tier
@@ -291,7 +291,7 @@ const fetchData = async () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-3 sm:gap-4">
         <Button variant="primary" leftIcon={<UserPlus size={18} />} onClick={() => router.push('/school-admin/students?add=true')}>
           Add Students
         </Button>

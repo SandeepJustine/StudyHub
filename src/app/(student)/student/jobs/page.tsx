@@ -40,7 +40,7 @@ export default async function StudentJobsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-purple-100 rounded-xl"><Briefcase size={22} className="text-purple-600" /></div>
@@ -50,7 +50,7 @@ export default async function StudentJobsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[{ l:'Active Jobs', v:jobs.length, i:<Briefcase size={16} className="text-purple-600" />, b:'bg-purple-50' },{ l:'Companies', v:new Set(jobs.map(j=>j.client?.companyName)).size, i:<Building2 size={16} className="text-blue-600" />, b:'bg-blue-50' },{ l:'Applied', v:0, i:<Send size={16} className="text-green" />, b:'bg-green-50' }].map((s,i)=>(
           <Card key={i} className="border-0 shadow-sm"><CardContent className="p-3 text-center"><div className={`p-1.5 rounded-lg ${s.b} inline-block mb-1`}>{s.i}</div><p className="text-xl font-bold text-navy">{s.v}</p><p className="text-xs text-grey-medium">{s.l}</p></CardContent></Card>
         ))}

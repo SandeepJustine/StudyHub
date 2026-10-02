@@ -174,7 +174,7 @@ export const DropdownMenuContent = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        'absolute z-50 min-w-[180px] rounded-lg bg-white shadow-lg border border-grey-light',
+        'absolute z-50 min-w-[180px] max-w-[calc(100vw-2rem)] rounded-lg bg-white shadow-lg border border-grey-light',
         'animate-scale origin-top-right',
         alignClasses[align],
         className

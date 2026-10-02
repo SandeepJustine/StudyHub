@@ -234,7 +234,7 @@ export function ModuleList({ courseId, modules }: ModuleListProps) {
             <label className="block text-sm font-medium text-grey-dark mb-1.5">
               Content Type
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {['VIDEO', 'AUDIO', 'TEXT', 'PDF', 'SLIDES', 'LINK', 'EMBED', 'QUIZ'].map((ct) => (
                 <button
                   key={ct}

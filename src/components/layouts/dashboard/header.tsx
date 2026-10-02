@@ -50,18 +50,21 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="bg-white border-b border-grey-light px-6 py-4">
-      <div className="flex items-center justify-between">
-        {/* Left - Title */}
-        <div>
-          <h1 className="text-2xl font-bold text-navy font-poppins">{title}</h1>
+    <header className="bg-white border-b border-grey-light px-4 py-4 sm:px-6">
+      <div className="flex items-center justify-between gap-3">
+        {/* Left - Title. pl-14 clears the fixed sidebar toggle (40px at left-4),
+            which otherwise renders on top of the title on mobile. */}
+        <div className="min-w-0 pl-14 lg:pl-0">
+          <h1 className="text-lg sm:text-2xl font-bold text-navy font-poppins truncate">
+            {title}
+          </h1>
           {description && (
-            <p className="text-sm text-grey-dark mt-1">{description}</p>
+            <p className="text-xs sm:text-sm text-grey-dark mt-1 truncate">{description}</p>
           )}
         </div>
 
         {/* Right - Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Search */}
           <div className="hidden md:block w-64">
             <Input
@@ -102,7 +105,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                   onClick={() => setShowUserMenu(false)}
                 />
                 
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-grey-light py-1 z-50">
+                <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-grey-light py-1 z-50">
                   {/* User Info Section */}
                   <div className="px-4 py-3 border-b border-grey-light">
                     <p className="text-sm font-medium text-navy truncate">

@@ -38,7 +38,7 @@ export default async function StudentCommunityPage() {
   const totalMembers = forums.reduce((sum, f) => sum + (f.memberCount || 0), 0);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export default async function StudentCommunityPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           { l: 'Discussions', v: totalThreads || 0, icon: <MessageSquare size={16} className="text-navy" />, bg: 'bg-navy/10' },
           { l: 'Members', v: totalMembers > 0 ? `${totalMembers}+` : '0', icon: <Users size={16} className="text-green" />, bg: 'bg-green-50' },

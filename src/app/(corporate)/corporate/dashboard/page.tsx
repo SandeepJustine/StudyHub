@@ -206,7 +206,7 @@ export default function CorporateDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-3 sm:gap-4">
         <Link href="/corporate/recruitment">
           <Button variant="primary" leftIcon={<Plus size={18} />}>
             Post New Job
@@ -240,15 +240,15 @@ export default function CorporateDashboardPage() {
           ) : (
             <div className="space-y-4">
               {data.recentPostings.map((posting) => (
-                <div key={posting.id} className="flex items-center justify-between p-4 bg-grey-light/50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                <div key={posting.id} className="flex flex-wrap items-center justify-between gap-3 p-4 bg-grey-light/50 rounded-lg">
+                  <div className="flex-1 min-w-[180px]">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h3 className="font-semibold text-navy">{posting.title}</h3>
                       <Badge variant={posting.status === 'active' ? 'success' : 'warning'} size="sm">
                         {posting.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-grey-medium">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-grey-medium">
                       <span className="flex items-center gap-1">
                         <Users size={14} /> {posting.applications} applications
                       </span>
@@ -285,19 +285,19 @@ export default function CorporateDashboardPage() {
           ) : (
             <div className="space-y-3">
               {data.recentApplications.map((app) => (
-                <div key={app.id} className="flex items-center justify-between p-4 bg-grey-light/50 rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center">
+                <div key={app.id} className="flex flex-wrap items-center justify-between gap-3 p-4 bg-grey-light/50 rounded-lg">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
                       <span className="font-medium text-navy">
                         {app.applicantName.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-navy">{app.applicantName}</h3>
-                      <p className="text-sm text-grey-medium">{app.position}</p>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-navy truncate">{app.applicantName}</h3>
+                      <p className="text-sm text-grey-medium truncate">{app.position}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <Badge
                       variant={
                         app.status === 'shortlisted' ? 'success' :
@@ -393,7 +393,7 @@ export default function CorporateDashboardPage() {
                   {inq.metadata?.message && (
                     <p className="text-sm text-grey-medium italic mb-3">"{inq.metadata.message}"</p>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-yellow-200">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-yellow-200">
                     <span className="text-xs text-grey-medium">
                       {formatRelativeTime(new Date(inq.createdAt))}
                     </span>

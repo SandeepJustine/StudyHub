@@ -106,8 +106,8 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           {['7d', '30d', '90d', '1y'].map((t) => (
             <Button
               key={t}
@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
           ))}
         </div>
         <Button variant="ghost" size="sm" leftIcon={<RefreshCw size={16} />} onClick={fetchMetrics}>
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 

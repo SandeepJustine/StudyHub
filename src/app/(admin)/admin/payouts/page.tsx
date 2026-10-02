@@ -441,7 +441,7 @@ export default function AdminPayoutsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-grey-dark mb-2">Payment Method</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
                     { id: 'AIRTEL_MONEY', name: 'Airtel Money', icon: '📱' },
                     { id: 'TNM_MPAMBA', name: 'TNM Mpamba', icon: '📱' },

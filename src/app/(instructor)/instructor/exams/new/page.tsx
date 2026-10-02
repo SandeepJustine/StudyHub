@@ -231,7 +231,7 @@ export default function ExamBuilderPage({ params }: { params: Promise<{ courseId
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href={`/instructor/courses/${courseId}/builder`}>
@@ -274,7 +274,7 @@ export default function ExamBuilderPage({ params }: { params: Promise<{ courseId
               onChange={(e) => setQuizData({ ...quizData, description: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Time Limit (min)"
               type="number"

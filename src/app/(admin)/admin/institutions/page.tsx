@@ -303,7 +303,7 @@ export default function AdminInstitutionsPage() {
       >
         {selectedInstitution && (
           <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg text-center">
                 <Users size={24} className="mx-auto text-blue-600 mb-2" />
                 <p className="text-2xl font-bold text-blue-600">{selectedInstitution.students}</p>
@@ -373,7 +373,7 @@ export default function AdminInstitutionsPage() {
 
             <div>
               <h4 className="font-semibold text-navy mb-2">Change Tier</h4>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {['INSTITUTION_BRONZE', 'INSTITUTION_SILVER', 'INSTITUTION_GOLD'].map((tier) => (
                   <Button
                     key={tier}

@@ -41,7 +41,7 @@ export default async function StudentPastPapersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2.5 bg-orange-100 rounded-xl"><FileText size={22} className="text-orange-600" /></div>
         <div><h1 className="text-2xl font-bold text-navy">Past Papers</h1><p className="text-sm text-grey-medium">Practice with real exam papers</p></div>

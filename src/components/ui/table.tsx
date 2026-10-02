@@ -45,7 +45,7 @@ export const TableHead = forwardRef<HTMLTableCellElement, React.ThHTMLAttributes
     return (
       <th
         ref={ref}
-        className={cn('px-4 py-3 text-left text-sm font-semibold text-grey-dark hidden md:table-cell', className)}
+        className={cn('px-4 py-3 text-left text-sm font-semibold text-grey-dark', className)}
         {...props}
       >
         {children}
@@ -60,7 +60,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, React.TdHTMLAttributes
     return (
       <td
         ref={ref}
-        className={cn('px-4 py-3 text-sm text-grey-dark hidden md:table-cell', className)}
+        className={cn('px-4 py-3 text-sm text-grey-dark', className)}
         {...props}
       >
         {children}
@@ -142,22 +142,35 @@ export function Table<T extends { id: string }>({
 
   return (
     <div className={cn('rounded-xl border border-grey-light', className)}>
-      {/* Mobile Card View */}
-      {renderMobileCard && (
-        <div className="md:hidden space-y-3 p-4">
-          {data.length === 0 ? (
-            <div className="text-center py-12 text-grey-medium">{emptyMessage}</div>
-          ) : (
-            data.map((item) => (
-              <Card key={item.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+      {/* Mobile Card View. Always rendered so data is never invisible on phones:
+          callers may supply renderMobileCard, otherwise the columns are laid out
+          as label/value pairs automatically. */}
+      <div className="md:hidden">
+        {data.length === 0 ? (
+          <div className="text-center py-12 px-4 text-grey-medium text-sm">{emptyMessage}</div>
+        ) : (
+          <div className="space-y-3 p-3">
+            {data.map((item) => (
+              <Card
+                key={item.id}
+                className={cn(
+                  'border-0 shadow-sm',
+                  onRowClick && 'cursor-pointer active:opacity-70'
+                )}
+                onClick={onRowClick ? () => onRowClick(item) : undefined}
+              >
                 <CardContent className="p-4">
-                  {renderMobileCard(item)}
+                  {renderMobileCard ? (
+                    renderMobileCard(item)
+                  ) : (
+                    <DefaultMobileCard item={item} columns={columns} />
+                  )}
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Desktop Table View */}
       <div className="hidden md:block overflow-x-auto">
@@ -221,6 +234,42 @@ export function Table<T extends { id: string }>({
           </TableBody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// Default mobile card (auto-generated)
+// ============================================
+
+/**
+ * Renders a row as a stacked card when the caller supplies no renderMobileCard.
+ * The first visible column becomes the card heading (it usually holds the
+ * identity cell); the rest are label-above-value rows. Labels sit above rather
+ * than beside the value so action columns full of buttons get the entire card
+ * width instead of being squeezed beside a label.
+ */
+function DefaultMobileCard<T>({ item, columns }: { item: T; columns: Column<T>[] }) {
+  const visible = columns.filter((column) => !column.hideOnMobile);
+  const [primary, ...rest] = visible;
+
+  return (
+    <div className="space-y-3">
+      {primary && (
+        <div className="pb-2 border-b border-grey-light font-medium text-navy text-sm break-words">
+          {primary.accessor(item)}
+        </div>
+      )}
+      <dl className="space-y-2.5">
+        {rest.map((column) => (
+          <div key={column.key} className="min-w-0">
+            <dt className="text-[11px] uppercase tracking-wide text-grey-medium mb-1">
+              {column.header}
+            </dt>
+            <dd className="text-sm text-grey-dark break-words">{column.accessor(item)}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }

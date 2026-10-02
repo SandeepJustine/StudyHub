@@ -47,7 +47,7 @@ export default async function StudentLiveClassesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2.5 bg-blue-100 rounded-xl"><Video size={22} className="text-blue-600" /></div>
         <div>
@@ -57,7 +57,7 @@ export default async function StudentLiveClassesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           { l: 'Live Now', v: liveNow.length, icon: <Play size={16} className="text-green" />, bg: 'bg-green-50', pulse: true },
           { l: 'Upcoming', v: scheduled.length, icon: <Calendar size={16} className="text-blue-600" />, bg: 'bg-blue-50' },

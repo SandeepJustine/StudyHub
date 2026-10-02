@@ -95,11 +95,11 @@ export default function InstitutionCertificateBranding({ institutionId }: { inst
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold text-navy">Certificate Branding</h1>
 
       <Card className="border-0 shadow-sm">
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-navy mb-2">Primary Color</label>

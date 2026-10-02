@@ -287,7 +287,7 @@ export default function NewCoursePage() {
                )}
              </div>
 
-             <div className="grid grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-grey-dark">Subject *</label>
                 <select className="w-full px-4 py-3 border-2 border-grey-light rounded-lg text-sm" value={courseData.subject} onChange={(e) => setCourseData({ ...courseData, subject: e.target.value })}>
@@ -324,7 +324,7 @@ export default function NewCoursePage() {
               <Input label="Module Title *" placeholder="e.g., Introduction to Algebra" value={currentModule.title} onChange={(e) => setCurrentModule({ ...currentModule, title: e.target.value })} />
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-grey-dark">Content Type</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {CONTENT_TYPES.map((ct) => (
                     <button key={ct.type} onClick={() => setCurrentModule({ ...currentModule, ContentType: ct.type })}
                       className={`p-3 rounded-xl border-2 text-center transition-all ${currentModule.ContentType === ct.type ? 'border-navy bg-navy/5' : 'border-grey-light hover:border-navy/50'}`}>

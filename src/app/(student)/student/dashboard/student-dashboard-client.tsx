@@ -108,32 +108,32 @@ export function StudentDashboardClient({
   const availableTiers = getTiersForRole('STUDENT').filter(t => t !== 'STUDENT_BASIC');
 
   return (
-    <div className="min-h-screen bg-grey-light p-6 space-y-6">
+    <div className="space-y-6">
       {/* Greeting Card */}
       <Card className="bg-gradient-to-r from-white to-grey-light border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-navy/10 flex items-center justify-center">
-                <span className="text-2xl font-bold text-navy">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
+                <span className="text-xl sm:text-2xl font-bold text-navy">
                   {session.user.name?.charAt(0)?.toUpperCase() || 'S'}
                 </span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-navy">
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-navy truncate">
                   Hello, {session.user.name?.split(' ')[0]}! 👋
                 </h1>
-                <p className="text-grey-dark mt-1">Ready to continue learning today?</p>
+                <p className="text-sm text-grey-dark mt-1">Ready to continue learning today?</p>
                 {student.grade && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <Badge variant="neutral" size="sm">{student.grade}</Badge>
                     {student.examBoard && <Badge variant="neutral" size="sm">{student.examBoard}</Badge>}
                   </div>
                 )}
               </div>
             </div>
-            <Link href="/student/courses">
-              <Button variant="primary" rightIcon={<ChevronRight size={16} />}>
+            <Link href="/student/courses" className="w-full sm:w-auto">
+              <Button variant="primary" fullWidth rightIcon={<ChevronRight size={16} />}>
                 Browse Courses
               </Button>
             </Link>
@@ -143,24 +143,24 @@ export function StudentDashboardClient({
 
       {/* Upgrade Banner */}
       {!isPremium && (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-xl">
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-yellow-100 rounded-xl shrink-0">
               <Crown size={20} className="text-yellow-600" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-semibold text-navy">Upgrade to Premium</h3>
               <p className="text-sm text-grey-dark">Unlock unlimited courses, AI Tutor, live classes, and downloadable past papers.</p>
             </div>
           </div>
-          <Button variant="primary" size="sm" className="bg-yellow-500 hover:bg-yellow-600 text-navy font-semibold" onClick={() => setShowUpgradeModal(true)}>
+          <Button variant="primary" size="sm" className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-navy font-semibold" onClick={() => setShowUpgradeModal(true)}>
             Upgrade Now
           </Button>
         </div>
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-2">
@@ -169,7 +169,7 @@ export function StudentDashboardClient({
               </div>
               <p className="text-sm font-medium text-grey-medium">Active Courses</p>
             </div>
-            <p className="text-3xl font-bold text-navy">{activeEnrollments.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-navy">{activeEnrollments.length}</p>
           </CardContent>
         </Card>
 
@@ -181,7 +181,7 @@ export function StudentDashboardClient({
               </div>
               <p className="text-sm font-medium text-grey-medium">Completed</p>
             </div>
-            <p className="text-3xl font-bold text-navy">{completedEnrollments.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-navy">{completedEnrollments.length}</p>
           </CardContent>
         </Card>
 
@@ -193,7 +193,7 @@ export function StudentDashboardClient({
               </div>
               <p className="text-sm font-medium text-grey-medium">Avg Progress</p>
             </div>
-            <p className="text-3xl font-bold text-navy">{averageProgress}%</p>
+            <p className="text-2xl sm:text-3xl font-bold text-navy">{averageProgress}%</p>
           </CardContent>
         </Card>
 
@@ -205,7 +205,7 @@ export function StudentDashboardClient({
               </div>
               <p className="text-sm font-medium text-grey-medium">Study Hours</p>
             </div>
-            <p className="text-3xl font-bold text-navy">{studyHours}h</p>
+            <p className="text-2xl sm:text-3xl font-bold text-navy">{studyHours}h</p>
           </CardContent>
         </Card>
       </div>
@@ -228,8 +228,8 @@ export function StudentDashboardClient({
               activeEnrollments.map((enrollment) => (
                 <Link key={enrollment.id} href={`/student/courses/${enrollment.courseId}`}>
                   <Card className="border-0 shadow-sm hover:shadow-md transition-all group cursor-pointer mb-5">
-                    <CardContent className="p-5">
-                      <div className="flex items-center justify-between">
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-5">
                             <h3 className="font-semibold text-navy group-hover:text-red transition-colors">
@@ -255,7 +255,7 @@ export function StudentDashboardClient({
                             </div>
                           </div>
                         </div>
-                        <Button variant="primary" size="sm" className="ml-4 flex-shrink-0">
+                        <Button variant="primary" size="sm" className="flex-shrink-0">
                           <Play size={14} className="mr-1" /> Continue
                         </Button>
                       </div>
@@ -457,7 +457,7 @@ export function StudentDashboardClient({
               {/* Payment Methods */}
               <div>
                 <h4 className="text-sm font-medium text-grey-dark mb-3">Select Payment Method</h4>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {paymentMethods.map(method => (
                     <button
                       key={method.id}

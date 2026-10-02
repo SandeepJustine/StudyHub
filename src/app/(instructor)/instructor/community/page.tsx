@@ -104,7 +104,7 @@ export default async function InstructorCommunityPage({
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -132,7 +132,7 @@ export default async function InstructorCommunityPage({
 
       {/* Stats */}
       {data?.stats && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             { l: 'My Courses', v: data.stats.courseCount, icon: <MessageSquare size={16} className="text-navy" />, bg: 'bg-navy/10' },
             { l: 'Threads', v: data.stats.totalThreads, icon: <MessageSquare size={16} className="text-blue-600" />, bg: 'bg-blue-50' },

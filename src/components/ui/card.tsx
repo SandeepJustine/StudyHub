@@ -9,11 +9,13 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, hover = false, padding = 'md', variant = 'default', children, ...props }, ref) => {
+    // Padding steps down on small screens: a hard p-6 inside an already-padded
+    // shell leaves too little usable width on a ~360px viewport.
     const paddingClasses = {
       none: 'p-0',
-      sm: 'p-4',
-      md: 'p-6',
-      lg: 'p-8',
+      sm: 'p-3 sm:p-4',
+      md: 'p-4 sm:p-6',
+      lg: 'p-5 sm:p-8',
     };
 
     const variantClasses = {
@@ -52,7 +54,7 @@ CardHeader.displayName = 'CardHeader';
 
 const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-lg font-semibold text-navy font-poppins', className)} {...props} />
+    <h3 ref={ref} className={cn('text-base sm:text-lg font-semibold text-navy font-poppins', className)} {...props} />
   )
 );
 CardTitle.displayName = 'CardTitle';

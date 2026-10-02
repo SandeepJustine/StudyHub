@@ -38,7 +38,7 @@ export function Toast({ message, type = 'info', duration = 5000, onClose }: Toas
   return (
     <div
       className={cn(
-        'fixed bottom-4 right-4 z-50 max-w-sm w-full rounded-lg border-l-4 shadow-lg p-4 transition-all duration-300',
+        'fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-4 sm:w-full sm:max-w-sm rounded-lg border-l-4 shadow-lg p-4 transition-all duration-300',
         bgColors[type],
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       )}
