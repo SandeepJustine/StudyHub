@@ -104,6 +104,7 @@ export class CourseService {
     grade?: string;
     price?: number;
     thumbnail?: string;
+    language?: string;
     tags?: string[];
     status?: ContentStatus;
   }) {
@@ -113,24 +114,47 @@ export class CourseService {
       throw new AppError('Not authorized to update this course', 'FORBIDDEN', 403);
     }
 
-    // Can't update published courses without review
-    if (course.status === 'APPROVED' && data.status) {
+    // Instructors may edit published courses freely: content and metadata
+    // changes go live immediately. Only the workflow status is protected here,
+    // because letting it be set through this generic method would bypass admin
+    // review (a draft could self-publish, a live course could silently unpublish).
+    // Legitimate transitions go through submitForReview/archiveCourse/reviewCourse.
+    if (data.status !== undefined) {
       throw new AppError(
-        'Published courses require admin review for changes',
-        'REQUIRES_REVIEW',
+        'Course status cannot be changed here. Use the submit-for-review or archive action.',
+        'STATUS_NOT_EDITABLE',
         400
       );
+    }
+
+    // Explicit allowlist. The HTTP layer forwards the raw request body, so
+    // spreading it would let an instructor write server-owned columns such as
+    // rating, reviewsCount, studentsCount, publishedAt or instructorId straight
+    // onto a live course.
+    const editable = {
+      ...(typeof data.title === 'string' ? { title: data.title } : {}),
+      ...(typeof data.description === 'string' ? { description: data.description } : {}),
+      ...(typeof data.subject === 'string' ? { subject: data.subject } : {}),
+      ...(typeof data.examBoard === 'string' ? { examBoard: data.examBoard } : {}),
+      ...(typeof data.grade === 'string' ? { grade: data.grade } : {}),
+      ...(typeof data.language === 'string' ? { language: data.language } : {}),
+      ...(typeof data.thumbnail === 'string' ? { thumbnail: data.thumbnail } : {}),
+      ...(typeof data.price === 'number' && Number.isFinite(data.price) ? { price: data.price } : {}),
+      ...(Array.isArray(data.tags)
+        ? { tags: data.tags.filter((t): t is string => typeof t === 'string') }
+        : {}),
+    };
+
+    if (Object.keys(editable).length === 0) {
+      throw new AppError('No editable fields provided', 'NO_CHANGES', 400);
     }
 
     // Update course
     const updated = await prisma.course.update({
       where: { id: courseId },
       data: {
-        ...data,
+        ...editable,
         updatedAt: new Date(),
-        ...(data.status === 'APPROVED' && !course.publishedAt && {
-          publishedAt: new Date(),
-        }),
       },
       include: {
         modules: true,

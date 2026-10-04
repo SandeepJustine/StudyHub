@@ -134,22 +134,23 @@ export default async function InstructorCourseDetailPage({
                 <Layout size={14} className="mr-1" /> Course Builder
               </Button>
             </Link>
-            {course.status === 'DRAFT' && (
-              <>
-                <Link href={`/instructor/courses/${course.id}/edit`}>
-                  <Button variant="outline" size="sm">
-                    <Edit size={14} className="mr-1" /> Edit Course
-                  </Button>
-                </Link>
-                <SubmitReviewButton courseId={course.id} />
-                <Link href={`/instructor/courses/${course.id}/quiz/new`}>
-                  <Button variant="outline" size="sm">
-                    <Plus size={14} className="mr-1" /> Add Quiz
-                  </Button>
-                </Link>
-              </>
-            )}
-            
+
+            {/* Editing stays available after publishing: changes go live
+                immediately for enrolled students. */}
+            <Link href={`/instructor/courses/${course.id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Edit size={14} className="mr-1" /> Edit Course
+              </Button>
+            </Link>
+            <Link href={`/instructor/courses/${course.id}/quiz/new`}>
+              <Button variant="outline" size="sm">
+                <Plus size={14} className="mr-1" /> Add Quiz
+              </Button>
+            </Link>
+
+            {/* Only a draft can be sent for review. */}
+            {course.status === 'DRAFT' && <SubmitReviewButton courseId={course.id} />}
+
             {course.status === 'PENDING_REVIEW' && (
               <div className="p-3 bg-yellow-50 rounded-lg text-sm text-yellow-800 w-full">
                 ⏳ This course is pending admin review. You'll be notified once it's approved.
@@ -158,7 +159,8 @@ export default async function InstructorCourseDetailPage({
 
             {course.status === 'APPROVED' && (
               <div className="p-3 bg-green-50 rounded-lg text-sm text-green-800 w-full">
-                ✅ This course is live and available to students.
+                ✅ This course is live and available to students. Your edits save immediately and go
+                live without further review.
               </div>
             )}
 

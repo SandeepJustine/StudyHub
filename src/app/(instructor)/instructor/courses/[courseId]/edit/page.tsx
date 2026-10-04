@@ -22,6 +22,8 @@ export default function EditCoursePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveCourse, setLiveCourse] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -42,6 +44,7 @@ export default function EditCoursePage() {
             language: c.language || 'en',
             tags: c.tags?.join(', ') || '',
           });
+          setLiveCourse(c.status === 'APPROVED');
         } else {
           throw new Error(result.error || 'Failed to load');
         }
@@ -80,8 +83,10 @@ export default function EditCoursePage() {
         const errData = await response.json();
         throw new Error(errData.error || 'Failed to update course');
       }
-      
-      router.push('/instructor/courses'); 
+
+      // Make the go-live effect explicit rather than silently redirecting.
+      setSaved(true);
+      setTimeout(() => router.push('/instructor/courses'), 1800);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -104,6 +109,21 @@ export default function EditCoursePage() {
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
             Error: {error}
+          </div>
+        )}
+
+        {saved && (
+          <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm">
+            {liveCourse
+              ? '✅ Saved. Your changes are live on the public catalogue and for enrolled students immediately.'
+              : '✅ Course saved.'}
+          </div>
+        )}
+
+        {liveCourse && !saved && (
+          <div className="mb-4 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm">
+            This course is published. Your changes go live immediately for students — no admin review
+            needed.
           </div>
         )}
 
@@ -146,9 +166,9 @@ export default function EditCoursePage() {
           </div>
 
           <div className="flex justify-end pt-4">
-            <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-navy/90 disabled:opacity-50">
+            <button type="submit" disabled={isSaving || saved} className="flex items-center gap-2 bg-navy text-white px-6 py-2 rounded-lg hover:bg-navy/90 disabled:opacity-50">
               <Save size={18} />
-              {isSaving ? 'Saving...' : 'Update Course'}
+              {isSaving ? 'Saving...' : saved ? 'Saved' : 'Update Course'}
             </button>
           </div>
         </form>

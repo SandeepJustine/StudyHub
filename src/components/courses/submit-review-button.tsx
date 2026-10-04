@@ -13,7 +13,7 @@ export function SubmitReviewButton({ courseId }: { courseId: string }) {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleSubmit = async () => {
-    if (!confirm('Submit this course for admin review? Once submitted, you cannot edit it until reviewed.')) {
+    if (!confirm('Submit this course for admin review? You can keep editing while it is being reviewed, and your changes will go live if it is approved.')) {
       return;
     }
 

@@ -1,10 +1,23 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth/auth-options';
 import { courseService } from '@/lib/courses/course-service';
 import { instructorService } from '@/lib/instructor/instructor-service';
 
 type Params = { params: Promise<{ courseId: string }> };
+
+/**
+ * Editing a published course changes what enrolled students see straight away,
+ * so refresh the public catalogue and the course's own pages.
+ */
+function revalidateCourse(courseId: string) {
+  revalidatePath('/courses');
+  revalidatePath(`/courses/${courseId}`);
+  revalidatePath('/');
+  revalidatePath('/student/courses');
+  revalidatePath(`/instructor/courses/${courseId}`);
+}
 
 async function ensureOwned(courseId: string, userId: string) {
   const instructor = await instructorService.resolveByUserId(userId);
@@ -57,6 +70,8 @@ export async function PUT(req: Request, { params }: Params) {
     const body = await req.json();
     const updated = await courseService.updateCourse(courseId, result.instructor.id, body);
 
+    revalidateCourse(courseId);
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     console.error('Instructor update course error:', error);
@@ -88,6 +103,14 @@ export async function PATCH(req: Request, { params }: Params) {
 
     let course;
     if (action === 'submit_for_review') {
+      // Only a draft may be submitted. Without this check a live course could be
+      // pushed back to PENDING_REVIEW and silently vanish from the catalogue.
+      if (result.course.status !== 'DRAFT') {
+        return NextResponse.json(
+          { error: 'Only draft courses can be submitted for review' },
+          { status: 400 },
+        );
+      }
       course = await courseService.submitForReview(courseId, result.instructor.id);
     } else if (action === 'archive') {
       course = await courseService.archiveCourse(courseId, result.instructor.id);
@@ -97,6 +120,8 @@ export async function PATCH(req: Request, { params }: Params) {
         { status: 400 },
       );
     }
+
+    revalidateCourse(courseId);
 
     return NextResponse.json({ success: true, data: course });
   } catch (error: any) {

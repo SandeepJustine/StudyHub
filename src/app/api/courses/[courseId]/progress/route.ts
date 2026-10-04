@@ -52,23 +52,36 @@ export async function POST(
     
     // Get current completed modules
     const completedModules = enrollment.completedModules || [];
-    
+
     // Add the module if not already completed
     if (!completedModules.includes(moduleId)) {
       completedModules.push(moduleId);
     }
-    
-    // Calculate progress percentage
-    const progress = (completedModules.length / course.modules.length) * 100;
-    
+
+    // Drop ids for modules that no longer exist. An instructor editing a live
+    // course can delete a module, and a stale id would otherwise inflate the
+    // numerator permanently.
+    const liveModuleIds = new Set(course.modules.map((m) => m.id));
+    const validCompleted = completedModules.filter((id) => liveModuleIds.has(id));
+
+    // Calculate progress percentage, clamped so a stale count can never
+    // produce a nonsensical value such as 133%.
+    const totalModules = course.modules.length;
+    const progress =
+      totalModules > 0 ? Math.min(100, (validCompleted.length / totalModules) * 100) : 0;
+
+    // Never revoke a completion. If an instructor adds a module after a student
+    // finished, progress drops but the student keeps the completion they earned
+    // (it gates certificate eligibility).
+    const completedAt = enrollment.completedAt ?? (progress >= 100 ? new Date() : null);
+
     // Update enrollment
     const updated = await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: {
-        completedModules,
+        completedModules: validCompleted,
         progress,
-        // Mark as completed if all modules are done
-        completedAt: progress === 100 ? new Date() : null
+        completedAt,
       }
     });
     
