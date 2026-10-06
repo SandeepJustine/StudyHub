@@ -33,6 +33,7 @@ const adminMenuItems = [
   { label: 'Sponsorships', href: '/admin/sponsorships', icon: <Megaphone size={20} /> },
   { label: 'Support', href: '/admin/support', icon: <HelpCircle size={20} />, badge: '3' },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: <Shield size={20} /> },
+  { label: 'KYC Review', href: '/admin/kyc', icon: <UserCheck size={20} /> },
   { label: 'Settings', href: '/admin/settings', icon: <Settings size={20} /> },
 ];
 

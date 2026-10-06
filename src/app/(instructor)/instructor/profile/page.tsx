@@ -5,8 +5,28 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Save, User, Mail, Phone, Award, FileText, CheckCircle } from 'lucide-react';
+import { Save, User, Mail, Phone, Award, FileText, CheckCircle, Upload, X, Eye, Shield } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+
+type KycDoc = {
+  id: string;
+  type: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number | null;
+  mimeType: string | null;
+  status: string;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  reviewer: { fullName: string; email: string } | null;
+};
+
+const KYC_TYPES = [
+  { value: 'NATIONAL_ID', label: 'National ID' },
+  { value: 'CERTIFICATE', label: 'Certificate / Qualification' },
+  { value: 'OTHER', label: 'Other' },
+] as const;
 
 export default function InstructorProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -14,14 +34,20 @@ export default function InstructorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [kycDocs, setKycDocs] = useState<KycDoc[]>([]);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [bio, setBio] = useState('');
   const [expertise, setExpertise] = useState<string[]>([]);
   const [expertiseInput, setExpertiseInput] = useState('');
   const [bankDetails, setBankDetails] = useState<any>({});
+  const [kycType, setKycType] = useState('NATIONAL_ID');
 
   useEffect(() => {
     fetchProfile();
+    fetchKyc();
   }, []);
 
   async function fetchProfile() {
@@ -40,6 +66,21 @@ export default function InstructorProfilePage() {
       setError('Failed to load profile');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchKyc() {
+    setKycLoading(true);
+    try {
+      const res = await fetch('/api/instructor/kyc');
+      if (res.ok) {
+        const json = await res.json();
+        setKycDocs(json.data || []);
+      }
+    } catch {
+      // non-blocking
+    } finally {
+      setKycLoading(false);
     }
   }
 
@@ -82,6 +123,52 @@ export default function InstructorProfilePage() {
     setExpertise(expertise.filter((e) => e !== item));
   }
 
+  async function handleKycUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', kycType);
+
+      const res = await fetch('/api/instructor/kyc', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Upload failed');
+
+      setKycDocs((prev) => [json.data, ...prev]);
+      setSuccess('Document uploaded successfully');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  async function handleKycDelete(id: string) {
+    if (!confirm('Remove this document?')) return;
+    try {
+      const res = await fetch(`/api/instructor/kyc/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Delete failed');
+      }
+      setKycDocs((prev) => prev.filter((d) => d.id !== id));
+      setSuccess('Document removed');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Delete failed');
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -93,9 +180,125 @@ export default function InstructorProfilePage() {
               <div className="h-4 bg-grey-light rounded animate-pulse w-5/6"></div>
               <div className="h-4 bg-grey-light rounded animate-pulse w-4/6"></div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+
+          {/* KYC Verification */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield size={18} className="text-blue-600" />
+                KYC Verification
+              </CardTitle>
+              <CardDescription>
+                Upload your National ID and certificates for admin review. Approved documents
+                unlock verified status and payouts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Upload form */}
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium text-grey-dark mb-1">Document Type</label>
+                  <select
+                    value={kycType}
+                    onChange={(e) => setKycType(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-grey-light rounded-lg text-sm"
+                  >
+                    {KYC_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-grey-dark mb-1">File</label>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf"
+                    onChange={handleKycUpload}
+                    disabled={uploading}
+                    className="block text-sm text-grey-dark file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-navy file:text-white hover:file:bg-navy/90 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+              {uploading && (
+                <p className="text-xs text-grey-medium">Uploading…</p>
+              )}
+
+              {/* Document list */}
+              {kycLoading ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-12 bg-grey-light rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : kycDocs.length === 0 ? (
+                <p className="text-sm text-grey-medium py-4 text-center">
+                  No documents uploaded yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {kycDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between gap-3 p-3 bg-grey-light/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <FileText size={18} className="text-navy shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-navy truncate">
+                            {doc.fileName}
+                          </p>
+                          <p className="text-xs text-grey-medium">
+                            {KYC_TYPES.find((t) => t.value === doc.type)?.label || doc.type}
+                            {' · '}
+                            {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(0)} KB` : ''}
+                            {' · '}
+                            {new Date(doc.createdAt).toLocaleDateString()}
+                          </p>
+                          {doc.status !== 'PENDING' && doc.reviewNote && (
+                            <p className="text-xs text-grey-dark mt-0.5">
+                              Note: {doc.reviewNote}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge
+                          variant={
+                            doc.status === 'APPROVED' ? 'success' :
+                            doc.status === 'REJECTED' ? 'error' : 'warning'
+                          }
+                          size="sm"
+                        >
+                          {doc.status}
+                        </Badge>
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 text-grey-medium hover:text-navy rounded"
+                          title="View"
+                        >
+                          <Eye size={14} />
+                        </a>
+                        {doc.status === 'PENDING' && (
+                          <button
+                            onClick={() => handleKycDelete(doc.id)}
+                            className="p-1.5 text-grey-medium hover:text-red rounded"
+                            title="Remove"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
     );
   }
 

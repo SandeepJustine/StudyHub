@@ -194,6 +194,7 @@ model User {
   supportResponses SupportResponse[]
   auditLogs      AuditLog[]
   activityLogs   ActivityLog[]
+  reviewedKycDocuments KycDocument[] @relation("ReviewedKyc")
 
   eventRegistrations EventRegistration[]
   forumThreads       ForumThread[]
@@ -342,6 +343,7 @@ model Instructor {
   certificateSignatures CertificateSignature[]
   ratings       InstructorRating[]
   experimentSubjects ExperimentSubjectAssignment[]
+  kycDocuments   KycDocument[]
 }
 
 model CorporateClient {
@@ -580,7 +582,7 @@ model Course {
   experiments   Experiment[]
   virtualLabs       VirtualLab[]
   pastPapers        PastPaper[]
-  aiConversations   AIConversation[]
+  aiConversations AIConversation[]
 }
 
 model PastPaper {
@@ -1249,6 +1251,31 @@ model VisitorLog {
   @@index([userType])
   @@index([userId])
   @@index([sessionId])
+}
+
+// ---------------------------------------------------------------------------
+// KYC documents
+// ---------------------------------------------------------------------------
+
+model KycDocument {
+  id           String    @id @default(cuid())
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  type         String    // NATIONAL_ID | CERTIFICATE | OTHER
+  fileName     String
+  fileUrl      String
+  fileSize     Int?
+  mimeType     String?
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedById String?
+  reviewer     User?     @relation("ReviewedKyc", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([instructorId])
+  @@index([status])
+  @@index([type])
 }
 
 // ---------------------------------------------------------------------------
