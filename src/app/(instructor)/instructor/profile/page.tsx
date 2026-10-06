@@ -180,124 +180,10 @@ export default function InstructorProfilePage() {
               <div className="h-4 bg-grey-light rounded animate-pulse w-5/6"></div>
               <div className="h-4 bg-grey-light rounded animate-pulse w-4/6"></div>
             </div>
-            </CardContent>
+          </CardContent>
           </Card>
 
-          {/* KYC Verification */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield size={18} className="text-blue-600" />
-                KYC Verification
-              </CardTitle>
-              <CardDescription>
-                Upload your National ID and certificates for admin review. Approved documents
-                unlock verified status and payouts.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Upload form */}
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[180px]">
-                  <label className="block text-sm font-medium text-grey-dark mb-1">Document Type</label>
-                  <select
-                    value={kycType}
-                    onChange={(e) => setKycType(e.target.value)}
-                    className="w-full px-4 py-2 border-2 border-grey-light rounded-lg text-sm"
-                  >
-                    {KYC_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-grey-dark mb-1">File</label>
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.webp,.pdf"
-                    onChange={handleKycUpload}
-                    disabled={uploading}
-                    className="block text-sm text-grey-dark file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-navy file:text-white hover:file:bg-navy/90 disabled:opacity-50"
-                  />
-                </div>
-              </div>
-              {uploading && (
-                <p className="text-xs text-grey-medium">Uploading…</p>
-              )}
-
-              {/* Document list */}
-              {kycLoading ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="h-12 bg-grey-light rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : kycDocs.length === 0 ? (
-                <p className="text-sm text-grey-medium py-4 text-center">
-                  No documents uploaded yet.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {kycDocs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between gap-3 p-3 bg-grey-light/50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <FileText size={18} className="text-navy shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-navy truncate">
-                            {doc.fileName}
-                          </p>
-                          <p className="text-xs text-grey-medium">
-                            {KYC_TYPES.find((t) => t.value === doc.type)?.label || doc.type}
-                            {' · '}
-                            {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(0)} KB` : ''}
-                            {' · '}
-                            {new Date(doc.createdAt).toLocaleDateString()}
-                          </p>
-                          {doc.status !== 'PENDING' && doc.reviewNote && (
-                            <p className="text-xs text-grey-dark mt-0.5">
-                              Note: {doc.reviewNote}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge
-                          variant={
-                            doc.status === 'APPROVED' ? 'success' :
-                            doc.status === 'REJECTED' ? 'error' : 'warning'
-                          }
-                          size="sm"
-                        >
-                          {doc.status}
-                        </Badge>
-                        <a
-                          href={doc.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 text-grey-medium hover:text-navy rounded"
-                          title="View"
-                        >
-                          <Eye size={14} />
-                        </a>
-                        {doc.status === 'PENDING' && (
-                          <button
-                            onClick={() => handleKycDelete(doc.id)}
-                            className="p-1.5 text-grey-medium hover:text-red rounded"
-                            title="Remove"
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          
         </div>
     );
   }
@@ -415,6 +301,116 @@ export default function InstructorProfilePage() {
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* KYC Verification */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield size={18} className="text-blue-600" />
+                KYC Verification
+              </CardTitle>
+              <CardDescription>
+                Upload your National ID and certificates for admin review. Approved documents
+                unlock verified status and payouts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium text-grey-dark mb-1">Document Type</label>
+                  <select
+                    value={kycType}
+                    onChange={(e) => setKycType(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-grey-light rounded-lg text-sm"
+                  >
+                    {KYC_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-grey-dark mb-1">File</label>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf"
+                    onChange={handleKycUpload}
+                    disabled={uploading}
+                    className="block text-sm text-grey-dark file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-navy file:text-white hover:file:bg-navy/90 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+              {uploading && (
+                <p className="text-xs text-grey-medium">Uploading…</p>
+              )}
+
+              {kycLoading ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-12 bg-grey-light rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : kycDocs.length === 0 ? (
+                <p className="text-sm text-grey-medium py-4 text-center">
+                  No documents uploaded yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {kycDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between gap-3 p-3 bg-grey-light/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <FileText size={18} className="text-navy shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-navy truncate">{doc.fileName}</p>
+                          <p className="text-xs text-grey-medium">
+                            {KYC_TYPES.find((t) => t.value === doc.type)?.label || doc.type}
+                            {' · '}
+                            {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(0)} KB` : ''}
+                            {' · '}
+                            {new Date(doc.createdAt).toLocaleDateString()}
+                          </p>
+                          {doc.status !== 'PENDING' && doc.reviewNote && (
+                            <p className="text-xs text-grey-dark mt-0.5">Note: {doc.reviewNote}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge
+                          variant={
+                            doc.status === 'APPROVED' ? 'success' :
+                            doc.status === 'REJECTED' ? 'error' : 'warning'
+                          }
+                          size="sm"
+                        >
+                          {doc.status}
+                        </Badge>
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 text-grey-medium hover:text-navy rounded"
+                          title="View"
+                        >
+                          <Eye size={14} />
+                        </a>
+                        {doc.status === 'PENDING' && (
+                          <button
+                            onClick={() => handleKycDelete(doc.id)}
+                            className="p-1.5 text-grey-medium hover:text-red rounded"
+                            title="Remove"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
