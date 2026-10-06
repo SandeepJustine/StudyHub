@@ -10,7 +10,7 @@ import prisma from '@/lib/utils/prisma';
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user || session.user.role !== 'PLATFORM_ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
     // Build where clause
     const where: any = {};
-    
+
     if (params.query) {
       where.OR = [
         { entityId: { contains: params.query, mode: 'insensitive' } },
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
     ]);
 
     // Format logs for the frontend
-    const formattedLogs = logs.map(log => ({
+    const formattedLogs = logs.map((log) => ({
       id: log.id,
       admin: log.admin?.fullName || 'System',
       adminEmail: log.admin?.email || 'system@studyhubmw.com',
@@ -76,11 +76,11 @@ export async function GET(req: Request) {
       entity: log.entity,
       entityId: log.entityId,
       changes: typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes,
-ipAddress: log.ipAddress || 'N/A',
-       timestamp: log.timestamp,
+      ipAddress: log.ipAddress || 'N/A',
+      timestamp: log.timestamp,
     }));
 
-    // Get summary stats
+    // Get summary stats for admin actions
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -93,6 +93,51 @@ ipAddress: log.ipAddress || 'N/A',
       _count: true,
     });
 
+    // Trace / visitor stats
+    const todayVisitorStart = new Date();
+    todayVisitorStart.setHours(0, 0, 0, 0);
+
+    const [
+      totalVisitors,
+      todayVisitors,
+      _uniquePaths,
+      userTypeBreakdown,
+      topPaths,
+    ] = await Promise.all([
+      prisma.visitorLog.count({}),
+      prisma.visitorLog.count({
+        where: { timestamp: { gte: todayVisitorStart } },
+      }),
+      prisma.visitorLog.findMany({
+        select: { path: true },
+        distinct: ['path'],
+        take: 1,
+      }),
+      prisma.visitorLog.groupBy({
+        by: ['userType'],
+        _count: true,
+      }),
+      prisma.visitorLog.groupBy({
+        by: ['path'],
+        _count: true,
+        orderBy: { _count: { path: 'desc' } },
+        take: 5,
+      }),
+    ]);
+
+    const uniquePaths = _uniquePaths.length;
+
+    // Rough "interactions" proxy: any event that isn't a GET pageview.
+    const interactionsCount = await prisma.visitorLog.count({
+      where: { method: { not: 'GET' } },
+    });
+
+    // Average session duration where recorded.
+    const durationStats = await prisma.visitorLog.aggregate({
+      _avg: { duration: true },
+      where: { duration: { not: null } },
+    });
+
     return NextResponse.json({
       success: true,
       data: formattedLogs,
@@ -100,6 +145,17 @@ ipAddress: log.ipAddress || 'N/A',
         totalLogs: total,
         todayCount,
         uniqueAdmins: uniqueAdmins.length,
+        trace: {
+          totalVisitors,
+          todayVisitors,
+          uniquePaths,
+          interactionsCount,
+          avgDurationMs: durationStats._avg.duration ? Math.round(durationStats._avg.duration) : null,
+          userTypeBreakdown: Object.fromEntries(
+            (userTypeBreakdown as Array<{ userType: string; _count: number }>).map((row) => [row.userType, row._count])
+          ),
+          topPaths: topPaths.map((row) => ({ path: row.path, views: row._count })),
+        },
       },
       pagination: {
         page: params.page,
@@ -117,3 +173,4 @@ ipAddress: log.ipAddress || 'N/A',
     );
   }
 }
+

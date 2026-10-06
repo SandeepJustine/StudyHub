@@ -18,8 +18,23 @@ import {
   Clock,
   Eye,
   FileText,
+  Globe,
+  MousePointerClick,
+  Timer,
+  Users2,
+  PanelTopOpen,
 } from 'lucide-react';
 import { formatDate, formatRelativeTime } from '@/utils/formatters';
+
+type TraceStats = {
+  totalVisitors: number;
+  todayVisitors: number;
+  uniquePaths: number;
+  interactionsCount: number;
+  avgDurationMs: number | null;
+  userTypeBreakdown: Record<string, number>;
+  topPaths: { path: string; views: number }[];
+};
 
 export default function AdminAuditLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -31,6 +46,8 @@ export default function AdminAuditLogsPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [auditStats, setAuditStats] = useState<{ totalLogs: number; todayCount: number; uniqueAdmins: number } | null>(null);
+  const [traceStats, setTraceStats] = useState<TraceStats | null>(null);
 
   useEffect(() => {
     fetchLogs();
@@ -59,6 +76,8 @@ export default function AdminAuditLogsPage() {
 
       setLogs(formattedLogs);
       setPagination(data.pagination);
+      setAuditStats(data.stats || null);
+      setTraceStats(data.stats?.trace || null);
     } catch (error) {
       console.error('Failed to fetch logs:', error);
       setToast({ message: 'Failed to fetch audit logs', type: 'error' });
@@ -131,7 +150,7 @@ export default function AdminAuditLogsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-navy">Audit Logs</h1>
-          <p className="text-grey-dark mt-1">Track all administrative actions</p>
+          <p className="text-grey-dark mt-1">Track all administrative actions and system activity</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" leftIcon={<Download size={16} />}>
@@ -139,6 +158,112 @@ export default function AdminAuditLogsPage() {
           </Button>
         </div>
       </div>
+
+      {/* System trace stats */}
+      {traceStats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Total Visitors</p>
+                <Globe size={16} className="text-blue-600" />
+              </div>
+              <p className="text-2xl font-bold text-navy">{traceStats.totalVisitors.toLocaleString?.() ?? traceStats.totalVisitors}</p>
+              <p className="text-xs text-grey-medium mt-1">+{traceStats.todayVisitors.toLocaleString?.() ?? traceStats.todayVisitors} today</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Unique Paths</p>
+                <PanelTopOpen size={16} className="text-purple-600" />
+              </div>
+              <p className="text-2xl font-bold text-navy">{traceStats.uniquePaths.toLocaleString?.() ?? traceStats.uniquePaths}</p>
+              <p className="text-xs text-grey-medium mt-1">pages visited</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Interactions</p>
+                <MousePointerClick size={16} className="text-green-600" />
+              </div>
+              <p className="text-2xl font-bold text-navy">{traceStats.interactionsCount.toLocaleString?.() ?? traceStats.interactionsCount}</p>
+              <p className="text-xs text-grey-medium mt-1">clicks / actions</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Avg. Time on Page</p>
+                <Timer size={16} className="text-orange-600" />
+              </div>
+              <p className="text-2xl font-bold text-navy">
+                {traceStats.avgDurationMs == null ? '—' : `${Math.round(traceStats.avgDurationMs / 1000)}s`}
+              </p>
+              <p className="text-xs text-grey-medium mt-1">per session</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Admin audit summary */}
+      {auditStats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Total Logs</p>
+                <FileText size={16} className="text-navy" />
+              </div>
+              <p className="text-2xl font-bold text-navy">{auditStats.totalLogs.toLocaleString?.() ?? auditStats.totalLogs}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Today</p>
+                <Clock size={16} className="text-green-600" />
+              </div>
+              <p className="text-2xl font-bold text-navy">{auditStats.todayCount.toLocaleString?.() ?? auditStats.todayCount}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Active Admins</p>
+                <Users2 size={16} className="text-blue-600" />
+              </div>
+              <p className="text-2xl font-bold text-navy">{auditStats.uniqueAdmins.toLocaleString?.() ?? auditStats.uniqueAdmins}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-grey-medium">Top Pages</p>
+                <Globe size={16} className="text-purple-600" />
+              </div>
+              <div className="space-y-1">
+                {(traceStats?.topPaths || []).slice(0, 2).map((row) => (
+                  <div key={row.path} className="flex items-center justify-between text-xs">
+                    <span className="text-navy truncate mr-2">{row.path}</span>
+                    <span className="text-grey-medium shrink-0">{row.views}</span>
+                  </div>
+                ))}
+                {!traceStats?.topPaths?.length && (
+                  <p className="text-xs text-grey-medium">No data yet</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 shadow-sm">

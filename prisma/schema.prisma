@@ -1231,6 +1231,26 @@ model AuditLog {
   timestamp     DateTime @default(now())
 }
 
+model VisitorLog {
+  id         String    @id @default(cuid())
+  path       String    @db.Text
+  method     String    @default("GET")
+  userType   String    @default("anonymous") // anonymous | student | instructor | admin | school_admin | corporate | parent
+  userId     String?
+  sessionId  String?
+  ipAddress  String?
+  userAgent  String?
+  referrer   String?   @db.Text
+  duration   Int?      // time on page in ms (sent on leave)
+  timestamp  DateTime  @default(now())
+
+  @@index([path])
+  @@index([timestamp])
+  @@index([userType])
+  @@index([userId])
+  @@index([sessionId])
+}
+
 // ---------------------------------------------------------------------------
 // Parent / guardian
 // ---------------------------------------------------------------------------
