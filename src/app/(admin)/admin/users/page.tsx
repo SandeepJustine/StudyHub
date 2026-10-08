@@ -19,6 +19,7 @@ import {
   CheckCircle,
   XCircle,
   LogIn,
+  Mail,
 } from 'lucide-react';
 import { formatDate, formatRelativeTime } from '@/utils/formatters';
 
@@ -114,6 +115,12 @@ export default function AdminUsersPage() {
   const handleVerifyEmail = () => {
     if (selectedUser) {
       handleUserAction('verify_email', selectedUser.id);
+    }
+  };
+
+  const handleRoleChange = () => {
+    if (selectedUser && newRole) {
+      handleUserAction('update_role', selectedUser.id, { role: newRole });
     }
   };
 
@@ -266,6 +273,20 @@ export default function AdminUsersPage() {
             onClick={() => {
               setSelectedUser(user);
               setConfirmAction({
+                action: 'verify_email',
+                label: user.isVerified ? 'Re-verify Email' : 'Verify Email',
+              });
+              setShowConfirmModal(true);
+            }}
+          >
+            <Mail size={14} className="mr-1" /> Verify
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedUser(user);
+              setConfirmAction({
                 action: 'toggle_lock',
                 label: user.isLocked ? 'Unlock Account' : 'Lock Account',
               });
@@ -402,6 +423,16 @@ export default function AdminUsersPage() {
               <Button variant="outline" onClick={() => { setShowUserModal(false); setNewRole(selectedUser.role); setShowRoleModal(true); }}>
                 Change Role
               </Button>
+              <Button variant="outline" leftIcon={<Mail size={14} />} onClick={() => {
+                setShowUserModal(false);
+                setConfirmAction({
+                  action: 'verify_email',
+                  label: selectedUser.isVerified ? 'Re-verify Email' : 'Verify Email',
+                });
+                setShowConfirmModal(true);
+              }}>
+                {selectedUser.isVerified ? 'Re-verify Email' : 'Verify Email'}
+              </Button>
               <Button variant={selectedUser.isLocked ? 'success' : 'danger'} onClick={() => {
                 setShowUserModal(false);
                 setConfirmAction({ action: 'toggle_lock', label: selectedUser.isLocked ? 'Unlock Account' : 'Lock Account' });
@@ -448,8 +479,14 @@ export default function AdminUsersPage() {
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setShowConfirmModal(false)}>Cancel</Button>
             <Button
-              variant={confirmAction.action === 'toggle_lock' && selectedUser?.isLocked ? 'success' : 'danger'}
-              onClick={handleLockToggle}
+              variant={
+                confirmAction.action === 'verify_email' ? 'success' :
+                confirmAction.action === 'toggle_lock' && selectedUser?.isLocked ? 'success' : 'danger'
+              }
+              onClick={() => {
+                if (confirmAction.action === 'verify_email') handleVerifyEmail();
+                else if (confirmAction.action === 'toggle_lock') handleLockToggle();
+              }}
             >
               {confirmAction.label}
             </Button>
