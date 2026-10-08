@@ -111,9 +111,9 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleRoleChange = () => {
-    if (selectedUser && newRole) {
-      handleUserAction('update_role', selectedUser.id, { role: newRole });
+  const handleVerifyEmail = () => {
+    if (selectedUser) {
+      handleUserAction('verify_email', selectedUser.id);
     }
   };
 
