@@ -157,12 +157,13 @@ export class AuthService {
       });
     }
 
-    // Send verification email
+    // Send welcome email and verification email
     try {
       const emailService = new EmailService();
       await emailService.sendWelcomeEmail(user.id, user.role);
+      await emailService.sendVerificationEmail(user.id, emailVerificationToken);
     } catch (error) {
-      console.error("Failed to send verification email:", error);
+      console.error("Failed to send welcome/verification email:", error);
       // Don't throw - user can still log in and request new verification
     }
 

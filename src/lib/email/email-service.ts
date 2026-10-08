@@ -72,6 +72,20 @@ export class EmailService {
     });
   }
 
+  async sendVerificationEmail(userId: string, token: string) {
+    const verificationLink = `${this.appUrl}/auth/verify-email?token=${token}`;
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true } });
+    await this.notificationService.send({
+      userId,
+      type: 'ACCOUNT_VERIFICATION',
+      title: 'Verify Your Email Address',
+      message: `Hi ${user?.fullName || 'there'}, please verify your email address to complete your registration.`,
+      channel: ['EMAIL'],
+      priority: 'high',
+      metadata: { verificationLink, token, template: 'account-verification' },
+    });
+  }
+
   async sendSubscriptionReceipt(userId: string, subscriptionData: {
     tier: string; amount: number; period: string; startDate: Date; endDate: Date; autoRenew: boolean;
   }) {

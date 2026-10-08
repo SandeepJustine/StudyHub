@@ -276,7 +276,7 @@ class EmailProvider implements NotificationProvider {
           userName: notification.metadata?.userName || 'Student',
           title: notification.title,
           message: notification.message,
-          metadata: notification.metadata,
+          ...notification.metadata,
           locale: notification.locale || 'en',
         })
       );
