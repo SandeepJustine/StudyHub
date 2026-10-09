@@ -351,8 +351,18 @@ export class PaymentService {
     }
 
     // Calculate revenue share if applicable (also sets transaction.instructorPayout)
-    if (transaction.instructorId) {
-      await this.calculateRevenueShare(transaction);
+    let instructorId = transaction.instructorId;
+    if (!instructorId && metadata?.courseId) {
+      // Course enrollment payments: the instructor is on the Course row,
+      // not the Transaction row, so resolve it here.
+      const course = await prisma.course.findUnique({
+        where: { id: metadata.courseId },
+        select: { instructorId: true },
+      });
+      instructorId = course?.instructorId ?? null;
+    }
+    if (instructorId) {
+      await this.calculateRevenueShare({ ...transaction, instructorId });
     }
 
     return transaction;
