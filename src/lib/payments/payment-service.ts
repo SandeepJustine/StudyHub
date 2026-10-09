@@ -350,7 +350,7 @@ export class PaymentService {
       }
     }
 
-    // Calculate revenue share if applicable
+    // Calculate revenue share if applicable (also sets transaction.instructorPayout)
     if (transaction.instructorId) {
       await this.calculateRevenueShare(transaction);
     }
@@ -381,9 +381,12 @@ export class PaymentService {
       },
     });
 
+    // Keep denormalized counters on Instructor in sync so the dashboard
+    // reflects live data without requiring a separate aggregation query.
     await prisma.instructor.update({
       where: { id: instructor.id },
       data: {
+        totalEarnings: { increment: transaction.amount },
         pendingEarnings: { increment: instructorEarnings },
       },
     });

@@ -19,22 +19,30 @@ export async function POST(req: Request) {
     // Process webhook
     const result = await paymentService.handleWebhook('PAYCHANGU', body);
 
-    // Log the webhook
-    await prisma.activityLog.create({
-      data: {
-        userId: 'system',
-        action: 'PAYMENT_WEBHOOK',
-        resource: 'payment',
-        resourceId: body.data?.charge_id || body.data?.ref_id || body.id,
-        metadata: { 
-          provider: 'PAYCHANGU',
-          eventType: body.event_type || body.type,
-          status: body.data?.status || body.status,
-          payload: body,
-        },
-        timestamp: new Date(),
-      },
-    });
+    // Log the webhook (best-effort — PayChangu payloads don't include a userId,
+    // and ActivityLog requires a valid User foreign key, so skip if absent)
+    const webhookUserId = body.data?.user_id;
+    if (webhookUserId) {
+      try {
+        await prisma.activityLog.create({
+          data: {
+            userId: webhookUserId,
+            action: 'PAYMENT_WEBHOOK',
+            resource: 'payment',
+            resourceId: body.data?.charge_id || body.data?.ref_id || body.id,
+            metadata: { 
+              provider: 'PAYCHANGU',
+              eventType: body.event_type || body.type,
+              status: body.data?.status || body.status,
+              payload: body,
+            },
+            timestamp: new Date(),
+          },
+        });
+      } catch (logError) {
+        console.error('Webhook log failed (non-fatal):', logError);
+      }
+    }
 
     return NextResponse.json({ received: true, processed: true });
 

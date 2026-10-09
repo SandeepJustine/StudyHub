@@ -310,29 +310,31 @@ export default function AdminDashboardPage() {
           <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {[
-              { action: 'New subscription', user: 'John Doe', plan: 'Student Premium', time: '5 min ago', type: 'success' },
-              { action: 'Course purchase', user: 'Jane Smith', plan: 'Mathematics MSCE', time: '12 min ago', type: 'info' },
-              { action: 'Institution renewal', user: 'Lilongwe Secondary', plan: 'Gold Tier', time: '1 hour ago', type: 'warning' },
-              { action: 'Payment failed', user: 'Bob Wilson', plan: 'Student Basic', time: '2 hours ago', type: 'error' },
-            ].map((activity, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-grey-light last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.type === 'success' ? 'bg-green' :
-                    activity.type === 'error' ? 'bg-red' :
-                    activity.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-600'
-                  }`} />
-                  <div>
-                    <p className="text-sm font-medium text-grey-dark">{activity.action}</p>
-                    <p className="text-xs text-grey-medium">{activity.user} • {activity.plan}</p>
+          {metrics?.recentActivity && metrics.recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {metrics.recentActivity.map((activity: any, i: number) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-grey-light last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${
+                      activity.type === 'success' ? 'bg-green' :
+                      activity.type === 'error' ? 'bg-red' :
+                      activity.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-600'
+                    }`} />
+                    <div>
+                      <p className="text-sm font-medium text-grey-dark">{activity.action}</p>
+                      <p className="text-xs text-grey-medium">{activity.user} • {activity.plan}</p>
+                    </div>
                   </div>
+                  <span className="text-xs text-grey-medium">{activity.time}</span>
                 </div>
-                <span className="text-xs text-grey-medium">{activity.time}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <Activity size={32} className="mx-auto text-grey-medium mb-2" />
+              <p className="text-sm text-grey-medium">No recent activity</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

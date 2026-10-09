@@ -3,10 +3,11 @@ import prisma from '@/lib/utils/prisma';
 export class AdminAnalyticsService {
   async getDashboardMetrics(): Promise<DashboardMetrics> {
     try {
-      const [mrr, arpu, cac, ltv, churnRate, courseCompletionRate, nps, activeSubscriptions, totalUsers, instructorPayouts, upcomingRenewals] = await Promise.all([
+      const [mrr, arpu, cac, ltv, churnRate, courseCompletionRate, nps, activeSubscriptions, totalUsers, instructorPayouts, upcomingRenewals, recentActivity] = await Promise.all([
         this.calculateMRR(), this.calculateARPU(), this.calculateCAC(), this.calculateLTV(),
         this.calculateChurnRate(), this.calculateCourseCompletionRate(), this.calculateNPS(),
         this.getActiveSubscriptions(), this.getTotalUsers(), this.getInstructorPayoutQueue(), this.getUpcomingRenewals(),
+        this.getRecentActivity(),
       ]);
       const [totalCourses, totalEnrollments] = await Promise.all([prisma.course.count(), prisma.enrollment.count()]);
       return {
@@ -16,10 +17,11 @@ export class AdminAnalyticsService {
         satisfaction: { nps },
         payouts: { pending: instructorPayouts.pending, total: instructorPayouts.total },
         renewals: { upcoming: upcomingRenewals.count, atRisk: upcomingRenewals.atRisk },
+        recentActivity,
       };
     } catch (error) {
       console.error('Dashboard metrics error:', error);
-      return { revenue: { mrr: 0, breakdown: { total: 0, byTier: [], byCategory: {}, byPaymentMethod: [] }, arpu: 0, cac: 0, ltv: 0 }, users: { total: 0, active: 0, churnRate: 0 }, courses: { completionRate: 0, totalCourses: 0, totalEnrollments: 0 }, satisfaction: { nps: 0 }, payouts: { pending: 0, total: 0 }, renewals: { upcoming: 0, atRisk: 0 } };
+      return { revenue: { mrr: 0, breakdown: { total: 0, byTier: [], byCategory: {}, byPaymentMethod: [] }, arpu: 0, cac: 0, ltv: 0 }, users: { total: 0, active: 0, churnRate: 0 }, courses: { completionRate: 0, totalCourses: 0, totalEnrollments: 0 }, satisfaction: { nps: 0 }, payouts: { pending: 0, total: 0 }, renewals: { upcoming: 0, atRisk: 0 }, recentActivity: [] };
     }
   }
 
@@ -57,7 +59,76 @@ export class AdminAnalyticsService {
   private async getTotalUsers(): Promise<number> { try { return await prisma.user.count(); } catch { return 0; } }
   private async getInstructorPayoutQueue() { try { const p = await prisma.payout.aggregate({ where: { status: 'pending' }, _sum: { amount: true }, _count: true }); const t = await prisma.payout.aggregate({ _sum: { amount: true } }); return { pending: p._sum.amount || 0, pendingCount: p._count, total: t._sum.amount || 0 }; } catch { return { pending: 0, pendingCount: 0, total: 0 }; } }
   private async getUpcomingRenewals() { try { const d = new Date(); d.setDate(d.getDate() + 30); const u = await prisma.subscription.count({ where: { status: 'active', endDate: { gte: new Date(), lte: d } } }); const a = new Date(); a.setDate(a.getDate() - 30); const r = await prisma.subscription.count({ where: { status: 'active', user: { lastLoginAt: { lt: a } } } }); return { count: u, atRisk: r }; } catch { return { count: 0, atRisk: 0 }; } }
+
+  private async getRecentActivity(): Promise<Array<{ action: string; user: string; plan: string; time: string; type: string }>> {
+    try {
+      const [recentTxns, recentEnrollments, recentSubs] = await Promise.all([
+        prisma.transaction.findMany({
+          where: { status: 'COMPLETED' },
+          include: { user: { select: { fullName: true } }, course: { select: { title: true } } },
+          orderBy: { completedAt: 'desc' },
+          take: 5,
+        }),
+        prisma.enrollment.findMany({
+          include: { student: { select: { user: { select: { fullName: true } } } }, course: { select: { title: true } } },
+          orderBy: { startedAt: 'desc' },
+          take: 5,
+        }),
+        prisma.subscription.findMany({
+          where: { status: 'active' },
+          include: { user: { select: { fullName: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+      ]);
+
+      const items: Array<{ action: string; user: string; plan: string; time: string; type: string }> = [];
+      for (const t of recentTxns) {
+        items.push({
+          action: 'Payment completed',
+          user: t.user?.fullName || 'Unknown',
+          plan: t.course?.title || `MWK ${t.amount.toLocaleString()}`,
+          time: this.relativeTime(t.completedAt ?? t.createdAt),
+          type: 'success',
+        });
+      }
+      for (const e of recentEnrollments) {
+        items.push({
+          action: 'Course enrollment',
+          user: e.student?.user?.fullName || 'Unknown',
+          plan: e.course?.title || 'Course',
+          time: this.relativeTime(e.startedAt),
+          type: 'info',
+        });
+      }
+      for (const s of recentSubs) {
+        items.push({
+          action: 'New subscription',
+          user: s.user?.fullName || 'Unknown',
+          plan: s.tier.replace(/_/g, ' '),
+          time: this.relativeTime(s.createdAt),
+          type: 'success',
+        });
+      }
+      items.sort((a, b) => (a.time < b.time ? 1 : -1));
+      return items.slice(0, 8);
+    } catch {
+      return [];
+    }
+  }
+
+  private relativeTime(date: Date | null): string {
+    if (!date) return 'just now';
+    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  }
 }
 
-export interface DashboardMetrics { revenue: { mrr: number; breakdown: RevenueBreakdown; arpu: number; cac: number; ltv: number }; users: { total: number; active: number; churnRate: number }; courses: { completionRate: number; totalCourses: number; totalEnrollments: number }; satisfaction: { nps: number }; payouts: { pending: number; total: number }; renewals: { upcoming: number; atRisk: number } }
+export interface DashboardMetrics { revenue: { mrr: number; breakdown: RevenueBreakdown; arpu: number; cac: number; ltv: number }; users: { total: number; active: number; churnRate: number }; courses: { completionRate: number; totalCourses: number; totalEnrollments: number }; satisfaction: { nps: number }; payouts: { pending: number; total: number }; renewals: { upcoming: number; atRisk: number }; recentActivity: Array<{ action: string; user: string; plan: string; time: string; type: string }> }
 export interface RevenueBreakdown { total: number; byTier: Array<{ tier: string; _count: number; _sum: { amount: number | null } }>; byCategory: Record<string, number>; byPaymentMethod: Array<{ paymentMethod: string; _sum: { amount: number | null } }> }
