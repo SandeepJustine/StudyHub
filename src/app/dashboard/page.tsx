@@ -15,7 +15,7 @@ export default async function DashboardRedirect() {
     INSTRUCTOR: '/instructor/dashboard',
     CORPORATE_CLIENT: '/corporate/dashboard',
     PLATFORM_ADMIN: '/admin/dashboard',
-    PARENT: '/parent/dashboard',
+    PARENT: '/parents',
   };
 
   redirect(roleRedirects[session.user.role] || '/auth/login');

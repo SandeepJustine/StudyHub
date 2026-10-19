@@ -11,13 +11,13 @@ export function useAuth(requiredRole?: string) {
 
     if (!session) {
       // No session, redirect to login
-      router.push('/login');
+      router.push('/auth/login');
       return;
     }
 
     if (requiredRole && session.user.role !== requiredRole) {
       // User doesn't have the required role, redirect to unauthorized page
-      router.push('/unauthorized');
+      router.push('/auth/login');
       return;
     }
   }, [session, status, requiredRole, router]);

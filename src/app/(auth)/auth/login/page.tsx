@@ -84,7 +84,7 @@ export default function LoginPage() {
         SCHOOL_ADMIN: '/school-admin/dashboard',
         CORPORATE_CLIENT: '/corporate/dashboard',
         PLATFORM_ADMIN: '/admin/dashboard',
-        PARENT: '/parents/dashboard',
+        PARENT: '/parents',
       };
       
       const dashboardPath = roleRoutes[session?.user?.role || ''] || '/';

@@ -10,7 +10,7 @@ const roleAccess: Record<UserRole, string[]> = {
   INSTRUCTOR: ['/instructor'],
   CORPORATE_CLIENT: ['/corporate'],
   PLATFORM_ADMIN: ['/admin'],
-  PARENT: ['/parent'],
+  PARENT: ['/parents'],
 };
 
 export default withAuth(
@@ -88,7 +88,7 @@ export default withAuth(
     },
     pages: {
       signIn: '/auth/login',
-      error: '/auth/error',
+      error: '/auth/login',
     },
   }
 );
