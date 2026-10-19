@@ -10,10 +10,21 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISS_KEY = 'studyhub:pwa-install-dismissed';
+const INSTALLED_KEY = 'studyhub:pwa-installed';
+
+function isAlreadyInstalled(): boolean {
+  if (typeof window === 'undefined') return false;
+  // iOS Safari
+  if ((navigator as any).standalone === true) return true;
+  // Chrome/Edge display-mode
+  if (window.matchMedia('(display-mode: standalone)').matches) return true;
+  return false;
+}
 
 export function PwaProvider() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
+  const [swRegistered, setSwRegistered] = useState(false);
 
   // Register the service worker so the app meets the installability criteria.
   useEffect(() => {
@@ -23,14 +34,12 @@ export function PwaProvider() {
     const register = async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        setSwRegistered(true);
 
         registration.addEventListener('updatefound', () => {
           const installing = registration.installing;
           if (!installing) return;
-
           installing.addEventListener('statechange', () => {
-            // A new worker finished installing and is waiting. Activate it so
-            // users are not pinned to a stale cache after a deploy.
             if (installing.state === 'installed' && navigator.serviceWorker.controller) {
               installing.postMessage('SKIP_WAITING');
             }
@@ -38,6 +47,7 @@ export function PwaProvider() {
         });
       } catch (error) {
         console.warn('Service worker registration failed:', error);
+        setSwRegistered(false);
       }
     };
 
@@ -48,14 +58,25 @@ export function PwaProvider() {
     }
   }, []);
 
-  // Capture the install prompt so we can offer our own button.
+  // Capture the install prompt and detect already-installed state.
   useEffect(() => {
+    // If already installed, suppress the prompt entirely.
+    if (isAlreadyInstalled()) {
+      try {
+        localStorage.setItem(INSTALLED_KEY, '1');
+      } catch {}
+      return;
+    }
+
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
+      console.log('[PWA] beforeinstallprompt captured');
 
       try {
-        if (!localStorage.getItem(DISMISS_KEY)) setShowInstall(true);
+        if (!localStorage.getItem(DISMISS_KEY) && !localStorage.getItem(INSTALLED_KEY)) {
+          setShowInstall(true);
+        }
       } catch {
         setShowInstall(true);
       }
@@ -65,6 +86,7 @@ export function PwaProvider() {
       setDeferredPrompt(null);
       setShowInstall(false);
       try {
+        localStorage.setItem(INSTALLED_KEY, '1');
         localStorage.setItem(DISMISS_KEY, 'installed');
       } catch {}
     };
@@ -76,14 +98,24 @@ export function PwaProvider() {
       window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
       window.removeEventListener('appinstalled', onInstalled);
     };
-  }, []);
+  }, [swRegistered]);
 
   const install = async () => {
-    if (!deferredPrompt) return;
+    if (deferredPrompt) {
+      setShowInstall(false);
+      await deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      try {
+        localStorage.setItem(INSTALLED_KEY, '1');
+      } catch {}
+      return;
+    }
+
+    // Fallback: browser didn't fire beforeinstallprompt. Trigger native
+    // install UI via matchMedia check is not possible here; guide user to
+    // browser menu instead.
     setShowInstall(false);
-    await deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
   };
 
   const dismiss = () => {
@@ -93,7 +125,8 @@ export function PwaProvider() {
     } catch {}
   };
 
-  if (!showInstall || !deferredPrompt) return null;
+  // If already installed or explicitly dismissed, don't render anything.
+  if (isAlreadyInstalled() || !showInstall) return null;
 
   return (
     <div className="fixed bottom-5 left-5 right-5 sm:left-5 sm:right-auto sm:max-w-sm z-40 print:hidden">

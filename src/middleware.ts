@@ -23,6 +23,11 @@ export default withAuth(
       return NextResponse.next();
     }
 
+    // PWA assets must never be redirected by role-based access control
+    if (pathname === '/site.webmanifest' || pathname.startsWith('/sw.js')) {
+      return NextResponse.next();
+    }
+
     // If user is logged in, redirect from auth pages to their dashboard
     if (token && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
       const dashboardPath = roleAccess[token.role as UserRole]?.[0] || '/student/dashboard';
@@ -81,7 +86,9 @@ export default withAuth(
           pathname.startsWith('/auth/verify-email') ||
           pathname.startsWith('/api/auth') ||
           pathname.startsWith('/api/public') ||
-          pathname.startsWith('/api/webhooks');
+          pathname.startsWith('/api/webhooks') ||
+          pathname === '/site.webmanifest' ||
+          pathname.startsWith('/sw.js');
 
         return isPublic || !!token;
       },

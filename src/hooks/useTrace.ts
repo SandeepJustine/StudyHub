@@ -66,12 +66,15 @@ export function useTrace(options: TraceOptions = {}) {
     if (typeof window === 'undefined' || events.length === 0) return;
     try {
       // fire-and-forget: tracking must never block the UI.
-      void fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(events),
-        keepalive: events.length === 1,
-      });
+      // Send each event individually as the endpoint expects a single object.
+      for (const event of events) {
+        void fetch(endpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(event),
+          keepalive: events.length === 1,
+        });
+      }
     } catch {
       // swallow - tracking is best-effort
     }
