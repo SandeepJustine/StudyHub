@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react';
 import { Sidebar } from './sidebar';
 import { DashboardHeader } from './header';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useBrowserCloseLogout } from '@/hooks/useBrowserCloseLogout';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ interface DashboardShellProps {
 
 function IdleTimeoutWrapper({ children }: { children: React.ReactNode }) {
   useIdleTimeout(30 * 60 * 1000); // 30 minutes inactive
+  useBrowserCloseLogout(); // logout after 30 min tab hidden / browser closed
   return <>{children}</>;
 }
 
